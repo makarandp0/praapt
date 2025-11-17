@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "npm --workspace=@praapt/api run dev",
     "dev:web": "npm --workspace=@praapt/web run dev",
+    "dev:all": "node scripts/dev-all.mjs",
     "build": "npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
     "start": "npm --workspace=@praapt/api run start",
     "migrate": "npm --workspace=@praapt/api run migrate",

@@ -30,6 +30,10 @@ API listens on `http://localhost:3000` by default.
 ## Useful Commands
 - `npm run dev` – Start API in watch mode (tsx)
 - `npm run dev:web` – Start frontend at `http://localhost:5173`
+- `npm run dev:all` – Start API and Web together.
+  - If API port `3000` is busy, assumes API is already running there and skips starting a second instance.
+  - If Web port `5173` is busy, starts another Vite dev server on the next free port.
+  - Sets `VITE_API_URL` for Web to point at the detected/started API URL.
 - `npm run build` – Build the API
 - `npm run start` – Start built API
 - `npm run migrate` – Apply latest DB migrations

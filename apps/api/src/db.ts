@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 import knex, { Knex } from 'knex';
 
 // Load env from current working directory; index.ts calls config() early.
-dotenv.config();
+config();
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/appdb';
 

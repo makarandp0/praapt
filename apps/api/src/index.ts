@@ -1,8 +1,9 @@
-import express from 'express';
+import express, { json } from 'express';
+
 import { db } from './db.js';
 
 const app = express();
-app.use(express.json());
+app.use(json());
 
 // Minimal CORS for dev: allow browser requests from Vite
 app.use((req, res, next) => {
