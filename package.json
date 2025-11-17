@@ -1,0 +1,37 @@
+{
+  "name": "praapt",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "dev": "npm --workspace=@praapt/api run dev",
+    "dev:web": "npm --workspace=@praapt/web run dev",
+    "build": "npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
+    "start": "npm --workspace=@praapt/api run start",
+    "migrate": "npm --workspace=@praapt/api run migrate",
+    "rollback": "npm --workspace=@praapt/api run rollback",
+    "seed": "npm --workspace=@praapt/api run seed",
+    "typecheck": "npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
+    "lint": "npm --workspace=@praapt/api run lint && npm --workspace=@praapt/web run lint",
+    "lint:fix": "npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
+    "format": "npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
+    "format:check": "npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.10.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^3.3.3"
+  }
+}

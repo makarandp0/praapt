@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+
+# Builds
+dist
+build
+
+# Env files
+.env
+apps/**/.env
+apps/web/src/**/*.js
+
+# OS / Misc
+.DS_Store
+*.log
+coverage
+ 
+# Additional common ignores
+# Environment variants
+.env.*
+!.env.example
+
+# Logs and pids
+logs
+*.pid
+*.pid.lock
+
+# Caches and build outputs
+.cache
+.turbo
+.next
+.output
+.parcel-cache
+
+# IDE settings
+.idea
