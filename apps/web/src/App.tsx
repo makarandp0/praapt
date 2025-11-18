@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { FaceCapture } from './components/FaceCapture';
 import { Button } from './components/ui/button';
 
 export function App() {
@@ -21,6 +22,9 @@ export function App() {
         <Button>Primary</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="outline">Outline</Button>
+      </div>
+      <div className="pt-4">
+        <FaceCapture apiBase={api} />
       </div>
     </div>
   );

@@ -98,3 +98,17 @@ npm run docker:run    # Run container
 - Copy `apps/web/.env.example` to `apps/web/.env`
 - `VITE_API_URL` defaults to `http://localhost:3000`
 - Access at `http://localhost:5173` during development
+
+## Image Capture Prototype
+
+- UI lives in `apps/web/src/components/FaceCapture.tsx` and is rendered in `apps/web/src/App.tsx`.
+- API endpoint: `POST /face/capture` accepts a JSON body `{ image: string }` where `image` is a base64 data URL (e.g. from `canvas.toDataURL('image/jpeg')`).
+- Saved uploads are written under `apps/api/.tmp/uploads/` for inspection.
+
+Quick test:
+
+```bash
+npm run dev:all          # Start API (3000) and Web (5173)
+# Visit the web app, allow camera, click Capture then Send to Backend
+# Check API logs and the saved file under apps/api/.tmp/uploads
+```
