@@ -6,7 +6,12 @@
     "apps/*"
   ],
   "engines": {
-    "node": ">=18.17"
+    "node": "22.18.0",
+    "npm": ">=10.9.0"
+  },
+  "volta": {
+    "node": "22.18.0",
+    "npm": "10.9.0"
   },
   "scripts": {
     "dev": "npm --workspace=@praapt/api run dev",
@@ -22,7 +27,10 @@
     "lint:fix": "npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
     "format": "npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
     "format:check": "npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "docker:build": "docker build -t praapt-api -f apps/api/Dockerfile .",
+    "docker:test": "docker build -t praapt-api -f apps/api/Dockerfile . && docker run --rm praapt-api node --version",
+    "docker:run": "docker run --rm --env-file ./apps/api/.env.docker -p 3000:3000 praapt-api"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.10.0",

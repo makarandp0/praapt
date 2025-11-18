@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-bookworm-slim AS deps
+FROM node:22.18-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json .
 COPY apps/api/package.json apps/api/package.json
@@ -8,10 +8,11 @@ RUN npm install --ignore-scripts
 
 FROM deps AS build
 WORKDIR /app
+# Copy the full repo (needed for TypeScript sources), but build only the API workspace
 COPY . .
-RUN npm run build
+RUN npm --workspace=@praapt/api run build
 
-FROM node:20-bookworm-slim AS runner
+FROM node:22.18-bookworm-slim AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
@@ -24,4 +25,3 @@ COPY apps/api/package.json /app/apps/api/package.json
 EXPOSE 3000
 WORKDIR /app/apps/api
 CMD ["node", "dist/index.js"]
-
