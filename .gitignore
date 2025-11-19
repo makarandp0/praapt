@@ -34,3 +34,4 @@ logs
 
 # IDE settings
 .idea
+apps/api/images/*
