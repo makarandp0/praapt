@@ -2,6 +2,12 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
+import {
+  CompareImagesBodySchema,
+  ListImagesResponseSchema,
+  SaveImageBodySchema,
+  SaveImageResponseSchema,
+} from '@praapt/shared';
 import express, { json } from 'express';
 
 import { db } from './db.js';
@@ -92,18 +98,15 @@ app.post('/users', async (req, res) => {
 // 1) Capture and name the image. Body: { name: string, image: string }
 app.post('/images', async (req, res) => {
   try {
-    const { name, image } = req.body ?? {};
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'name required' });
-    }
-    if (!image || typeof image !== 'string') {
-      return res.status(400).json({ error: 'image required (base64 or data URL)' });
-    }
+    const { name, image } = SaveImageBodySchema.parse(req.body ?? {});
     const { buffer, ext } = parseImageToBuffer(image);
     const fileName = fileNameFor(name, ext);
     const dest = path.join(IMAGES_DIR, fileName);
     fs.writeFileSync(dest, buffer);
-    return res.status(201).json({ ok: true, name: sanitizeName(name), file: fileName });
+    const payload = { ok: true as const, name: sanitizeName(name), file: fileName };
+    // Validate server response shape during dev
+    SaveImageResponseSchema.parse(payload);
+    return res.status(201).json(payload);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('save image error', err);
@@ -115,15 +118,16 @@ app.post('/images', async (req, res) => {
 app.get('/images', (_req, res) => {
   const files = listImageFiles();
   const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
-  res.json({ ok: true, images: names, files });
+  const payload = { ok: true as const, images: names, files };
+  ListImagesResponseSchema.parse(payload);
+  res.json(payload);
 });
 
 // 3) Compare two images by names (sha256 equality)
 // Body: { a: string, b: string }
 app.post('/images/compare', (req, res) => {
   try {
-    const { a, b } = req.body ?? {};
-    if (!a || !b) return res.status(400).json({ error: 'a and b required' });
+    const { a, b } = CompareImagesBodySchema.parse(req.body ?? {});
     // Accept either base name or filename with extension
     const files = listImageFiles();
     const findFile = (key: string) => {

@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "engines": {
     "node": "22.18.0",
@@ -17,16 +18,16 @@
     "dev": "npm --workspace=@praapt/api run dev",
     "dev:web": "npm --workspace=@praapt/web run dev",
     "dev:all": "node scripts/dev-all.mjs",
-    "build": "npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
+    "build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
     "start": "npm --workspace=@praapt/api run start",
     "migrate": "npm --workspace=@praapt/api run migrate",
     "rollback": "npm --workspace=@praapt/api run rollback",
     "seed": "npm --workspace=@praapt/api run seed",
-    "typecheck": "npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
-    "lint": "npm --workspace=@praapt/api run lint && npm --workspace=@praapt/web run lint",
-    "lint:fix": "npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
-    "format": "npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
-    "format:check": "npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
+    "typecheck": "npm --workspace=@praapt/shared run typecheck && npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
+    "lint": "npm --workspace=@praapt/shared run lint && npm --workspace=@praapt/api run lint && npm --workspace=@praapt/web run lint",
+    "lint:fix": "npm --workspace=@praapt/shared run lint:fix && npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
+    "format": "npm --workspace=@praapt/shared run format && npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
+    "format:check": "npm --workspace=@praapt/shared run format:check && npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
     "verify": "node scripts/verify.mjs",
     "docker:build": "docker build -t praapt-api -f apps/api/Dockerfile .",
     "docker:test": "docker build -t praapt-api -f apps/api/Dockerfile . && docker run --rm praapt-api node --version",

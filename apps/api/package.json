@@ -18,6 +18,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\""
   },
   "dependencies": {
+    "@praapt/shared": "^0.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "knex": "^3.1.0",
