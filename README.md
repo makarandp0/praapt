@@ -105,14 +105,30 @@ npm run docker:run    # Run container
 - Endpoints:
   - `POST /images` – Body `{ name: string, image: string }` (image is data URL or base64). Saves as `<sanitized-name>.<ext>`.
   - `GET /images` – Returns `{ images: string[], files: string[] }` where `images` are filename stems.
-  - `POST /images/compare` – Body `{ a: string, b: string }` compares two saved images by name using `sha256` equality; returns `{ same: boolean }`.
+  - `POST /images/compare` – Body `{ a: string, b: string }` compares two saved images. If the face service is available, uses face embeddings (ArcFace) and returns `{ same, distance, threshold, algo: 'face-arcface' }`. Otherwise falls back to `{ same, algo: 'sha256' }` by file equality.
 - UI: `apps/web/src/components/ImageManager.tsx` offers capture/upload with name, lists images, and compares two chosen names.
 
-## Named Images API (Prototype)
+## Face Service (Python)
 
-- Directory: Backend stores images in `IMAGES_DIR` (env) or defaults to `./images` under the API CWD. Ensure the directory is writable.
-- Endpoints:
-  - `POST /images` – Body `{ name: string, image: string }` (image is data URL or base64). Saves as `<sanitized-name>.<ext>`.
-  - `GET /images` – Returns `{ images: string[], files: string[] }` where `images` are filename stems.
-  - `POST /images/compare` – Body `{ a: string, b: string }` compares two saved images by name using `sha256` equality; returns `{ same: boolean }`.
-- UI: `apps/web/src/components/ImageManager.tsx` offers capture/upload with name, lists images, and compares two chosen names.
+- Service path: `apps/face-py` (FastAPI + InsightFace + ONNXRuntime CPU).
+- Docker compose service name: `face` (port `8000`). Models are cached in a volume `face-models`.
+
+Run locally (recommended):
+
+```bash
+# Start Postgres and face service
+docker compose up -d db face
+
+# Configure API env to point to face service
+cp apps/api/.env.example apps/api/.env
+# FACE_SERVICE_URL defaults to http://localhost:8000 for local dev
+
+# Start API and Web
+npm run dev:all
+```
+
+Notes:
+
+- If you also run the API inside Docker, set `FACE_SERVICE_URL=http://face:8000` so it can reach the Python service via compose DNS.
+- Health check: `curl http://localhost:8000/health` should return `{ ok: true }` once models are loaded.
+- First run downloads models into the `face-models` volume; this can take a minute.

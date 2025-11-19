@@ -11,6 +11,7 @@ import {
 import express, { json } from 'express';
 
 import { db } from './db.js';
+import { compareFiles as faceCompareFiles } from './faceClient.js';
 
 const app = express();
 // Allow larger JSON payloads for base64 images in prototypes
@@ -125,10 +126,9 @@ app.get('/images', (_req, res) => {
 
 // 3) Compare two images by names (sha256 equality)
 // Body: { a: string, b: string }
-app.post('/images/compare', (req, res) => {
+app.post('/images/compare', async (req, res) => {
   try {
     const { a, b } = CompareImagesBodySchema.parse(req.body ?? {});
-    // Accept either base name or filename with extension
     const files = listImageFiles();
     const findFile = (key: string) => {
       const base = sanitizeName(String(key));
@@ -141,9 +141,25 @@ app.post('/images/compare', (req, res) => {
     const B = findFile(b);
     if (!A) return res.status(404).json({ error: `image not found: ${a}` });
     if (!B) return res.status(404).json({ error: `image not found: ${b}` });
-    const ha = sha256Of(A);
-    const hb = sha256Of(B);
-    return res.json({ ok: true, same: ha === hb, algo: 'sha256', a, b });
+
+    // Try face match via Python microservice
+    try {
+      const { distance, threshold, match } = await faceCompareFiles(A, B);
+      return res.json({
+        ok: true,
+        same: Boolean(match),
+        algo: 'face-arcface' as const,
+        a,
+        b,
+        distance,
+        threshold,
+      });
+    } catch {
+      // Fallback to sha256 equality if face service unavailable
+      const ha = sha256Of(A);
+      const hb = sha256Of(B);
+      return res.json({ ok: true, same: ha === hb, algo: 'sha256' as const, a, b });
+    }
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('compare error', err);
