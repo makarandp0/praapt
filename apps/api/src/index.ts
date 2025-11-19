@@ -80,8 +80,17 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'api' });
+app.get('/health', async (_req, res) => {
+  const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
+  let face: { ok: boolean; modelsLoaded?: boolean } = { ok: false };
+  try {
+    const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
+    const j = await r.json();
+    face = { ok: Boolean(j?.ok), modelsLoaded: Boolean(j?.modelsLoaded) };
+  } catch {
+    face = { ok: false };
+  }
+  res.json({ ok: true, service: 'api', face });
 });
 
 app.get('/users', async (_req, res) => {
