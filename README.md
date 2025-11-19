@@ -6,27 +6,32 @@ TypeScript monorepo with Express API and React frontend. Uses Postgres database 
 
 ## Quick Setup
 
-**Prerequisites:** Node.js 22.18.0, npm 10.9.0+, Docker Desktop
+Prerequisites: Node.js 22.18.0, npm 10.9.0+, Docker Desktop
 
 ```bash
-# 1. Clone and install
+# 1) Clone and install
 git clone git@github.com:makarandp0/praapt.git
 cd praapt
 npm install
 
-# 2. Start database
-docker compose up -d
+# 2) Start infra (Postgres + Face service)
+docker compose up -d db face
 
-# 3. Configure environment
-cp .env.example apps/api/.env
+# 3) Configure env
+cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
+# FACE_SERVICE_URL defaults to http://localhost:8000 (adjust to http://face:8000 if API runs in Docker)
 
-# 4. Initialize database
+# 4) Initialize database
 npm run migrate
 npm run seed  # Optional: sample data
 
-# 5. Start development
-npm run dev:all  # Both API and Web
+# 5) Run app (API on 3000, Web on 5173)
+npm run dev:all
+
+# 6) Verify health
+curl http://localhost:3000/health   # -> { ok: true, service: 'api', face: { ok: true, ... } }
+curl http://localhost:8000/health   # -> { ok: true, ... }
 ```
 
 ## Development
@@ -47,15 +52,15 @@ npm run dev:web   # Web only
 
 ```bash
 npm run verify  # Type-check, lint, and build
-curl http://localhost:3000/health  # Should return 200 OK
+curl http://localhost:3000/health  # API + Face service health summary
 ```
 
-## Architecture
+## Services (High-level)
 
-- **Database**: Postgres runs in Docker (`docker compose up -d`)
-- **API**: Express + TypeScript, runs locally with Node.js (`npm run dev`)
-- **Web**: React + Vite + Tailwind, runs locally (`npm run dev:web`)
-- **Production**: API can be containerized for deployment
+- **Web (apps/web)**: React + Vite + Tailwind frontend. Provides Image Manager to capture/upload and compare images.
+- **API (apps/api)**: Express + TypeScript backend. Stores named images, aggregates health, and proxies compare to the Face service (fallback to sha256 if unavailable).
+- **Face Service (apps/face-py)**: FastAPI + InsightFace + ONNXRuntime (CPU). Detects faces and returns ArcFace embeddings; used by API for robust comparisons.
+- **Database (Docker `db`)**: Postgres for app data.
 
 ## Workspaces
 
@@ -95,9 +100,9 @@ npm run docker:run    # Run container
 
 ## Frontend Setup
 
-- Copy `apps/web/.env.example` to `apps/web/.env`
-- `VITE_API_URL` defaults to `http://localhost:3000`
-- Access at `http://localhost:5173` during development
+- Copy `apps/web/.env.example` to `apps/web/.env` (already in Quick Setup).
+- `VITE_API_URL` defaults to `http://localhost:3000`.
+- Access at `http://localhost:5173` during development.
 
 ## Named Images API (Prototype)
 
@@ -108,27 +113,8 @@ npm run docker:run    # Run container
   - `POST /images/compare` – Body `{ a: string, b: string }` compares two saved images. If the face service is available, uses face embeddings (ArcFace) and returns `{ same, distance, threshold, algo: 'face-arcface' }`. Otherwise falls back to `{ same, algo: 'sha256' }` by file equality.
 - UI: `apps/web/src/components/ImageManager.tsx` offers capture/upload with name, lists images, and compares two chosen names.
 
-## Face Service (Python)
+## Face Service Notes
 
-- Service path: `apps/face-py` (FastAPI + InsightFace + ONNXRuntime CPU).
-- Docker compose service name: `face` (port `8000`). Models are cached in a volume `face-models`.
-
-Run locally (recommended):
-
-```bash
-# Start Postgres and face service
-docker compose up -d db face
-
-# Configure API env to point to face service
-cp apps/api/.env.example apps/api/.env
-# FACE_SERVICE_URL defaults to http://localhost:8000 for local dev
-
-# Start API and Web
-npm run dev:all
-```
-
-Notes:
-
-- If you also run the API inside Docker, set `FACE_SERVICE_URL=http://face:8000` so it can reach the Python service via compose DNS.
-- Health check: `curl http://localhost:8000/health` should return `{ ok: true }` once models are loaded.
-- First run downloads models into the `face-models` volume; this can take a minute.
+- Service path: `apps/face-py` (FastAPI). Docker Compose service name: `face` (port `8000`).
+- Models are cached in the `face-models` volume; first run may take a minute to download.
+- If the API runs in Docker, set `FACE_SERVICE_URL=http://face:8000` in `apps/api/.env`.
