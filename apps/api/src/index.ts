@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -8,6 +9,55 @@ import { db } from './db.js';
 const app = express();
 // Allow larger JSON payloads for base64 images in prototypes
 app.use(json({ limit: '10mb' }));
+
+// Configure images directory (env IMAGES_DIR or default to ./images under CWD)
+const IMAGES_DIR = process.env.IMAGES_DIR
+  ? path.resolve(process.env.IMAGES_DIR)
+  : path.join(process.cwd(), 'images');
+fs.mkdirSync(IMAGES_DIR, { recursive: true });
+
+// Helpers
+function sanitizeName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function parseImageToBuffer(image: string): { buffer: Buffer; ext: string } {
+  // Supports data URL or raw base64; determine ext from mime if provided
+  if (image.startsWith('data:')) {
+    const [meta, b64] = image.split(',');
+    const m = /data:(.+?);base64/.exec(meta || '');
+    const mime = (m?.[1] || 'image/jpeg').toLowerCase();
+    const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
+    return { buffer: Buffer.from(b64, 'base64'), ext };
+  }
+  // Default to jpeg extension when not specified
+  return { buffer: Buffer.from(image, 'base64'), ext: 'jpg' };
+}
+
+function listImageFiles(): string[] {
+  const entries = fs.readdirSync(IMAGES_DIR, { withFileTypes: true });
+  const files = entries
+    .filter((e) => e.isFile())
+    .map((e) => e.name)
+    .filter((n) => /\.(jpg|jpeg|png|webp)$/i.test(n))
+    .sort();
+  return files;
+}
+
+function fileNameFor(name: string, ext: string): string {
+  return `${sanitizeName(name)}.${ext}`;
+}
+
+function sha256Of(filePath: string): string {
+  const buf = fs.readFileSync(filePath);
+  const h = crypto.createHash('sha256');
+  h.update(buf);
+  return h.digest('hex');
+}
 
 // Minimal CORS for dev: allow browser requests from Vite
 app.use((req, res, next) => {
@@ -39,40 +89,61 @@ app.post('/users', async (req, res) => {
   res.status(201).json(user);
 });
 
-// Prototype endpoint: accept a base64-encoded image captured from the browser
-// Body: { image: string (data URL or base64), tag?: string }
-app.post('/face/capture', async (req, res) => {
+// 1) Capture and name the image. Body: { name: string, image: string }
+app.post('/images', async (req, res) => {
   try {
-    const { image, tag } = req.body ?? {};
+    const { name, image } = req.body ?? {};
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'name required' });
+    }
     if (!image || typeof image !== 'string') {
-      return res.status(400).json({ error: 'image (base64 or data URL) required' });
+      return res.status(400).json({ error: 'image required (base64 or data URL)' });
     }
-
-    // Support both raw base64 and data URLs like "data:image/jpeg;base64,...."
-    const base64 = image.startsWith('data:') ? image.split(',')[1] : image;
-    if (!base64) {
-      return res.status(400).json({ error: 'invalid image payload' });
-    }
-
-    const buffer = Buffer.from(base64, 'base64');
-
-    // Save to a temp folder for debugging/inspection
-    const uploadsDir = path.join(process.cwd(), '.tmp', 'uploads');
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `capture-${ts}${tag ? `-${String(tag)}` : ''}.jpg`;
-    const filePath = path.join(uploadsDir, filename);
-    fs.writeFileSync(filePath, buffer);
-
-    return res.status(201).json({
-      ok: true,
-      bytes: buffer.length,
-      saved: path.relative(process.cwd(), filePath),
-    });
+    const { buffer, ext } = parseImageToBuffer(image);
+    const fileName = fileNameFor(name, ext);
+    const dest = path.join(IMAGES_DIR, fileName);
+    fs.writeFileSync(dest, buffer);
+    return res.status(201).json({ ok: true, name: sanitizeName(name), file: fileName });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error('capture error', err);
-    return res.status(500).json({ error: 'failed to process image' });
+    console.error('save image error', err);
+    return res.status(500).json({ error: 'failed to save image' });
+  }
+});
+
+// 2) Return names of all images (filename stems)
+app.get('/images', (_req, res) => {
+  const files = listImageFiles();
+  const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
+  res.json({ ok: true, images: names, files });
+});
+
+// 3) Compare two images by names (sha256 equality)
+// Body: { a: string, b: string }
+app.post('/images/compare', (req, res) => {
+  try {
+    const { a, b } = req.body ?? {};
+    if (!a || !b) return res.status(400).json({ error: 'a and b required' });
+    // Accept either base name or filename with extension
+    const files = listImageFiles();
+    const findFile = (key: string) => {
+      const base = sanitizeName(String(key));
+      const withExt =
+        files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base) ||
+        files.find((f) => f === key);
+      return withExt ? path.join(IMAGES_DIR, withExt) : null;
+    };
+    const A = findFile(a);
+    const B = findFile(b);
+    if (!A) return res.status(404).json({ error: `image not found: ${a}` });
+    if (!B) return res.status(404).json({ error: `image not found: ${b}` });
+    const ha = sha256Of(A);
+    const hb = sha256Of(B);
+    return res.json({ ok: true, same: ha === hb, algo: 'sha256', a, b });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('compare error', err);
+    return res.status(500).json({ error: 'failed to compare images' });
   }
 });
 
