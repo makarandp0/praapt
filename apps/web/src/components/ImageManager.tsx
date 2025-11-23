@@ -20,6 +20,12 @@ export function ImageManager({ apiBase }: Props) {
   const [cameraOpen, setCameraOpen] = useState(false);
   // Holds the current unsaved capture/upload preview (data URL)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [compareResult, setCompareResult] = useState<{
+    same: boolean;
+    algo: string;
+    distance?: number;
+    threshold?: number;
+  } | null>(null);
 
   const canSave = useMemo(() => name.trim().length > 0 && Boolean(previewUrl), [name, previewUrl]);
   const canCompare = useMemo(() => a && b && a !== b, [a, b]);
@@ -123,11 +129,19 @@ export function ImageManager({ apiBase }: Props) {
 
   const doCompare = async () => {
     setStatus('Comparing...');
+    setCompareResult(null);
     try {
       const res = await compareImages(api, a, b);
-      setStatus(`algo=${res.algo}, same=${res.same ? 'YES' : 'NO'}`);
+      setCompareResult({
+        same: res.same,
+        algo: res.algo,
+        distance: res.distance,
+        threshold: res.threshold,
+      });
+      setStatus('');
     } catch (err: unknown) {
       setStatus(err instanceof Error ? err.message : 'Failed to compare');
+      setCompareResult(null);
     }
   };
 
@@ -252,14 +266,81 @@ export function ImageManager({ apiBase }: Props) {
                 Compare
               </Button>
             </div>
+            {status && (
+              <div className="text-sm">
+                <div className="rounded border px-3 py-2 text-muted-foreground bg-background">
+                  {status}
+                </div>
+              </div>
+            )}
+            {compareResult && (
+              <div className="mt-3 p-4 rounded-lg border-2 bg-gradient-to-br from-background to-muted/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm ${
+                      compareResult.same
+                        ? 'bg-green-100 text-green-800 border-2 border-green-300'
+                        : 'bg-red-100 text-red-800 border-2 border-red-300'
+                    }`}
+                  >
+                    {compareResult.same ? (
+                      <>
+                        <span className="text-lg">✓</span>
+                        <span>Match</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg">✗</span>
+                        <span>No Match</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+                    Algorithm: {compareResult.algo}
+                  </div>
+                </div>
+                {compareResult.distance !== undefined && compareResult.threshold !== undefined && (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Distance:</span>
+                      <span className="font-mono font-semibold">
+                        {compareResult.distance.toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Threshold:</span>
+                      <span className="font-mono font-semibold">
+                        {compareResult.threshold.toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="text-muted-foreground">Confidence</span>
+                        <span className="font-medium">
+                          {compareResult.same
+                            ? `${Math.max(0, ((compareResult.threshold - compareResult.distance) / compareResult.threshold) * 100).toFixed(1)}%`
+                            : `${Math.max(0, (compareResult.distance / compareResult.threshold) * 100 - 100).toFixed(1)}% different`}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            compareResult.same ? 'bg-green-500' : 'bg-red-500'
+                          }`}
+                          style={{
+                            width: compareResult.same
+                              ? `${Math.min(100, Math.max(0, ((compareResult.threshold - compareResult.distance) / compareResult.threshold) * 100))}%`
+                              : `${Math.min(100, Math.max(0, (compareResult.distance / compareResult.threshold) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
-      </div>
-
-      <div className="text-sm">
-        <div className="rounded border px-3 py-2 text-muted-foreground bg-background">
-          {status || 'Ready'}
-        </div>
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
