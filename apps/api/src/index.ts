@@ -2,16 +2,17 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
+import express, { json } from 'express';
+
+import { db } from './db.js';
+import { compareFiles as faceCompareFiles } from './faceClient.js';
+
 import {
   CompareImagesBodySchema,
   ListImagesResponseSchema,
   SaveImageBodySchema,
   SaveImageResponseSchema,
 } from '@praapt/shared';
-import express, { json } from 'express';
-
-import { db } from './db.js';
-import { compareFiles as faceCompareFiles } from './faceClient.js';
 
 const app = express();
 // Allow larger JSON payloads for base64 images in prototypes
@@ -131,6 +132,17 @@ app.get('/images', (_req, res) => {
   const payload = { ok: true as const, images: names, files };
   ListImagesResponseSchema.parse(payload);
   res.json(payload);
+});
+
+// 2.5) Serve individual image by name
+app.get('/images/:name', (req, res) => {
+  const { name } = req.params;
+  const files = listImageFiles();
+  const base = sanitizeName(String(name));
+  const file = files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base);
+  if (!file) return res.status(404).json({ error: `image not found: ${name}` });
+  const filePath = path.join(IMAGES_DIR, file);
+  return res.sendFile(filePath);
 });
 
 // 3) Compare two images by names (sha256 equality)

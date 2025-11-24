@@ -227,41 +227,70 @@ export function ImageManager({ apiBase }: Props) {
 
           <div className="space-y-2">
             <h3 className="font-medium">Compare</h3>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-sm" htmlFor="select-a">
-                A
-              </label>
-              <select
-                id="select-a"
-                className="border rounded px-2 py-2 text-sm min-w-[160px]"
-                value={a}
-                onChange={(e) => setA(e.target.value)}
-              >
-                <option value="">Select</option>
-                {images.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-wrap items-start gap-4">
+              {/* Image A selection */}
+              <div className="flex-1 min-w-[160px] space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium" htmlFor="select-a">
+                    Image A
+                  </label>
+                  <select
+                    id="select-a"
+                    className="border rounded px-2 py-2 text-sm flex-1"
+                    value={a}
+                    onChange={(e) => setA(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {images.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {a && (
+                  <div className="border rounded overflow-hidden bg-black/5">
+                    <img
+                      src={`${apiBase}/images/${a}`}
+                      alt={`Image A: ${a}`}
+                      className="w-full h-48 object-contain"
+                    />
+                  </div>
+                )}
+              </div>
 
-              <label className="text-sm" htmlFor="select-b">
-                B
-              </label>
-              <select
-                id="select-b"
-                className="border rounded px-2 py-2 text-sm min-w-[160px]"
-                value={b}
-                onChange={(e) => setB(e.target.value)}
-              >
-                <option value="">Select</option>
-                {images.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-
+              {/* Image B selection */}
+              <div className="flex-1 min-w-[160px] space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium" htmlFor="select-b">
+                    Image B
+                  </label>
+                  <select
+                    id="select-b"
+                    className="border rounded px-2 py-2 text-sm flex-1"
+                    value={b}
+                    onChange={(e) => setB(e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    {images.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {b && (
+                  <div className="border rounded overflow-hidden bg-black/5">
+                    <img
+                      src={`${apiBase}/images/${b}`}
+                      alt={`Image B: ${b}`}
+                      className="w-full h-48 object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="pt-2">
               <Button variant="secondary" onClick={doCompare} disabled={!canCompare}>
                 Compare
               </Button>
