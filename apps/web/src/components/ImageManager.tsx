@@ -300,39 +300,66 @@ export function ImageManager({ apiBase }: Props) {
                   </div>
                 </div>
                 {compareResult.distance !== undefined && compareResult.threshold !== undefined && (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Distance:</span>
-                      <span className="font-mono font-semibold">
-                        {compareResult.distance.toFixed(4)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Threshold:</span>
-                      <span className="font-mono font-semibold">
-                        {compareResult.threshold.toFixed(4)}
-                      </span>
-                    </div>
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex justify-between items-center text-xs mb-1">
-                        <span className="text-muted-foreground">Confidence</span>
-                        <span className="font-medium">
-                          {compareResult.same
-                            ? `${Math.max(0, ((compareResult.threshold - compareResult.distance) / compareResult.threshold) * 100).toFixed(1)}%`
-                            : `${Math.max(0, (compareResult.distance / compareResult.threshold) * 100 - 100).toFixed(1)}% different`}
-                        </span>
+                  <div className="space-y-3 text-sm">
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground leading-relaxed">
+                        <p>
+                          The progress bar shows the <strong>distance</strong> between the two
+                          images. Lower distance means more similar faces. The blue line marks the{' '}
+                          <strong>threshold</strong> ({compareResult.threshold.toFixed(4)}):
+                          distances below it indicate a match, while distances above it indicate no
+                          match.
+                        </p>
+                        <p className="mt-2">
+                          <strong>Result:</strong>{' '}
+                          {compareResult.same ? (
+                            <span className="text-green-700 font-semibold">
+                              Distance is below threshold — Images Match
+                            </span>
+                          ) : (
+                            <span className="text-red-700 font-semibold">
+                              Distance is above threshold — Images Do Not Match
+                            </span>
+                          )}
+                        </p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                      <div className="relative pt-8">
+                        {/* Background bar representing maximum range (0-2.0 for cosine distance) */}
+                        <div className="w-full bg-gray-200 rounded-full h-8 relative overflow-hidden">
+                          {/* Distance bar */}
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              compareResult.same ? 'bg-green-500' : 'bg-red-500'
+                            }`}
+                            style={{
+                              width: `${Math.min(100, (compareResult.distance / 2.0) * 100)}%`,
+                            }}
+                          />
+                          {/* Distance label */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="font-mono font-semibold text-xs text-white drop-shadow-md">
+                              Distance: {compareResult.distance.toFixed(4)}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Threshold marker */}
                         <div
-                          className={`h-full rounded-full transition-all ${
-                            compareResult.same ? 'bg-green-500' : 'bg-red-500'
-                          }`}
+                          className="absolute top-8 bottom-0 w-1 bg-blue-600 shadow-lg"
                           style={{
-                            width: compareResult.same
-                              ? `${Math.min(100, Math.max(0, ((compareResult.threshold - compareResult.distance) / compareResult.threshold) * 100))}%`
-                              : `${Math.min(100, Math.max(0, (compareResult.distance / compareResult.threshold) * 100))}%`,
+                            left: `${Math.min(100, (compareResult.threshold / 2.0) * 100)}%`,
+                            transform: 'translateX(-50%)',
                           }}
-                        />
+                        >
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-600">
+                              Threshold
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                        <span>0.0 (Identical)</span>
+                        <span>2.0 (Opposite)</span>
                       </div>
                     </div>
                   </div>
