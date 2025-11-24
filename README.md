@@ -118,3 +118,7 @@ npm run docker:run    # Run container
 - Service path: `apps/face-py` (FastAPI). Docker Compose service name: `face` (port `8000`).
 - Models are cached in the `face-models` volume; first run may take a minute to download.
 - If the API runs in Docker, set `FACE_SERVICE_URL=http://face:8000` in `apps/api/.env`.
+
+## Face Comparison Technical Details
+
+Face comparison uses **InsightFace** with the `buffalo_l` model pack (RetinaFace for detection + ArcFace for embeddings). For each image, the largest face is detected and converted to a 512-dimensional normalized embedding vector via ArcFace. Distance is computed as **1 - cosine_similarity** between embeddings, where 0 means identical and values closer to 0 indicate similarity. The default threshold is **0.4**—distances below this are considered matches.
