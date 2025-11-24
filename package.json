@@ -23,7 +23,7 @@
     "migrate": "npm --workspace=@praapt/api run migrate",
     "rollback": "npm --workspace=@praapt/api run rollback",
     "seed": "npm --workspace=@praapt/api run seed",
-    "typecheck": "npm --workspace=@praapt/shared run typecheck && npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
+    "typecheck": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/shared run typecheck && npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
     "lint": "npm --workspace=@praapt/shared run lint && npm --workspace=@praapt/api run lint && npm --workspace=@praapt/web run lint",
     "lint:fix": "npm --workspace=@praapt/shared run lint:fix && npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
     "format": "npm --workspace=@praapt/shared run format && npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
