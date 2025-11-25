@@ -1,10 +1,12 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import express, { json } from 'express';
 
 import { db } from './db.js';
+import { NODE_ENV } from './env.js';
 import { compareFiles as faceCompareFiles } from './faceClient.js';
 
 import {
@@ -13,6 +15,8 @@ import {
   SaveImageBodySchema,
   SaveImageResponseSchema,
 } from '@praapt/shared';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 // Allow larger JSON payloads for base64 images in prototypes
@@ -81,7 +85,10 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get('/health', async (_req, res) => {
+// API routes (all prefixed with /api in production when serving static files)
+const apiRouter = express.Router();
+
+apiRouter.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
   let face: { ok: boolean; modelsLoaded?: boolean } = { ok: false };
   try {
@@ -91,15 +98,15 @@ app.get('/health', async (_req, res) => {
   } catch {
     face = { ok: false };
   }
-  res.json({ ok: true, service: 'api', face });
+  res.json({ ok: true, service: 'api', env: NODE_ENV, face });
 });
 
-app.get('/users', async (_req, res) => {
+apiRouter.get('/users', async (_req, res) => {
   const users = await db('users').select('*').orderBy('id', 'asc');
   res.json(users);
 });
 
-app.post('/users', async (req, res) => {
+apiRouter.post('/users', async (req, res) => {
   const { email, name } = req.body ?? {};
   if (!email) return res.status(400).json({ error: 'email required' });
   const [user] = await db('users').insert({ email, name }).returning('*');
@@ -107,7 +114,7 @@ app.post('/users', async (req, res) => {
 });
 
 // 1) Capture and name the image. Body: { name: string, image: string }
-app.post('/images', async (req, res) => {
+apiRouter.post('/images', async (req, res) => {
   try {
     const { name, image } = SaveImageBodySchema.parse(req.body ?? {});
     const { buffer, ext } = parseImageToBuffer(image);
@@ -126,7 +133,7 @@ app.post('/images', async (req, res) => {
 });
 
 // 2) Return names of all images (filename stems)
-app.get('/images', (_req, res) => {
+apiRouter.get('/images', (_req, res) => {
   const files = listImageFiles();
   const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
   const payload = { ok: true as const, images: names, files };
@@ -135,7 +142,7 @@ app.get('/images', (_req, res) => {
 });
 
 // 2.5) Serve individual image by name
-app.get('/images/:name', (req, res) => {
+apiRouter.get('/images/:name', (req, res) => {
   const { name } = req.params;
   const files = listImageFiles();
   const base = sanitizeName(String(name));
@@ -147,7 +154,7 @@ app.get('/images/:name', (req, res) => {
 
 // 3) Compare two images by names (sha256 equality)
 // Body: { a: string, b: string }
-app.post('/images/compare', async (req, res) => {
+apiRouter.post('/images/compare', async (req, res) => {
   try {
     const { a, b } = CompareImagesBodySchema.parse(req.body ?? {});
     const files = listImageFiles();
@@ -187,6 +194,19 @@ app.post('/images/compare', async (req, res) => {
     return res.status(500).json({ error: 'failed to compare images' });
   }
 });
+
+// Mount API routes
+app.use('/api', apiRouter);
+
+// Serve static frontend files in production
+if (NODE_ENV === 'production') {
+  const staticPath = path.join(__dirname, '../../web/dist');
+  app.use(express.static(staticPath));
+  // SPA fallback - serve index.html for non-API routes
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(staticPath, 'index.html'));
+  });
+}
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {

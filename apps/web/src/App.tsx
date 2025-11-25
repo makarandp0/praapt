@@ -6,7 +6,9 @@ import { Button } from './components/ui/button';
 export function App() {
   const [health, setHealth] = useState<string>('Checking...');
   const [faceHealth, setFaceHealth] = useState<string>('Checking...');
-  const api = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  // In production, API is at /api (same server). In dev, use VITE_API_URL or localhost:3000
+  const api = import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? '/api' : 'http://localhost:3000');
 
   useEffect(() => {
     fetch(`${api}/health`)
