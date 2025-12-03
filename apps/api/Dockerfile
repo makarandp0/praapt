@@ -32,4 +32,4 @@ COPY packages/shared/package.json /app/packages/shared/package.json
 
 EXPOSE 3000
 WORKDIR /app
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["node", "apps/api/dist/src/index.js"]
