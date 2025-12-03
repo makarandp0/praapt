@@ -88,6 +88,7 @@ Docker Compose is for **local development only**. In production, use managed ser
 5. Your app is live! 🚀
 
 **Important Notes:**
+
 - Face service requires **2GB+ memory** (set in Railway Settings → Resources)
 - Uses `buffalo_s` model in production (~500MB, optimized for memory)
 - PostgreSQL is optional (DB code is commented out for now)

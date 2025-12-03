@@ -76,5 +76,3 @@ def compare(a_b64: str, b_b64: str) -> Tuple[Optional[float], dict]:
         return None, {"error": "no face in B", **meta_b}
     dist = cosine_distance(ea, eb)
     return dist, {"a": meta_a, "b": meta_b}
-
-
