@@ -42,7 +42,7 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      NODE_ENV: development
+      NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@db:5432/appdb?sslmode=disable
       FACE_SERVICE_URL: http://face:8000
     depends_on:

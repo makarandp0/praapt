@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 import express, { json } from 'express';
 
-import { db } from './db.js';
+// import { db } from './db.js';
 import { NODE_ENV } from './env.js';
 import { compareFiles as faceCompareFiles } from './faceClient.js';
 
@@ -101,17 +101,17 @@ apiRouter.get('/health', async (_req, res) => {
   res.json({ ok: true, service: 'api', env: NODE_ENV, face });
 });
 
-apiRouter.get('/users', async (_req, res) => {
-  const users = await db('users').select('*').orderBy('id', 'asc');
-  res.json(users);
-});
+// apiRouter.get('/users', async (_req, res) => {
+//   const users = await db('users').select('*').orderBy('id', 'asc');
+//   res.json(users);
+// });
 
-apiRouter.post('/users', async (req, res) => {
-  const { email, name } = req.body ?? {};
-  if (!email) return res.status(400).json({ error: 'email required' });
-  const [user] = await db('users').insert({ email, name }).returning('*');
-  res.status(201).json(user);
-});
+// apiRouter.post('/users', async (req, res) => {
+//   const { email, name } = req.body ?? {};
+//   if (!email) return res.status(400).json({ error: 'email required' });
+//   const [user] = await db('users').insert({ email, name }).returning('*');
+//   res.status(201).json(user);
+// });
 
 // 1) Capture and name the image. Body: { name: string, image: string }
 apiRouter.post('/images', async (req, res) => {
@@ -214,12 +214,12 @@ app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
 });
 
-process.on('SIGINT', async () => {
-  await db.destroy();
-  process.exit(0);
-});
+// process.on('SIGINT', async () => {
+//   await db.destroy();
+//   process.exit(0);
+// });
 
-process.on('SIGTERM', async () => {
-  await db.destroy();
-  process.exit(0);
-});
+// process.on('SIGTERM', async () => {
+//   await db.destroy();
+//   process.exit(0);
+// });

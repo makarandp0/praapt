@@ -27,6 +27,7 @@ npm run dev:all
 **Open:** http://localhost:5173
 
 That's it! The app is running with:
+
 - Frontend: http://localhost:5173
 - API: http://localhost:3000
 - Face service: http://localhost:8000
@@ -60,36 +61,42 @@ npm run docker:restart  # Restart all services
 
 ## Production Deployment
 
-Docker Compose is for **local development only**. In production, use managed services:
+Docker Compose is for **local development only**. In production, use managed services.
 
-**Deploy to Railway/Render:**
-1. Connect repo, select `apps/api/Dockerfile`
-2. Add managed PostgreSQL database
-3. Deploy Python face service (`apps/face-py/Dockerfile`)
-4. Set environment variables:
-   - `NODE_ENV=production`
-   - `DATABASE_URL=<from postgres service>`
-   - `FACE_SERVICE_URL=<python service URL>`
+**Deploy to Railway (Recommended):**
 
-Production serves frontend at `/` and API at `/api/*` from port 3000.
+See **[RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)** for complete step-by-step guide.
+
+Quick overview:
+
+1. Create Railway project from GitHub repo
+2. Add PostgreSQL database (optional - DB code is commented out)
+3. Deploy Face Service (`apps/face-py`)
+4. Deploy API Service (root)
+5. Set environment variables and connect services
 
 **Test production build locally:**
+
 ```bash
 npm run prod:build  # Build everything
 npm run prod:start  # Run at http://localhost:3000
 ```
+
+Production serves frontend at `/` and API at `/api/*` from port 3000.
 
 ---
 
 ## Architecture
 
 **Workspaces:**
+
 - `apps/api` – Express + TypeScript + Knex + PostgreSQL
 - `apps/web` – React + Vite + Tailwind
 - `apps/face-py` – FastAPI + InsightFace + ONNX Runtime
 - `packages/shared` – Shared TypeScript types
 
 **API Endpoints:**
+
 - `GET /api/health` – Health check (API + face service status)
 - `POST /api/images` – Save image with name
 - `GET /api/images` – List saved images
