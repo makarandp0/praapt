@@ -19,6 +19,7 @@ RUN npm --workspace=@praapt/web run build
 
 FROM node:22.18-bookworm-slim AS runner
 ENV NODE_ENV=production
+ENV STATIC_PATH=/app/apps/web/dist
 WORKDIR /app
 
 # Copy built artifacts: API dist, web dist, shared dist, and node_modules

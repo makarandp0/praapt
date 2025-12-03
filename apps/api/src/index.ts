@@ -200,7 +200,13 @@ app.use('/api', apiRouter);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {
-  const staticPath = path.join(__dirname, '../../web/dist');
+  // In Docker: /app/apps/web/dist (from root /app)
+  // In dev: relative from this file location
+  const staticPath = process.env.STATIC_PATH
+    ? path.resolve(process.env.STATIC_PATH)
+    : path.join(__dirname, '../../web/dist');
+  
+  console.log(`Serving static files from: ${staticPath}`);
   app.use(express.static(staticPath));
   // SPA fallback - serve index.html for non-API routes
   app.get('*', (_req, res) => {
