@@ -63,17 +63,35 @@ npm run docker:restart  # Restart all services
 
 Docker Compose is for **local development only**. In production, use managed services.
 
-**Deploy to Railway (Recommended):**
+### Deploy to Railway (Recommended)
 
-See **[RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)** for complete step-by-step guide.
+**📖 See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete deployment guide.**
 
-Quick overview:
+**Quick overview:**
 
-1. Create Railway project from GitHub repo
-2. Add PostgreSQL database (optional - DB code is commented out)
-3. Deploy Face Service (`apps/face-py`)
-4. Deploy API Service (root)
-5. Set environment variables and connect services
+1. Install Railway CLI: `brew install railway` (or `npm i -g @railway/cli`)
+2. Create Railway project from GitHub repo
+3. Deploy Face Service:
+   ```bash
+   cd apps/face-py
+   railway up
+   railway domain  # Get public URL
+   ```
+4. Deploy API Service:
+   ```bash
+   cd ../..
+   railway variables --service api --set NODE_ENV=production
+   railway variables --service api --set FACE_SERVICE_URL=https://face-py-production.up.railway.app
+   railway up --service api
+   railway domain --service api
+   ```
+5. Your app is live! 🚀
+
+**Important Notes:**
+- Face service requires **2GB+ memory** (set in Railway Settings → Resources)
+- Uses `buffalo_s` model in production (~500MB, optimized for memory)
+- PostgreSQL is optional (DB code is commented out for now)
+- First deployment takes ~2-3 minutes as models download
 
 **Test production build locally:**
 
@@ -104,4 +122,4 @@ Production serves frontend at `/` and API at `/api/*` from port 3000.
 - `POST /api/images/compare` – Compare two faces
 
 **Face Recognition:**
-Uses InsightFace `buffalo_l` model (RetinaFace + ArcFace). Compares 512-dimensional embeddings with cosine similarity. Default threshold: 0.4.
+Uses InsightFace model (default: `buffalo_l` for local dev, `buffalo_s` for production). Compares 512-dimensional embeddings with cosine similarity. Default threshold: 0.4.
