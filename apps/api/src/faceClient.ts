@@ -7,11 +7,22 @@ async function fileToBase64(p: string): Promise<string> {
   return buf.toString('base64');
 }
 
+export interface CompareFilesResult {
+  ok: true;
+  distance: number;
+  threshold: number;
+  match: boolean;
+  meta?: {
+    timing_ms?: number;
+    model?: string;
+  };
+}
+
 export async function compareFiles(
   aPath: string,
   bPath: string,
   threshold = 0.5,
-): Promise<{ ok: true; distance: number; threshold: number; match: boolean }> {
+): Promise<CompareFilesResult> {
   const [a, b] = await Promise.all([fileToBase64(aPath), fileToBase64(bPath)]);
   const res = await fetch(`${FACE_URL}/compare`, {
     method: 'POST',
@@ -23,5 +34,18 @@ export async function compareFiles(
     const msg = json?.detail || json?.error || 'face service error';
     throw new Error(String(msg));
   }
-  return json as { ok: true; distance: number; threshold: number; match: boolean };
+  return json as CompareFilesResult;
+}
+
+export async function loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<void> {
+  const res = await fetch(`${FACE_URL}/load-model`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model }),
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    const msg = json?.detail || json?.error || 'failed to load model';
+    throw new Error(String(msg));
+  }
 }

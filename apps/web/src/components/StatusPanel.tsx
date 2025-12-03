@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface StatusPanelProps {
   apiBase: string;
@@ -12,22 +12,23 @@ interface FaceServiceInfo {
   model: string | null;
 }
 
-export function StatusPanel({ apiBase }: StatusPanelProps) {
+export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
   const [health, setHealth] = useState<StatusType>('Checking...');
   const [faceInfo, setFaceInfo] = useState<FaceServiceInfo>({
     status: 'Checking...',
     modelsLoaded: false,
     model: null,
   });
+  const [loadingModel, setLoadingModel] = useState<string | null>(null);
 
-  const fetchHealth = () => {
+  const fetchHealth = useCallback(() => {
     console.log('Fetching health status from:', apiBase);
     setHealth('Checking...');
-    setFaceInfo({
+    setFaceInfo((prev) => ({
       status: 'Checking...',
       modelsLoaded: false,
-      model: faceInfo.model, // Keep previous model name during refresh
-    });
+      model: prev.model, // Keep previous model name during refresh
+    }));
 
     fetch(`${apiBase}/health`)
       .then((r) => r.json())
@@ -44,11 +45,11 @@ export function StatusPanel({ apiBase }: StatusPanelProps) {
         setHealth('Unavailable');
         setFaceInfo({ status: 'Unavailable', modelsLoaded: false, model: null });
       });
-  };
+  }, [apiBase]);
 
   useEffect(() => {
     fetchHealth();
-  }, [apiBase]);
+  }, [fetchHealth]);
 
   const getStatusColor = (status: StatusType) => {
     switch (status) {
@@ -76,6 +77,29 @@ export function StatusPanel({ apiBase }: StatusPanelProps) {
     }
   };
 
+  const handleLoadModel = async (model: 'buffalo_l' | 'buffalo_s') => {
+    setLoadingModel(model);
+    try {
+      const res = await fetch(`${apiBase}/load-model`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json?.error || 'Failed to load model');
+      }
+      // Refresh health status to show the new model
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      fetchHealth();
+    } catch (err) {
+      console.error('Failed to load model:', err);
+      alert(`Failed to load model: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setLoadingModel(null);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-gray-500 font-mono">{apiBase}</span>
@@ -96,14 +120,45 @@ export function StatusPanel({ apiBase }: StatusPanelProps) {
         <span>Face</span>
         {faceInfo.status === 'OK' && (
           <span className="ml-1 text-[10px] opacity-75">
-            {faceInfo.model ? (
-              <>({faceInfo.model})</>
-            ) : (
-              <>(not loaded)</>
-            )}
+            {faceInfo.model ? <>({faceInfo.model})</> : <>(not loaded)</>}
           </span>
         )}
       </button>
+
+      {/* Model Loading Controls */}
+      {faceInfo.status === 'OK' && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500">Load:</span>
+          <button
+            onClick={() => handleLoadModel('buffalo_s')}
+            disabled={loadingModel !== null || faceInfo.model === 'buffalo_s'}
+            className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
+              faceInfo.model === 'buffalo_s'
+                ? 'bg-blue-100 text-blue-800 border-blue-300 cursor-default'
+                : loadingModel === 'buffalo_s'
+                  ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
+                  : 'bg-white hover:bg-gray-50 border-gray-300 cursor-pointer'
+            }`}
+            title="Small model (~500MB, faster)"
+          >
+            {loadingModel === 'buffalo_s' ? '⟳ Loading...' : 'Small'}
+          </button>
+          <button
+            onClick={() => handleLoadModel('buffalo_l')}
+            disabled={loadingModel !== null || faceInfo.model === 'buffalo_l'}
+            className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
+              faceInfo.model === 'buffalo_l'
+                ? 'bg-blue-100 text-blue-800 border-blue-300 cursor-default'
+                : loadingModel === 'buffalo_l'
+                  ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
+                  : 'bg-white hover:bg-gray-50 border-gray-300 cursor-pointer'
+            }`}
+            title="Large model (~1.5GB, more accurate)"
+          >
+            {loadingModel === 'buffalo_l' ? '⟳ Loading...' : 'Large'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,11 +8,11 @@ import {
   SaveImageBodySchema,
   SaveImageResponseSchema,
 } from '@praapt/shared';
-import express, { json } from 'express';
+import express, { json, Router, static as expressStatic } from 'express';
 
 // import { db } from './db.js';
 import { NODE_ENV } from './env.js';
-import { compareFiles as faceCompareFiles } from './faceClient.js';
+import { compareFiles as faceCompareFiles, loadModel as faceLoadModel } from './faceClient.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,13 +62,6 @@ function fileNameFor(name: string, ext: string): string {
   return `${sanitizeName(name)}.${ext}`;
 }
 
-function sha256Of(filePath: string): string {
-  const buf = fs.readFileSync(filePath);
-  const h = crypto.createHash('sha256');
-  h.update(buf);
-  return h.digest('hex');
-}
-
 // Minimal CORS for dev: allow browser requests from Vite
 app.use((req, res, next) => {
   const origin = process.env.CORS_ORIGIN || '*';
@@ -85,7 +77,7 @@ app.use((req, res, next) => {
 });
 
 // API routes (all prefixed with /api in production when serving static files)
-const apiRouter = express.Router();
+const apiRouter = Router();
 
 apiRouter.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
@@ -102,6 +94,21 @@ apiRouter.get('/health', async (_req, res) => {
     face = { ok: false };
   }
   res.json({ ok: true, service: 'api', env: NODE_ENV, face });
+});
+
+apiRouter.post('/load-model', async (req, res) => {
+  try {
+    const { model } = req.body as { model?: string };
+    if (!model || (model !== 'buffalo_l' && model !== 'buffalo_s')) {
+      return res.status(400).json({ error: "model must be 'buffalo_l' or 'buffalo_s'" });
+    }
+    await faceLoadModel(model);
+    return res.json({ ok: true, message: `Model '${model}' loaded successfully`, model });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('load-model error', err);
+    return res.status(500).json({ error: 'failed to load model' });
+  }
 });
 
 // apiRouter.get('/users', async (_req, res) => {
@@ -173,24 +180,20 @@ apiRouter.post('/images/compare', async (req, res) => {
     if (!A) return res.status(404).json({ error: `image not found: ${a}` });
     if (!B) return res.status(404).json({ error: `image not found: ${b}` });
 
-    // Try face match via Python microservice
-    try {
-      const { distance, threshold, match } = await faceCompareFiles(A, B);
-      return res.json({
-        ok: true,
-        same: Boolean(match),
-        algo: 'face-arcface' as const,
-        a,
-        b,
-        distance,
-        threshold,
-      });
-    } catch {
-      // Fallback to sha256 equality if face service unavailable
-      const ha = sha256Of(A);
-      const hb = sha256Of(B);
-      return res.json({ ok: true, same: ha === hb, algo: 'sha256' as const, a, b });
-    }
+    // Face match via Python microservice
+    const result = await faceCompareFiles(A, B);
+    const { distance, threshold, match, meta } = result;
+    return res.json({
+      ok: true,
+      same: Boolean(match),
+      algo: 'face-arcface' as const,
+      a,
+      b,
+      distance,
+      threshold,
+      timing_ms: meta?.timing_ms,
+      model: meta?.model,
+    });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('compare error', err);
@@ -210,7 +213,7 @@ if (NODE_ENV === 'production') {
     : path.join(__dirname, '../../web/dist');
 
   console.log(`Serving static files from: ${staticPath}`);
-  app.use(express.static(staticPath));
+  app.use(expressStatic(staticPath));
   // SPA fallback - serve index.html for non-API routes
   app.get('*', (_req, res) => {
     res.sendFile(path.join(staticPath, 'index.html'));

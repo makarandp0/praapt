@@ -26,7 +26,10 @@ export function Library({ apiBase }: Props) {
     algo: string;
     distance?: number;
     threshold?: number;
+    timing_ms?: number;
+    model?: string;
   } | null>(null);
+  const [compareError, setCompareError] = useState<string | null>(null);
 
   const slots = Array.from({ length: MAX_IMAGES }, (_, i) => imageSlots[i] || null);
 
@@ -202,6 +205,7 @@ export function Library({ apiBase }: Props) {
       return [...prev, slotIndex];
     });
     setCompareResult(null);
+    setCompareError(null);
   };
 
   const doCompare = async () => {
@@ -210,9 +214,9 @@ export function Library({ apiBase }: Props) {
     const img2 = imageSlots[selectedForCompare[1]];
     if (!img1 || !img2) return;
 
-    setStatus('Comparing...');
     setComparing(true);
     setCompareResult(null);
+    setCompareError(null);
     try {
       const res = await compareImages(api, img1, img2);
       setCompareResult({
@@ -220,10 +224,11 @@ export function Library({ apiBase }: Props) {
         algo: res.algo,
         distance: res.distance,
         threshold: res.threshold,
+        timing_ms: res.timing_ms,
+        model: res.model,
       });
-      setStatus('');
     } catch (err: unknown) {
-      setStatus(err instanceof Error ? err.message : 'Failed to compare');
+      setCompareError(err instanceof Error ? err.message : 'Failed to compare');
     } finally {
       setComparing(false);
     }
@@ -400,6 +405,26 @@ export function Library({ apiBase }: Props) {
         ))}
       </div>
 
+      {/* Comparison Error */}
+      {compareError && selectedForCompare.length === 2 && (
+        <div className="mt-6 p-4 rounded-lg border-2 border-red-300 bg-red-50">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+              <span className="text-red-600 text-lg font-bold">!</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-900 mb-1">Comparison Failed</h3>
+              <p className="text-sm text-red-800">{compareError}</p>
+              {compareError.includes('No model loaded') && (
+                <p className="text-xs text-red-700 mt-2">
+                  💡 Tip: Load a face recognition model using the buttons in the status bar above.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Comparison Result */}
       {compareResult && selectedForCompare.length === 2 && (
         <div className="mt-6 p-4 rounded-lg border-2 bg-gradient-to-br from-background to-muted/20">
@@ -426,6 +451,8 @@ export function Library({ apiBase }: Props) {
             <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
               Slot {selectedForCompare[0] + 1} vs Slot {selectedForCompare[1] + 1} • Algorithm:{' '}
               {compareResult.algo}
+              {compareResult.model && ` • Model: ${compareResult.model}`}
+              {compareResult.timing_ms !== undefined && ` • ${compareResult.timing_ms.toFixed(0)}ms`}
             </div>
           </div>
           {compareResult.distance !== undefined && compareResult.threshold !== undefined && (

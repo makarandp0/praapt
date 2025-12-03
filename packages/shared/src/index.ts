@@ -36,11 +36,13 @@ export type CompareImagesBody = z.infer<typeof CompareImagesBodySchema>;
 export const CompareImagesResponseSchema = z.object({
   ok: z.literal(true),
   same: z.boolean(),
-  algo: z.enum(['sha256', 'face-arcface']),
+  algo: z.literal('face-arcface'),
   a: z.string(),
   b: z.string(),
-  distance: z.number().optional(),
-  threshold: z.number().optional(),
+  distance: z.number(),
+  threshold: z.number(),
+  timing_ms: z.number().optional(),
+  model: z.string().optional(),
 });
 export type CompareImagesResponse = z.infer<typeof CompareImagesResponseSchema>;
 

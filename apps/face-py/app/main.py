@@ -20,20 +20,22 @@ class CompareBody(BaseModel):
     threshold: Optional[float] = 0.4  # cosine distance threshold (~0.4-0.5 typical)
 
 
+class LoadModelBody(BaseModel):
+    model: str = Field(..., description="Model name: buffalo_l or buffalo_s")
+
+
 app = FastAPI(title="Face Service", version="0.1.0")
 
 
 @app.on_event("startup")
 def _startup() -> None:
-    # Models are loaded lazily on first request for faster cold starts
-    # This is especially useful for serverless deployments
-    print("[face] service started - models will load on first request")
+    # Models must be explicitly loaded via /load-model endpoint
+    print("[face] service started - use /load-model to load a model")
 
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    # Don't load models here - just report current status
-    # Models will be loaded lazily on first embed/compare request
+    # Report current model loading status
     model_info = get_model_info()
     return {
         "ok": True,
@@ -41,6 +43,31 @@ def health() -> Dict[str, Any]:
         "modelsLoaded": model_info["loaded"],
         "model": model_info["model"],
     }
+
+
+@app.post("/load-model")
+def post_load_model(body: LoadModelBody) -> Dict[str, Any]:
+    """
+    Load a face recognition model. Unloads any previously loaded model.
+
+    Args:
+        model: Either "buffalo_l" (large, accurate) or "buffalo_s" (small, fast)
+    """
+    model = body.model
+    if model not in ("buffalo_l", "buffalo_s"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid model '{model}'. Must be 'buffalo_l' or 'buffalo_s'",
+        )
+    try:
+        load_models(model)
+        return {
+            "ok": True,
+            "message": f"Model '{model}' loaded successfully",
+            "model": model,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}")
 
 
 @app.post("/embed")
@@ -52,10 +79,13 @@ def post_embed(body: ImageBody) -> Dict[str, Any]:
         b64 = parts[1] if len(parts) > 1 else ""
     if not b64:
         raise HTTPException(status_code=400, detail="invalid image payload")
-    vec, meta = embed(b64)
-    if vec is None:
-        raise HTTPException(status_code=422, detail="no face found")
-    return {"ok": True, "vector": vec.tolist(), "meta": meta}
+    try:
+        vec, meta = embed(b64)
+        if vec is None:
+            raise HTTPException(status_code=422, detail="no face found")
+        return {"ok": True, "vector": vec.tolist(), "meta": meta}
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @app.post("/compare")
@@ -73,11 +103,14 @@ def post_compare(body: CompareBody) -> Dict[str, Any]:
         else:
             b = v
 
-    dist, meta = compare(a, b)
-    if dist is None:
-        raise HTTPException(status_code=422, detail=meta.get("error", "no face"))
-    th = float(body.threshold or 0.4)
-    match = bool(dist <= th)
-    return {"ok": True, "distance": float(dist), "threshold": th, "match": match, "meta": meta}
+    try:
+        dist, meta = compare(a, b)
+        if dist is None:
+            raise HTTPException(status_code=422, detail=meta.get("error", "no face"))
+        th = float(body.threshold or 0.4)
+        match = bool(dist <= th)
+        return {"ok": True, "distance": float(dist), "threshold": th, "match": match, "meta": meta}
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 

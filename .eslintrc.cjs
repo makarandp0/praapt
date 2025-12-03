@@ -17,7 +17,9 @@ module.exports = {
   rules: {
     'import/order': ['warn', { 'newlines-between': 'always', alphabetize: { order: 'asc', caseInsensitive: true } }],
     'react/react-in-jsx-scope': 'off',
-    'react/jsx-uses-react': 'off'
+    'react/jsx-uses-react': 'off',
+    'react/prop-types': 'off', // Disabled for TypeScript projects - type checking is handled by TypeScript
+    '@typescript-eslint/explicit-module-boundary-types': 'off' // Let TypeScript infer return types
   },
   settings: {
     react: { version: 'detect' },
