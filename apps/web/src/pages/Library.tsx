@@ -309,7 +309,7 @@ export function Library({ apiBase }: Props) {
       )}
 
       {/* Image Grid */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
         {slots.map((img, index) => (
           <div
             key={`slot-${index}-${slotTimestamps[index] || 0}`}
@@ -323,7 +323,7 @@ export function Library({ apiBase }: Props) {
                       ? 'ring-4 ring-blue-500'
                       : 'hover:border-gray-400'
                   }`}
-                  style={{ aspectRatio: '1/1' }}
+                  style={{ aspectRatio: '1/1', maxHeight: '200px' }}
                   onClick={() => toggleSelection(index)}
                 >
                   <div className="w-full h-full relative">
