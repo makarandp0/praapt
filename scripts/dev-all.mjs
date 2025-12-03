@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 
-const log = (s) => process.stdout.write(s + "\n");
+const log = (s) => process.stdout.write(s + '\n');
 
 async function isPortFree(port, host = '127.0.0.1') {
   return await new Promise((resolve) => {
@@ -66,7 +66,7 @@ function run(cmd, args, opts = {}) {
   }
 
   // Ensure the web gets the correct API URL (if API is on the standard port, it's already correct).
-  const webEnv = { ...process.env, VITE_API_URL: apiUrl };
+  const webEnv = { ...process.env, VITE_API_URL: `${apiUrl}/api` };
   const webArgs = ['--workspace=@praapt/web', 'run', 'dev', '--', '--port', String(webPort)];
   const webChild = run('npm', webArgs, { env: webEnv, name: 'web' });
 
@@ -78,4 +78,3 @@ function run(cmd, args, opts = {}) {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 })();
-
