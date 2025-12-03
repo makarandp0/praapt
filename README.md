@@ -47,6 +47,8 @@ npm run migrate   # Run database migrations
 npm run seed      # Add sample data (optional)
 
 npm run verify    # Type-check, lint, and build
+
+npx tsx apps/face-py/test-compare-all.ts  # Test: compare all images (requires face service)
 ```
 
 ## Docker Commands
@@ -123,4 +125,4 @@ Production serves frontend at `/` and API at `/api/*` from port 3000.
 - `POST /api/images/compare` – Compare two faces
 
 **Face Recognition:**
-Uses InsightFace model (default: `buffalo_l` for local dev, `buffalo_s` for production). Compares 512-dimensional embeddings with cosine similarity. Default threshold: 0.4.
+Uses InsightFace model (default: `buffalo_l` for local dev, `buffalo_s` for production). Compares 512-dimensional embeddings with cosine similarity. Default threshold: 0.5.

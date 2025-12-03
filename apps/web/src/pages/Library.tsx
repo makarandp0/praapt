@@ -313,38 +313,38 @@ export function Library({ apiBase }: Props) {
         {slots.map((img, index) => (
           <div
             key={`slot-${index}-${slotTimestamps[index] || 0}`}
-            className="relative group w-full"
-            style={{ aspectRatio: '1/1', maxHeight: '220px' }}
+            className="w-full space-y-2 p-2 border rounded-lg bg-white"
           >
             {img ? (
-              <div
-                className={`w-full h-full border-2 rounded overflow-hidden transition-all ${
-                  selectedForCompare.includes(index)
-                    ? 'ring-4 ring-blue-500'
-                    : 'hover:border-gray-400'
-                }`}
-              >
+              <>
                 <div
-                  className="w-full h-full cursor-pointer"
+                  className={`w-full border-2 rounded overflow-hidden transition-all cursor-pointer ${
+                    selectedForCompare.includes(index)
+                      ? 'ring-4 ring-blue-500'
+                      : 'hover:border-gray-400'
+                  }`}
+                  style={{ aspectRatio: '1/1' }}
                   onClick={() => toggleSelection(index)}
                 >
-                  <img
-                    key={`${img}-${slotTimestamps[index] || 0}`}
-                    src={`${apiBase}/images/${img}?t=${slotTimestamps[index] || 0}`}
-                    alt={img}
-                    className="w-full h-full object-cover"
-                  />
-                  {selectedForCompare.includes(index) && (
-                    <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
-                      {selectedForCompare.indexOf(index) + 1}
+                  <div className="w-full h-full relative">
+                    <img
+                      key={`${img}-${slotTimestamps[index] || 0}`}
+                      src={`${apiBase}/images/${img}?t=${slotTimestamps[index] || 0}`}
+                      alt={img}
+                      className="w-full h-full object-cover"
+                    />
+                    {selectedForCompare.includes(index) && (
+                      <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
+                        {selectedForCompare.indexOf(index) + 1}
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 text-center">
+                      Slot {index + 1}
                     </div>
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 text-center">
-                    Slot {index + 1}
                   </div>
                 </div>
-                {/* Replace buttons - appear on hover */}
-                <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                {/* Replace buttons - below image */}
+                <div className="flex gap-1">
                   <Button
                     size="sm"
                     variant="outline"
@@ -352,10 +352,10 @@ export function Library({ apiBase }: Props) {
                       e.stopPropagation();
                       openCamera(index);
                     }}
-                    className="text-xs bg-white/90 hover:bg-white"
+                    className="text-xs flex-1"
                     title="Replace with camera"
                   >
-                    📷
+                    📷 Camera
                   </Button>
                   <Button
                     size="sm"
@@ -364,13 +364,13 @@ export function Library({ apiBase }: Props) {
                       e.stopPropagation();
                       handleFileSelect(index);
                     }}
-                    className="text-xs bg-white/90 hover:bg-white"
+                    className="text-xs flex-1"
                     title="Upload from device"
                   >
-                    📁
+                    📁 Upload
                   </Button>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="w-full h-full border-2 border-dashed rounded flex flex-col items-center justify-center gap-2 bg-gray-50">
                 <p className="text-xs text-gray-500">Slot {index + 1}</p>
