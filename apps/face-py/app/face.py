@@ -9,10 +9,11 @@ import numpy as np
 from PIL import Image
 
 _fa = None  # lazy-loaded global FaceAnalysis
+_model_name = None  # track which model is loaded
 
 
 def load_models() -> None:
-    global _fa
+    global _fa, _model_name
     if _fa is not None:
         return
     # Lazy import to speed cold starts and allow dependency-less tooling
@@ -20,11 +21,21 @@ def load_models() -> None:
 
     # Use the default 'buffalo_l' model pack (retinaface + arcface)
     # buffalo_s is smaller and uses less memory (~500MB vs ~1.5GB)
-    fa = FaceAnalysis(name="buffalo_l")
+    model = "buffalo_l"
+    fa = FaceAnalysis(name=model)
     # fa = FaceAnalysis(name="buffalo_s")
     # ctx_id = 0 means CPU on onnxruntime; set to -1 for pure CPU in some envs
     fa.prepare(ctx_id=0, det_size=(640, 640))
     _fa = fa
+    _model_name = model
+
+
+def get_model_info() -> dict:
+    """Return current model loading status and model name."""
+    return {
+        "loaded": _fa is not None,
+        "model": _model_name,
+    }
 
 
 def _to_bgr(image_b64: str) -> np.ndarray:

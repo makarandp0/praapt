@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .face import compare, embed, load_models
+from .face import compare, embed, get_model_info, load_models
 
 
 class ImageBody(BaseModel):
@@ -25,22 +25,22 @@ app = FastAPI(title="Face Service", version="0.1.0")
 
 @app.on_event("startup")
 def _startup() -> None:
-    # Preload models so first request is fast
-    try:
-        load_models()
-    except Exception as e:  # pragma: no cover
-        # Model can still be lazy-loaded on first request
-        print("[face] model preload failed:", e)
+    # Models are loaded lazily on first request for faster cold starts
+    # This is especially useful for serverless deployments
+    print("[face] service started - models will load on first request")
 
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    try:
-        load_models()
-        ok = True
-    except Exception:
-        ok = False
-    return {"ok": ok, "service": "face", "modelsLoaded": ok}
+    # Don't load models here - just report current status
+    # Models will be loaded lazily on first embed/compare request
+    model_info = get_model_info()
+    return {
+        "ok": True,
+        "service": "face",
+        "modelsLoaded": model_info["loaded"],
+        "model": model_info["model"],
+    }
 
 
 @app.post("/embed")
