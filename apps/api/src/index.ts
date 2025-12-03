@@ -89,11 +89,15 @@ const apiRouter = express.Router();
 
 apiRouter.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
-  let face: { ok: boolean; modelsLoaded?: boolean } = { ok: false };
+  let face: { ok: boolean; modelsLoaded?: boolean; model?: string | null } = { ok: false };
   try {
     const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
     const j = await r.json();
-    face = { ok: Boolean(j?.ok), modelsLoaded: Boolean(j?.modelsLoaded) };
+    face = {
+      ok: Boolean(j?.ok),
+      modelsLoaded: Boolean(j?.modelsLoaded),
+      model: j?.model || null,
+    };
   } catch {
     face = { ok: false };
   }

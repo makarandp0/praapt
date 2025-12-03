@@ -6,23 +6,48 @@ interface StatusPanelProps {
 
 type StatusType = 'OK' | 'Not OK' | 'Unavailable' | 'Checking...';
 
+interface FaceServiceInfo {
+  status: StatusType;
+  modelsLoaded: boolean;
+  model: string | null;
+}
+
 export function StatusPanel({ apiBase }: StatusPanelProps) {
   const [health, setHealth] = useState<StatusType>('Checking...');
-  const [faceHealth, setFaceHealth] = useState<StatusType>('Checking...');
+  const [faceInfo, setFaceInfo] = useState<FaceServiceInfo>({
+    status: 'Checking...',
+    modelsLoaded: false,
+    model: null,
+  });
 
-  useEffect(() => {
-    console.log('Using API endpoint:', apiBase);
+  const fetchHealth = () => {
+    console.log('Fetching health status from:', apiBase);
+    setHealth('Checking...');
+    setFaceInfo({
+      status: 'Checking...',
+      modelsLoaded: false,
+      model: faceInfo.model, // Keep previous model name during refresh
+    });
+
     fetch(`${apiBase}/health`)
       .then((r) => r.json())
       .then((d) => {
         setHealth(d.ok ? 'OK' : 'Not OK');
-        setFaceHealth(d?.face?.ok ? 'OK' : 'Unavailable');
+        setFaceInfo({
+          status: d?.face?.ok ? 'OK' : 'Unavailable',
+          modelsLoaded: d?.face?.modelsLoaded ?? false,
+          model: d?.face?.model ?? null,
+        });
       })
       .catch((err) => {
         console.error('Health check failed:', err);
         setHealth('Unavailable');
-        setFaceHealth('Unavailable');
+        setFaceInfo({ status: 'Unavailable', modelsLoaded: false, model: null });
       });
+  };
+
+  useEffect(() => {
+    fetchHealth();
   }, [apiBase]);
 
   const getStatusColor = (status: StatusType) => {
@@ -54,18 +79,31 @@ export function StatusPanel({ apiBase }: StatusPanelProps) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-gray-500 font-mono">{apiBase}</span>
-      <div
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium ${getStatusColor(health)}`}
+      <button
+        onClick={fetchHealth}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(health)}`}
+        title="Click to refresh status"
       >
         <span>{getStatusIcon(health)}</span>
         <span>API</span>
-      </div>
-      <div
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium ${getStatusColor(faceHealth)}`}
+      </button>
+      <button
+        onClick={fetchHealth}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(faceInfo.status)}`}
+        title="Click to refresh status"
       >
-        <span>{getStatusIcon(faceHealth)}</span>
+        <span>{getStatusIcon(faceInfo.status)}</span>
         <span>Face</span>
-      </div>
+        {faceInfo.status === 'OK' && (
+          <span className="ml-1 text-[10px] opacity-75">
+            {faceInfo.model ? (
+              <>({faceInfo.model})</>
+            ) : (
+              <>(not loaded)</>
+            )}
+          </span>
+        )}
+      </button>
     </div>
   );
 }
