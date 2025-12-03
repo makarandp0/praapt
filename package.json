@@ -29,9 +29,13 @@
     "format": "npm --workspace=@praapt/shared run format && npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
     "format:check": "npm --workspace=@praapt/shared run format:check && npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
     "verify": "node scripts/verify.mjs",
-    "docker:build": "docker build -t praapt-api -f apps/api/Dockerfile .",
-    "docker:test": "docker build -t praapt-api -f apps/api/Dockerfile . && docker run --rm praapt-api node --version",
-    "docker:run": "docker run --rm --env-file ./apps/api/.env.docker -p 3000:3000 praapt-api"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build",
+    "docker:restart": "docker compose restart",
+    "prod:build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
+    "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.10.0",

@@ -7,7 +7,11 @@ async function fileToBase64(p: string): Promise<string> {
   return buf.toString('base64');
 }
 
-export async function compareFiles(aPath: string, bPath: string, threshold = 0.4) {
+export async function compareFiles(
+  aPath: string,
+  bPath: string,
+  threshold = 0.4,
+): Promise<{ ok: true; distance: number; threshold: number; match: boolean }> {
   const [a, b] = await Promise.all([fileToBase64(aPath), fileToBase64(bPath)]);
   const res = await fetch(`${FACE_URL}/compare`, {
     method: 'POST',

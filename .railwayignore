@@ -1,0 +1,48 @@
+# Railway ignore file - excludes files from deployment
+
+# This speeds up builds by not uploading unnecessary files
+
+# Dependencies
+
+node_modules/
+
+# Build outputs (will be rebuilt)
+
+dist/
+build/
+coverage/
+.next/
+.turbo/
+.cache/
+
+# Development files
+
+_.log
+_.pid
+.DS_Store
+.env
+.env.\*
+!.env.example
+
+# Git
+
+.git/
+.github/
+
+# IDE
+
+.vscode/
+.idea/
+_.swp
+_.swo
+\*~
+
+# Testing
+
+coverage/
+.nyc_output/
+
+# Local development
+
+docker-compose.yml
+docker-compose.\*.yml

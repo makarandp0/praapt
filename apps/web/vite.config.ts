@@ -6,5 +6,9 @@ console.log('[vite] Loaded apps/web/vite.config.ts');
 
 export default defineConfig({
   plugins: [react.default()],
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+  },
+  // Tell Vite where to find .env files (current directory which is apps/web)
+  envDir: '.',
 });
