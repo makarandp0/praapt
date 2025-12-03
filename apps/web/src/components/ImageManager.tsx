@@ -151,7 +151,7 @@ export function ImageManager({ apiBase }: Props) {
         <div>
           <h2 className="text-2xl font-semibold">Image Manager</h2>
           <p className="text-sm text-muted-foreground">
-            Capture or upload, organize, and compare images.
+            Create or upload images, build your library, and compare faces.
           </p>
         </div>
         <div className="text-xs">
@@ -166,9 +166,33 @@ export function ImageManager({ apiBase }: Props) {
         </div>
       </div>
 
+      {/* Workflow explanation */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">How it works:</h3>
+        <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+          <li>
+            <strong>Create or Upload</strong> – Capture an image from your camera or upload from
+            your device
+          </li>
+          <li>
+            <strong>Add to Library</strong> – Save images with unique names to build your collection
+          </li>
+          <li>
+            <strong>Compare Images</strong> – Select any two images from your library to compare
+            faces
+          </li>
+        </ol>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {/* Left: Capture/Upload */}
         <section className="space-y-3">
+          <div>
+            <h3 className="font-medium text-lg mb-1">1. Create or Upload Image</h3>
+            <p className="text-sm text-muted-foreground">
+              Use your camera or upload a file to get started
+            </p>
+          </div>
           <div className="relative">
             <video ref={videoRef} className="w-full rounded border bg-black/5" playsInline muted />
             <div className="absolute top-2 right-2 flex gap-2">
@@ -189,9 +213,12 @@ export function ImageManager({ apiBase }: Props) {
           </div>
 
           {previewUrl && (
-            <div className="space-y-3">
+            <div className="space-y-3 border-t pt-3">
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Preview (unsaved)</p>
+                <p className="text-sm font-medium text-muted-foreground">2. Save to Library</p>
+                <p className="text-xs text-muted-foreground">
+                  Give this image a name and save it to your library
+                </p>
                 <img src={previewUrl} alt="preview" className="w-full rounded border" />
               </div>
               <div className="flex flex-wrap gap-2 items-center">
@@ -215,18 +242,25 @@ export function ImageManager({ apiBase }: Props) {
 
         {/* Right: Library & Compare */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium">Library</h3>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground">Count: {images.length}</span>
+          <div>
+            <h3 className="font-medium text-lg mb-1">Your Library</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              All saved images appear here ({images.length} total)
+            </p>
+            <div className="flex items-center gap-3">
               <Button variant="secondary" onClick={refresh}>
-                Refresh
+                Refresh Library
               </Button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="font-medium">Compare</h3>
+          <div className="space-y-2 border-t pt-4">
+            <div>
+              <h3 className="font-medium text-lg mb-1">3. Compare Images</h3>
+              <p className="text-sm text-muted-foreground">
+                Select two images from your library to compare
+              </p>
+            </div>
             <div className="flex flex-wrap items-start gap-4">
               {/* Image A selection */}
               <div className="flex-1 min-w-[160px] space-y-2">

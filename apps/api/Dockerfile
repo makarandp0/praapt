@@ -31,6 +31,9 @@ COPY package.json /app/package.json
 COPY apps/api/package.json /app/apps/api/package.json
 COPY packages/shared/package.json /app/packages/shared/package.json
 
+# Copy seed images if they exist
+COPY apps/api/images /app/images
+
 EXPOSE 3000
 WORKDIR /app
 CMD ["node", "apps/api/dist/src/index.js"]

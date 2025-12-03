@@ -27,6 +27,16 @@ export async function listImages(api: ApiConfig) {
   return ListImagesResponseSchema.parse(json);
 }
 
+export async function deleteImage(api: ApiConfig, name: string) {
+  const res = await fetch(`${api.base}/images/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const json = await res.json();
+    throw new Error(json?.error || 'Failed to delete image');
+  }
+}
+
 export async function compareImages(api: ApiConfig, a: string, b: string) {
   const body = CompareImagesBodySchema.parse({ a, b });
   const res = await fetch(`${api.base}/images/compare`, {
