@@ -3,18 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import express, { json } from 'express';
-
-// import { db } from './db.js';
-import { NODE_ENV } from './env.js';
-import { compareFiles as faceCompareFiles } from './faceClient.js';
-
 import {
   CompareImagesBodySchema,
   ListImagesResponseSchema,
   SaveImageBodySchema,
   SaveImageResponseSchema,
 } from '@praapt/shared';
+import express, { json } from 'express';
+
+// import { db } from './db.js';
+import { NODE_ENV } from './env.js';
+import { compareFiles as faceCompareFiles } from './faceClient.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -205,7 +204,7 @@ if (NODE_ENV === 'production') {
   const staticPath = process.env.STATIC_PATH
     ? path.resolve(process.env.STATIC_PATH)
     : path.join(__dirname, '../../web/dist');
-  
+
   console.log(`Serving static files from: ${staticPath}`);
   app.use(express.static(staticPath));
   // SPA fallback - serve index.html for non-API routes
