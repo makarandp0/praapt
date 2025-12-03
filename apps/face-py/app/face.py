@@ -19,7 +19,8 @@ def load_models() -> None:
     from insightface.app import FaceAnalysis
 
     # Use the default 'buffalo_l' model pack (retinaface + arcface)
-    fa = FaceAnalysis(name="buffalo_l")
+    # buffalo_s is smaller and uses less memory (~500MB vs ~1.5GB)
+    fa = FaceAnalysis(name="buffalo_s")
     # ctx_id = 0 means CPU on onnxruntime; set to -1 for pure CPU in some envs
     fa.prepare(ctx_id=0, det_size=(640, 640))
     _fa = fa
