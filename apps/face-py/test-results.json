@@ -1,0 +1,2094 @@
+{
+  "total_images": 8,
+  "total_comparisons": 28,
+  "models": [
+    {
+      "model": "buffalo_s",
+      "results": [
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-02.jpg",
+          "distance": 0.9403472356498241,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": false
+            },
+            "b": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": false
+            },
+            "timing_ms": 843.75,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 843.75
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-03.jpg",
+          "distance": 0.3627116084098816,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": false
+            },
+            "timing_ms": 1082.15,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 1082.15
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.37176060676574707,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": false
+            },
+            "timing_ms": 218.74,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 218.74
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 0.9901224616914988,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": false
+            },
+            "timing_ms": 211.14,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 211.14
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.9808014966547489,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": false
+            },
+            "timing_ms": 232.06,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 232.06
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.37574303150177,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": false
+            },
+            "timing_ms": 148.48,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 148.48
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.3897038698196411,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                573.7709350585938,
+                926.142578125,
+                1699.4967041015625,
+                2611.483154296875
+              ],
+              "det_score": 0.8534054756164551,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": false
+            },
+            "timing_ms": 210.74,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_s",
+          "timing_ms": 210.74
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-03.jpg",
+          "distance": 0.9587263390421867,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "timing_ms": 4.91,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 4.91
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.9207903370261192,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "timing_ms": 4.37,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 4.37
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 0.403855562210083,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "timing_ms": 2.78,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 2.78
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.40575700998306274,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "timing_ms": 2.97,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 2.97
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.9578886963427067,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "timing_ms": 1.48,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 1.48
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 1.0359014570713043,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 4,
+              "bbox": [
+                1047.313720703125,
+                771.89013671875,
+                1790.095458984375,
+                1700.3460693359375
+              ],
+              "det_score": 0.800153374671936,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 5.34,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 5.34
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.39740848541259766,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "timing_ms": 6.76,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 6.76
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 0.9890746735036373,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "timing_ms": 5.14,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 5.14
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.9595860689878464,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "timing_ms": 5.36,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 5.36
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.3694576025009155,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "timing_ms": 3.88,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 3.88
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.38062357902526855,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                235.48086547851562,
+                863.8262329101562,
+                1188.4359130859375,
+                2131.390869140625
+              ],
+              "det_score": 0.7804086208343506,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 7.77,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 7.77
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 1.0443969294428825,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "timing_ms": 4.59,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 4.59
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.9947701683267951,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "timing_ms": 4.81,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 4.81
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.4469935894012451,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "timing_ms": 3.29,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 3.29
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.354547381401062,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                607.033935546875,
+                972.7469482421875,
+                1874.2398681640625,
+                2903.056640625
+              ],
+              "det_score": 0.8292223215103149,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 7.12,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 7.12
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.47187960147857666,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "timing_ms": 3.17,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 3.17
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 1.014695224352181,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "timing_ms": 1.75,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 1.75
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 1.0544141978025436,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                442.1012878417969,
+                855.4066772460938,
+                1824.8204345703125,
+                2686.472412109375
+              ],
+              "det_score": 0.8567646145820618,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 5.6,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 5.6
+        },
+        {
+          "image1": "slot-06.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.9921448938548565,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "timing_ms": 1.99,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 1.99
+        },
+        {
+          "image1": "slot-06.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 1.0116148851811886,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                2374.411376953125,
+                1324.767578125,
+                2895.7802734375,
+                1963.89306640625
+              ],
+              "det_score": 0.7295389175415039,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 5.77,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 5.77
+        },
+        {
+          "image1": "slot-07.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.43439650535583496,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                277.40069580078125,
+                167.96307373046875,
+                427.7267761230469,
+                378.44384765625
+              ],
+              "det_score": 0.7724196910858154,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                482.49169921875,
+                1136.965576171875,
+                1608.3450927734375,
+                2822.840576171875
+              ],
+              "det_score": 0.823888897895813,
+              "cached": true
+            },
+            "timing_ms": 4.34,
+            "model": "buffalo_s",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_s",
+          "timing_ms": 4.34
+        }
+      ],
+      "matches": 8,
+      "no_matches": 20,
+      "errors": 0
+    },
+    {
+      "model": "buffalo_l",
+      "results": [
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-02.jpg",
+          "distance": 0.9369214028120041,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": false
+            },
+            "b": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": false
+            },
+            "timing_ms": 2962.9,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 2962.9
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-03.jpg",
+          "distance": 0.2462490200996399,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": false
+            },
+            "timing_ms": 3088.22,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 3088.22
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.2770746946334839,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": false
+            },
+            "timing_ms": 574.7,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 574.7
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 0.9982588477432728,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": false
+            },
+            "timing_ms": 578.52,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 578.52
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.9570757150650024,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": false
+            },
+            "timing_ms": 624.88,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 624.88
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.3490591049194336,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": false
+            },
+            "timing_ms": 502.01,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 502.01
+        },
+        {
+          "image1": "slot-01.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.3544073700904846,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                562.2544555664062,
+                914.4700927734375,
+                1682.640380859375,
+                2602.363525390625
+              ],
+              "det_score": 0.8879607915878296,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": false
+            },
+            "timing_ms": 679.37,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": false
+          },
+          "model": "buffalo_l",
+          "timing_ms": 679.37
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-03.jpg",
+          "distance": 0.9421734884381294,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "timing_ms": 8.11,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 8.11
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.8958898782730103,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "timing_ms": 5.32,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 5.32
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 0.27822965383529663,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "timing_ms": 2.94,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 2.94
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.2851458787918091,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "timing_ms": 3.49,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 3.49
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.9367139935493469,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "timing_ms": 1.66,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 1.66
+        },
+        {
+          "image1": "slot-02.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.9804601408541203,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 7,
+              "bbox": [
+                1050.149658203125,
+                789.5596923828125,
+                1797.901611328125,
+                1698.0787353515625
+              ],
+              "det_score": 0.8314871788024902,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 8.76,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 8.76
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-04.jpg",
+          "distance": 0.3263629674911499,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "timing_ms": 6.8,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 6.8
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 1.0263710897415876,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "timing_ms": 5.39,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 5.39
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.958718616515398,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "timing_ms": 5.79,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 5.79
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.3802279829978943,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "timing_ms": 3.91,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 3.91
+        },
+        {
+          "image1": "slot-03.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.34549957513809204,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 10,
+              "bbox": [
+                246.8103790283203,
+                882.3907470703125,
+                1190.130126953125,
+                2130.7060546875
+              ],
+              "det_score": 0.7797437906265259,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 8.44,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 8.44
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-05.jpg",
+          "distance": 1.0024822326377034,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "timing_ms": 4.76,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 4.76
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.9236337840557098,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "timing_ms": 4.88,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 4.88
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.3723594546318054,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "timing_ms": 3.43,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 3.43
+        },
+        {
+          "image1": "slot-04.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.33630895614624023,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                616.9141845703125,
+                959.5488891601562,
+                1862.734619140625,
+                2860.620361328125
+              ],
+              "det_score": 0.8823686838150024,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 7.3,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 7.3
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-06.jpg",
+          "distance": 0.3604590892791748,
+          "match": true,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "timing_ms": 3.21,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 3.21
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.9983954913914204,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "timing_ms": 1.73,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 1.73
+        },
+        {
+          "image1": "slot-05.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 1.0359280854463577,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                453.23968505859375,
+                878.4689331054688,
+                1818.1767578125,
+                2688.72900390625
+              ],
+              "det_score": 0.9018484354019165,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 5.7,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 5.7
+        },
+        {
+          "image1": "slot-06.jpg",
+          "image2": "slot-07.jpg",
+          "distance": 0.95822698995471,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "timing_ms": 2.05,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 2.05
+        },
+        {
+          "image1": "slot-06.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.9484776109457016,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                2383.150634765625,
+                1335.15771484375,
+                2894.7998046875,
+                1949.39697265625
+              ],
+              "det_score": 0.7450249791145325,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 5.94,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 5.94
+        },
+        {
+          "image1": "slot-07.jpg",
+          "image2": "slot-08.jpg",
+          "distance": 0.4733133316040039,
+          "match": false,
+          "threshold": 0.4,
+          "meta": {
+            "a": {
+              "faces": 1,
+              "bbox": [
+                279.4788818359375,
+                164.24110412597656,
+                428.463623046875,
+                377.7371520996094
+              ],
+              "det_score": 0.7876375317573547,
+              "cached": true
+            },
+            "b": {
+              "faces": 1,
+              "bbox": [
+                485.7110595703125,
+                1158.8568115234375,
+                1587.9720458984375,
+                2882.162353515625
+              ],
+              "det_score": 0.8405455946922302,
+              "cached": true
+            },
+            "timing_ms": 4.41,
+            "model": "buffalo_l",
+            "cache_used": true,
+            "both_cached": true
+          },
+          "model": "buffalo_l",
+          "timing_ms": 4.41
+        }
+      ],
+      "matches": 12,
+      "no_matches": 16,
+      "errors": 0
+    }
+  ]
+}
