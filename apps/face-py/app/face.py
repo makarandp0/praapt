@@ -9,8 +9,30 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from . import cache
+
 _fa = None  # lazy-loaded global FaceAnalysis
 _model_name = None  # track which model is loaded
+
+
+def get_cache_info() -> dict:
+    """
+    Return cache statistics and configuration.
+
+    Returns:
+        Dictionary with cache stats, size, and configuration
+    """
+    return cache.get_cache_info()
+
+
+def clear_cache() -> dict:
+    """
+    Clear all cached embeddings.
+
+    Returns:
+        Dictionary with number of files deleted
+    """
+    return cache.clear_cache()
 
 
 def load_models(model: str) -> None:
@@ -58,13 +80,14 @@ def _to_bgr(image_b64: str) -> np.ndarray:
     return bgr
 
 
-def embed(image_b64: str) -> Tuple[Optional[np.ndarray], dict]:
+def embed(image_b64: str, use_cache: bool = True) -> Tuple[Optional[np.ndarray], dict]:
     """
     Returns (embedding, meta). If no face found, embedding is None.
     Picks the largest detected face if multiple present.
 
     Args:
         image_b64: Base64-encoded image
+        use_cache: Whether to use cache for embeddings (default: True)
 
     Raises:
         RuntimeError: If no model is loaded
@@ -72,10 +95,22 @@ def embed(image_b64: str) -> Tuple[Optional[np.ndarray], dict]:
     if _fa is None:
         raise RuntimeError("No model loaded. Call load_models() first.")
     assert _fa is not None
+
+    # Try cache first
+    if use_cache:
+        cache_key = cache.get_cache_key(image_b64, _model_name)
+        cached = cache.cache_get(cache_key)
+        if cached is not None:
+            embedding, meta = cached
+            meta["cached"] = True
+            return embedding, meta
+
+    # Cache miss or cache disabled - compute embedding
     bgr = _to_bgr(image_b64)
     faces = _fa.get(bgr)
     if not faces:
-        return None, {"faces": 0}
+        return None, {"faces": 0, "cached": False}
+
     # Choose the largest face by bounding box area
     def _area(face) -> float:
         x1, y1, x2, y2 = face.bbox.astype(int)
@@ -87,7 +122,13 @@ def embed(image_b64: str) -> Tuple[Optional[np.ndarray], dict]:
         "faces": len(faces),
         "bbox": best.bbox.astype(float).tolist(),
         "det_score": float(getattr(best, "det_score", 0.0)),
+        "cached": False,
     }
+
+    # Store in cache
+    if use_cache:
+        cache.cache_set(cache_key, vec, meta)
+
     return vec, meta
 
 
@@ -98,16 +139,17 @@ def cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
     return 1.0 - sim
 
 
-def compare(a_b64: str, b_b64: str) -> Tuple[Optional[float], dict]:
+def compare(a_b64: str, b_b64: str, use_cache: bool = True) -> Tuple[Optional[float], dict]:
     """
     Compare two face images and return cosine distance.
 
     Args:
         a_b64: Base64-encoded first image
         b_b64: Base64-encoded second image
+        use_cache: Whether to use cache for embeddings (default: True)
 
     Returns:
-        Tuple of (distance, metadata) where metadata includes timing and model info
+        Tuple of (distance, metadata) where metadata includes timing, cache info, and model info
 
     Raises:
         RuntimeError: If no model is loaded
@@ -117,10 +159,10 @@ def compare(a_b64: str, b_b64: str) -> Tuple[Optional[float], dict]:
 
     start_time = time.time()
 
-    ea, meta_a = embed(a_b64)
+    ea, meta_a = embed(a_b64, use_cache=use_cache)
     if ea is None:
         return None, {"error": "no face in A", **meta_a}
-    eb, meta_b = embed(b_b64)
+    eb, meta_b = embed(b_b64, use_cache=use_cache)
     if eb is None:
         return None, {"error": "no face in B", **meta_b}
     dist = cosine_distance(ea, eb)
@@ -132,4 +174,6 @@ def compare(a_b64: str, b_b64: str) -> Tuple[Optional[float], dict]:
         "b": meta_b,
         "timing_ms": round(elapsed_ms, 2),
         "model": _model_name,
+        "cache_used": use_cache,
+        "both_cached": meta_a.get("cached", False) and meta_b.get("cached", False),
     }

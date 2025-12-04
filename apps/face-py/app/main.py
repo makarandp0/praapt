@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .face import compare, embed, get_model_info, load_models
+from .face import clear_cache, compare, embed, get_cache_info, get_model_info, load_models
 
 
 class ImageBody(BaseModel):
@@ -37,11 +37,17 @@ def _startup() -> None:
 def health() -> Dict[str, Any]:
     # Report current model loading status
     model_info = get_model_info()
+    cache_info = get_cache_info()
     return {
         "ok": True,
         "service": "face",
         "modelsLoaded": model_info["loaded"],
         "model": model_info["model"],
+        "cache": {
+            "enabled": cache_info["enabled"],
+            "cached_embeddings": cache_info["cached_embeddings"],
+            "hit_rate_percent": cache_info["stats"]["hit_rate_percent"],
+        },
     }
 
 
@@ -112,5 +118,27 @@ def post_compare(body: CompareBody) -> Dict[str, Any]:
         return {"ok": True, "distance": float(dist), "threshold": th, "match": match, "meta": meta}
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+
+@app.get("/cache/info")
+def get_cache_info_endpoint() -> Dict[str, Any]:
+    """
+    Get cache statistics and information.
+
+    Returns cache hit rate, number of cached embeddings, and cache size.
+    """
+    info = get_cache_info()
+    return {"ok": True, **info}
+
+
+@app.post("/cache/clear")
+def post_clear_cache() -> Dict[str, Any]:
+    """
+    Clear all cached embeddings.
+
+    This will delete all cached face embeddings and reset cache statistics.
+    """
+    result = clear_cache()
+    return {"ok": True, "message": "Cache cleared", **result}
 
 
