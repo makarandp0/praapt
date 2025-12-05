@@ -46,6 +46,27 @@ export const CompareImagesResponseSchema = z.object({
 });
 export type CompareImagesResponse = z.infer<typeof CompareImagesResponseSchema>;
 
+// Health check
+export const HealthResponseSchema = z.object({
+  ok: z.literal(true),
+  service: z.string(),
+  env: z.string(),
+  face: z.object({
+    ok: z.boolean(),
+    modelsLoaded: z.boolean().optional(),
+    model: z.string().nullable().optional(),
+  }),
+  config: z
+    .object({
+      faceServiceUrl: z.string(),
+      port: z.string(),
+      imagesDir: z.string(),
+      corsOrigin: z.string(),
+    })
+    .optional(),
+});
+export type HealthResponse = z.infer<typeof HealthResponseSchema>;
+
 // Error response
 export const ErrorResponseSchema = z.object({ error: z.string() });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
