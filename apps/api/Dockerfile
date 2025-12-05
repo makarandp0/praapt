@@ -18,6 +18,12 @@ RUN npm --workspace=@praapt/api run build
 RUN npm --workspace=@praapt/web run build
 
 FROM node:22.18-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    procps \
+    net-tools \
+    lsof \
+    && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 ENV STATIC_PATH=/app/apps/web/dist
 WORKDIR /app
