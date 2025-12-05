@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '../components/ui/button';
-import { compareImages, listImages, saveImage as saveImageApi, type ApiConfig } from '../lib/api';
+import { createApiClient } from '../lib/apiClient';
 
 type Props = { apiBase: string };
 
 const MAX_IMAGES = 8;
 
 export function Library({ apiBase }: Props) {
-  const api: ApiConfig = { base: apiBase };
+  console.log('[Library] Component render');
+  const api = useMemo(() => {
+    console.log('[Library] Creating new API client');
+    return createApiClient(apiBase);
+  }, [apiBase]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -42,10 +46,10 @@ export function Library({ apiBase }: Props) {
 
   const refresh = async () => {
     try {
-      const { images: imgs } = await listImages(api);
+      const { images: imgs } = await api.listImages();
       // Parse image names to slot numbers (format: slot-01, slot-02, etc.)
       const slotMap: Record<number, string> = {};
-      imgs.forEach((img) => {
+      imgs.forEach((img: string) => {
         const match = img.match(/^slot-(\d+)$/);
         if (match) {
           const slotNum = parseInt(match[1], 10) - 1; // Convert to 0-indexed
@@ -123,7 +127,7 @@ export function Library({ apiBase }: Props) {
     try {
       const slotName = `slot-${String(addingToSlot + 1).padStart(2, '0')}`;
       console.log('Saving to slot:', slotName, 'existing:', imageSlots[addingToSlot]);
-      await saveImageApi(api, slotName, dataUrl);
+      await api.saveImage({ name: slotName, image: dataUrl });
       console.log('Save successful, refreshing...');
       await refresh();
       setSlotTimestamps((prev) => ({ ...prev, [addingToSlot]: `${Date.now()}-${Math.random()}` }));
@@ -162,7 +166,7 @@ export function Library({ apiBase }: Props) {
       try {
         const slotName = `slot-${String(slotToUpdate + 1).padStart(2, '0')}`;
         console.log('Uploading to slot:', slotName, 'existing:', imageSlots[slotToUpdate]);
-        await saveImageApi(api, slotName, dataUrl);
+        await api.saveImage({ name: slotName, image: dataUrl });
         console.log('Upload successful, refreshing...');
         await refresh();
         const newTimestamp = `${Date.now()}-${Math.random()}`;
@@ -218,7 +222,7 @@ export function Library({ apiBase }: Props) {
     setCompareResult(null);
     setCompareError(null);
     try {
-      const res = await compareImages(api, img1, img2);
+      const res = await api.compareImages({ a: img1, b: img2 });
       setCompareResult({
         same: res.same,
         algo: res.algo,
@@ -452,7 +456,8 @@ export function Library({ apiBase }: Props) {
               Slot {selectedForCompare[0] + 1} vs Slot {selectedForCompare[1] + 1} • Algorithm:{' '}
               {compareResult.algo}
               {compareResult.model && ` • Model: ${compareResult.model}`}
-              {compareResult.timing_ms !== undefined && ` • ${compareResult.timing_ms.toFixed(0)}ms`}
+              {compareResult.timing_ms !== undefined &&
+                ` • ${compareResult.timing_ms.toFixed(0)}ms`}
             </div>
           </div>
           {compareResult.distance !== undefined && compareResult.threshold !== undefined && (

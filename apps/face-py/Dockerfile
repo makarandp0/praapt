@@ -22,5 +22,6 @@ COPY app ./app
 
 EXPOSE 8000
 
-# Railway provides $PORT, default to 8000 for local
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Use fixed port 8000 for private networking stability
+# Railway's public networking will handle port mapping automatically
+CMD uvicorn app.main:app --host 0.0.0.0 --port 8000

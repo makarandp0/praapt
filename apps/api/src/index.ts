@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 import {
   CompareImagesBodySchema,
+  HealthResponse,
   ListImagesResponseSchema,
   SaveImageBodySchema,
   SaveImageResponseSchema,
@@ -93,7 +94,19 @@ apiRouter.get('/health', async (_req, res) => {
   } catch {
     face = { ok: false };
   }
-  res.json({ ok: true, service: 'api', env: NODE_ENV, face });
+  const payload: HealthResponse = {
+    ok: true,
+    service: 'api',
+    env: NODE_ENV,
+    face,
+    config: {
+      faceServiceUrl: faceUrl,
+      port: process.env.PORT || '3000',
+      imagesDir: IMAGES_DIR,
+      corsOrigin: process.env.CORS_ORIGIN || '*',
+    },
+  };
+  return res.json(payload);
 });
 
 apiRouter.post('/load-model', async (req, res) => {

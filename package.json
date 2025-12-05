@@ -28,6 +28,8 @@
     "lint:fix": "npm --workspace=@praapt/shared run lint:fix && npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
     "format": "npm --workspace=@praapt/shared run format && npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
     "format:check": "npm --workspace=@praapt/shared run format:check && npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
+    "knip": "knip",
+    "knip:watch": "knip --watch",
     "verify": "node scripts/verify.mjs",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -42,10 +44,11 @@
     "@typescript-eslint/parser": "^8.10.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
     "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "knip": "^5.71.0",
     "prettier": "^3.3.3"
   }
 }
