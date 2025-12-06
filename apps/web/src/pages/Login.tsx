@@ -2,8 +2,10 @@ import { LoginBody, LoginResponse, LoginFailureResponse, ErrorResponse } from '@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
+import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface LoginProps {
   apiBase: string;
@@ -18,10 +20,20 @@ export function Login({ apiBase }: LoginProps) {
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/user';
 
   // Camera state
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cameraRef = useRef<CameraPreviewRef | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+
+  // Face detection state (updated via callback from CameraPreview)
+  const [faceDetection, setFaceDetection] = useState<FaceDetectionResult>({
+    faceDetected: false,
+    faceCount: 0,
+    isLoading: true,
+    error: null,
+    confidence: null,
+    boundingBox: null,
+    detectionMethod: null,
+  });
 
   // Submission state
   const [status, setStatus] = useState('');
@@ -37,15 +49,10 @@ export function Login({ apiBase }: LoginProps) {
   const autoLoginRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Attach stream to video element when camera opens
-  useEffect(() => {
-    if (cameraOpen && streamRef.current && videoRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch((err) => {
-        setStatus(`Video play error: ${err instanceof Error ? err.message : 'unknown'}`);
-      });
-    }
-  }, [cameraOpen]);
+  // Handle face detection updates from CameraPreview
+  const handleFaceDetectionChange = useCallback((result: FaceDetectionResult) => {
+    setFaceDetection(result);
+  }, []);
 
   /** Open the webcam */
   const openCamera = useCallback(async () => {
@@ -70,29 +77,16 @@ export function Login({ apiBase }: LoginProps) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
     setCameraOpen(false);
   }, []);
 
   /** Capture and submit for face login */
   const handleLogin = useCallback(async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) {
+    const dataUrl = cameraRef.current?.captureFrame();
+    if (!dataUrl) {
       setStatus('Camera not ready');
       return;
     }
-
-    // Capture frame
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     setIsSubmitting(true);
     setStatus('Verifying face...');
@@ -153,8 +147,8 @@ export function Login({ apiBase }: LoginProps) {
       countdownRef.current = null;
     }
 
-    // Only auto-login when camera is open, not submitting, and auto-login is enabled
-    if (!cameraOpen || isSubmitting || !autoLoginEnabled) {
+    // Only auto-login when camera is open, not submitting, auto-login is enabled, and face is detected
+    if (!cameraOpen || isSubmitting || !autoLoginEnabled || !faceDetection.faceDetected) {
       return;
     }
 
@@ -188,7 +182,14 @@ export function Login({ apiBase }: LoginProps) {
         clearInterval(countdownRef.current);
       }
     };
-  }, [cameraOpen, isSubmitting, autoLoginEnabled, retryDelay, handleLogin]);
+  }, [
+    cameraOpen,
+    isSubmitting,
+    autoLoginEnabled,
+    retryDelay,
+    handleLogin,
+    faceDetection.faceDetected,
+  ]);
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -198,23 +199,36 @@ export function Login({ apiBase }: LoginProps) {
         {/* Camera preview */}
         {cameraOpen ? (
           <div className="space-y-4">
-            <video
-              ref={videoRef}
-              className="w-full rounded-lg border border-gray-300"
-              autoPlay
-              playsInline
-              muted
+            <CameraPreview
+              ref={cameraRef}
+              stream={streamRef.current}
+              isActive={cameraOpen}
+              onFaceDetectionChange={handleFaceDetectionChange}
             />
 
-            {/* Auto-login countdown */}
-            {autoLoginEnabled && !isSubmitting && (
-              <div className="text-center text-sm text-gray-600">
+            {/* Auto-login countdown - only show when face is detected */}
+            {autoLoginEnabled && !isSubmitting && faceDetection.faceDetected && (
+              <div className="text-center text-sm text-green-600">
                 Auto-login in <span className="font-mono font-bold">{countdown}</span> seconds...
               </div>
             )}
 
+            {/* Waiting for face message */}
+            {autoLoginEnabled &&
+              !isSubmitting &&
+              !faceDetection.faceDetected &&
+              !faceDetection.isLoading && (
+                <div className="text-center text-sm text-orange-600">
+                  Position your face in front of the camera to login
+                </div>
+              )}
+
             <div className="flex gap-2">
-              <Button onClick={handleLogin} disabled={isSubmitting} className="flex-1">
+              <Button
+                onClick={handleLogin}
+                disabled={isSubmitting || !faceDetection.faceDetected}
+                className="flex-1"
+              >
                 {isSubmitting ? 'Verifying...' : 'Login Now'}
               </Button>
               <Button variant="outline" onClick={closeCamera} disabled={isSubmitting}>
@@ -243,9 +257,6 @@ export function Login({ apiBase }: LoginProps) {
             </div>
           </div>
         )}
-
-        {/* Hidden canvas for capturing */}
-        <canvas ref={canvasRef} className="hidden" />
 
         {/* Status message */}
         {status && (
