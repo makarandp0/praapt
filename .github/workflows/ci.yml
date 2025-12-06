@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -63,5 +63,11 @@ jobs:
       - name: Build API
         run: npm run build
 
-      - name: Verify end-to-end
+      - name: Verify build output
+        run: npm run verify:build
+
+      - name: Build Docker image (API)
+        run: docker build -f apps/api/Dockerfile -t praapt-api-test .
+
+      - name: API smoke test
         run: npm run verify
