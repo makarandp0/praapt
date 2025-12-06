@@ -53,20 +53,20 @@ npx tsx apps/face-py/test-compare-all.ts  # Test: compare all images (requires f
 The project uses **Drizzle ORM** for typesafe database access. Schema is defined in `apps/api/src/schema.ts`.
 
 ```bash
-# Development - apply schema changes directly (no migrations)
+# Run all migrations (schema + custom)
+npm run migrate
+
+# Rollback last custom migration
+npm run rollback
+
+# Development - apply schema changes directly (no migration files)
 npm run db:push -w @praapt/api
 
-# Generate SQL migration from schema changes
+# Generate SQL migration file from schema changes
 npm run db:generate -w @praapt/api
-
-# Apply pending migrations
-npm run db:migrate -w @praapt/api
 
 # Open Drizzle Studio (visual database browser)
 npm run db:studio -w @praapt/api
-
-# Introspect existing database to generate schema
-npm run db:introspect -w @praapt/api
 ```
 
 ### Reset Local Database
@@ -80,8 +80,8 @@ docker compose down -v
 # Start fresh database
 docker compose up -d db
 
-# Apply schema
-npm run db:push -w @praapt/api
+# Run migrations
+npm run migrate
 ```
 
 ### Schema Changes Workflow
@@ -89,6 +89,42 @@ npm run db:push -w @praapt/api
 1. **Edit schema:** Modify `apps/api/src/schema.ts`
 2. **Development:** Run `npm run db:push -w @praapt/api` to apply changes directly
 3. **Production:** Run `npm run db:generate -w @praapt/api` to create a migration file
+
+### Custom Migrations (with TypeScript code)
+
+For migrations that need code logic (data transformations, seeding, etc.), create a file in `apps/api/src/migrations/`:
+
+```typescript
+// apps/api/src/migrations/001_seed_admin_user.ts
+import { eq } from 'drizzle-orm';
+import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import * as schema from '../schema.js';
+
+type DB = PostgresJsDatabase<typeof schema>;
+
+export async function up(db: DB): Promise<void> {
+  const existing = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.email, 'admin@example.com'));
+  if (existing.length === 0) {
+    await db.insert(schema.users).values({ email: 'admin@example.com', name: 'Admin' });
+  }
+}
+
+export async function down(db: DB): Promise<void> {
+  await db.delete(schema.users).where(eq(schema.users.email, 'admin@example.com'));
+}
+```
+
+Custom migrations:
+
+- Are stored in `apps/api/src/migrations/` (one file per migration)
+- Must export `up(db)` and `down(db)` functions
+- Use numeric prefix for ordering (e.g., `001_`, `002_`)
+- Run automatically after schema migrations via `npm run migrate`
+- Are tracked in `custom_migrations` table (won't run twice)
+- Can be rolled back with `npm run rollback`
 
 ### Typesafe Queries
 
