@@ -30,6 +30,7 @@
     "knip": "knip",
     "knip:watch": "knip --watch",
     "verify": "node scripts/verify.mjs",
+    "verify:build": "node scripts/verify-build.mjs",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
