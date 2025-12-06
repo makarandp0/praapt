@@ -8,22 +8,28 @@ Repository Map (high signal first)
 2. package.json (root): Workspace scripts and tooling entry points.
 3. apps/api (Express API)
    - src/index.ts: API server entry.
-   - src/db.ts: Database connection via Knex/PG.
-   - migrations/_, seeds/_: DB schema and sample data (TypeScript).
-   - knexfile.ts, tsconfig.json: Build/runtime config.
+   - src/routes/\*.ts: Route handlers (auth, images, health).
+   - src/db.ts: Database connection via Drizzle/PG.
+   - src/schema.ts: Drizzle schema definitions.
+   - drizzle/: SQL migrations.
 4. apps/web (React + Vite)
    - src/main.tsx | src/main.js: Frontend bootstrap.
-   - src/App.tsx | src/App.js: Primary app component.
+   - src/App.tsx | src/App.js: Primary app component with routing.
+   - src/pages/: Page components (Login, Signup, Library).
+   - src/contexts/: React contexts (AuthContext).
    - src/components/_, src/lib/_: UI and helpers.
    - index.css, tailwind config: Styling.
-5. docker-compose.yml: Local Postgres.
-6. scripts/\*.mjs: Repo scripts (e.g., verification).
+5. packages/shared (Shared Types)
+   - src/index.ts: Zod schemas and TypeScript types shared between API and web.
+   - **Always use these shared types for API request/response contracts.**
+6. docker-compose.yml: Local Postgres.
+7. scripts/\*.mjs: Repo scripts (e.g., verification).
 
 Paths To Prioritize
 
+- packages/shared/src/index.ts (shared Zod schemas - check first for API contracts)
 - apps/api/src/\*_/_.ts
-- apps/api/migrations/\*_/_.ts
-- apps/api/seeds/\*_/_.ts
+- apps/api/drizzle/\*.sql
 - apps/web/src/\*_/_.{ts,tsx,js,jsx,css}
 - README.md, package.json, apps/\*/package.json, docker-compose.yml
 
@@ -64,16 +70,23 @@ Working Rules For The LLM
 6. Validate With Existing Scripts
    - Use `npm run typecheck`, `npm run lint`, and relevant workspace scripts.
    - After making any code changes, run `npm run lint` from the repo root and fix all reported issues. Use `npm run lint:fix` for autofixes, then resolve any remaining problems manually.
-   - For DB work, consult migrations and seeds; do not alter them unless the task requires.
+   - For DB work, consult drizzle/ migrations and src/schema.ts; do not alter them unless the task requires.
 
-7. Environment & Secrets
+7. Use Shared Types (packages/shared)
+   - All API request/response types MUST be defined as Zod schemas in `packages/shared/src/index.ts`.
+   - Import types from `@praapt/shared` in both API routes and web pages.
+   - After adding new schemas, run `npm run build --workspace=@praapt/shared` to compile.
+   - Example: `SignupBodySchema`, `LoginResponseSchema`, `UserSchema`.
+
+8. Environment & Secrets
    - Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
 
 Task-Focused Entry Points (quick checklist)
 
-- API route/behavior issue: apps/api/src/index.ts (+ files it imports), apps/api/src/db.ts
-- DB schema/seed change: apps/api/migrations/_, apps/api/seeds/_, knexfile.ts
-- Frontend UI/state change: apps/web/src/App.(ts|js)x, apps/web/src/main.(ts|js)x, components/, lib/
+- API route/behavior issue: apps/api/src/routes/\*.ts, apps/api/src/index.ts
+- DB schema/seed change: apps/api/src/schema.ts, apps/api/drizzle/\*.sql
+- Frontend UI/state change: apps/web/src/App.tsx, apps/web/src/pages/_.tsx, apps/web/src/contexts/_.tsx
+- API contracts/types: packages/shared/src/index.ts (Zod schemas)
 - Project setup/scripts: README.md, root/package.json, apps/_/package.json, scripts/_.mjs
 
 If In Doubt

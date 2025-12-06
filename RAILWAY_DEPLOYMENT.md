@@ -120,7 +120,7 @@ NODE_ENV=production
 PORT=3000  # Railway auto-assigns
 FACE_SERVICE_URL=https://your-face-service.up.railway.app
 DATABASE_URL=${{Postgres.DATABASE_URL}}  # Auto-linked if using DB
-IMAGES_DIR=/app/images  # Optional, defaults to ./images
+IMAGES_DIR=/app/images  # Mounted to Railway volume for persistence
 CORS_ORIGIN=*  # Or specific domain for production
 ```
 
@@ -130,6 +130,15 @@ CORS_ORIGIN=*  # Or specific domain for production
 PORT=8000  # Railway auto-assigns
 INSIGHTFACE_HOME=/models
 ```
+
+## Volumes
+
+The API service uses a Railway volume to persist uploaded images (profile photos):
+
+- **Mount path:** `/app/images`
+- **Volume name:** `praapt-images`
+
+This is configured in `railway.json`. Images survive redeploys and container restarts.
 
 ## Quick Deployment Commands (CLI)
 

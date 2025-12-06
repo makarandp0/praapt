@@ -51,6 +51,25 @@ jobs:
         env:
           PGPASSWORD: postgres
 
+      - name: Check Drizzle migrations are up to date
+        run: |
+          # Generate migrations from current schema
+          npm --workspace=@praapt/api run db:generate
+          # Check if there are any uncommitted changes in drizzle folder
+          if ! git diff --exit-code apps/api/drizzle/; then
+            echo "❌ Drizzle migrations are out of date!"
+            echo "Please run 'npm --workspace=@praapt/api run db:generate' and commit the changes."
+            exit 1
+          fi
+          # Also check for new untracked files
+          if [ -n "$(git ls-files --others --exclude-standard apps/api/drizzle/)" ]; then
+            echo "❌ New Drizzle migration files detected that are not committed!"
+            echo "Please run 'npm --workspace=@praapt/api run db:generate' and commit the new files."
+            git ls-files --others --exclude-standard apps/api/drizzle/
+            exit 1
+          fi
+          echo "✅ Drizzle migrations are up to date"
+
       - name: Run migrations
         run: npm run migrate
 
