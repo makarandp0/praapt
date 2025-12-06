@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { StatusPanel } from './components/StatusPanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ModelStatusProvider } from './contexts/ModelStatusContext';
+import { Config } from './pages/Config';
 import { Library } from './pages/Library';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -97,6 +98,13 @@ function NavBar() {
                   >
                     Version
                   </Link>
+                  <Link
+                    to="/config"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                  >
+                    Config
+                  </Link>
                   <button
                     onClick={() => {
                       logout();
@@ -130,6 +138,13 @@ function NavBar() {
                   >
                     Version
                   </Link>
+                  <Link
+                    to="/config"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                  >
+                    Config
+                  </Link>
                 </>
               )}
             </div>
@@ -151,6 +166,7 @@ function AppRoutes() {
           <Route path="/login" element={<Login apiBase={API_BASE} />} />
           <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
+          <Route path="/config" element={<Config apiBase={API_BASE} />} />
           <Route
             path="/user"
             element={

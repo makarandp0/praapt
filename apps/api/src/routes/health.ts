@@ -13,19 +13,20 @@ const router = Router();
 
 router.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
-  let face: FaceHealth;
+  let face: FaceHealth = { ok: false, modelsLoaded: false, model: null, commit: 'unknown' };
 
   try {
     const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
     const j = await r.json();
     face = {
+      ...face,
       ok: Boolean(j?.ok),
       modelsLoaded: Boolean(j?.modelsLoaded),
-      model: j?.model || null,
-      commit: j?.commit || 'unknown',
+      model: j?.model ?? face.model,
+      commit: j?.commit ?? face.commit,
     };
   } catch {
-    face = { ok: false };
+    // face already initialized with defaults
   }
 
   const payload: HealthResponse = {
