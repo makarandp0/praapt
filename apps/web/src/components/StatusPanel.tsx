@@ -91,6 +91,19 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
     }
   };
 
+  const getStatusAriaLabel = (status: StatusType) => {
+    switch (status) {
+      case 'OK':
+        return 'success';
+      case 'Not OK':
+        return 'error';
+      case 'Unavailable':
+        return 'unavailable';
+      case 'Checking...':
+        return 'loading';
+    }
+  };
+
   const handleLoadModel = async (modelName: 'buffalo_l' | 'buffalo_s') => {
     try {
       await contextLoadModel(modelName);
@@ -109,7 +122,7 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(health)}`}
           title="Click to refresh status"
         >
-          <span>{getStatusIcon(health)}</span>
+          <span aria-label={getStatusAriaLabel(health)}>{getStatusIcon(health)}</span>
           <span>API</span>
         </button>
 
@@ -122,7 +135,7 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
             title="The face service is sleeping to save resources. Click to wake it up (may take 10-30 seconds)"
           >
-            <span>💤</span>
+            <span aria-label="sleeping">💤</span>
             <span>Wake Up Face Service</span>
           </button>
         ) : (
@@ -131,7 +144,9 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(faceInfo.status)}`}
             title="Click to refresh status"
           >
-            <span>{getStatusIcon(faceInfo.status)}</span>
+            <span aria-label={getStatusAriaLabel(faceInfo.status)}>
+              {getStatusIcon(faceInfo.status)}
+            </span>
             <span>Face</span>
           </button>
         )}
@@ -141,12 +156,12 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
         {/* Step 3: Model Status */}
         {faceInfo.status !== 'OK' ? (
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium bg-gray-50 text-gray-400 border-gray-200">
-            <span>−</span>
+            <span aria-label="unavailable">−</span>
             <span>Model</span>
           </span>
         ) : faceInfo.model ? (
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium bg-green-100 text-green-800 border-green-200">
-            <span>✓</span>
+            <span aria-label="success">✓</span>
             <span>Model ({faceInfo.model})</span>
           </span>
         ) : (
@@ -160,7 +175,9 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
             }`}
             title="Load face recognition model"
           >
-            <span>{isLoadingModel ? '⟳' : '▶'}</span>
+            <span aria-label={isLoadingModel ? 'loading' : 'play'}>
+              {isLoadingModel ? '⟳' : '▶'}
+            </span>
             <span>{isLoadingModel ? 'Loading Model...' : 'Load Model'}</span>
           </button>
         )}
