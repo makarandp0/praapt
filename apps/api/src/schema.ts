@@ -13,6 +13,8 @@ export const users = pgTable('users', {
   faceEmbedding: jsonb('face_embedding').$type<number[]>(),
   profileImagePath: text('profile_image_path'),
   faceRegisteredAt: timestamp('face_registered_at', { withTimezone: true }),
+  // Login tracking
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
