@@ -45,14 +45,15 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
     setHealth('Checking...');
 
     try {
+      // Refresh the shared context (which makes the API call)
+      await refreshStatus();
+      // Fetch config separately since it's only needed in StatusPanel
       const d = await apiClient.getHealth();
       console.log('[StatusPanel] Health response received:', d);
       setHealth(d.ok ? 'OK' : 'Not OK');
       if (d.config) {
         setConfig(d.config);
       }
-      // Also refresh the shared context
-      await refreshStatus();
     } catch (err) {
       console.error('Health check failed:', err);
       setHealth('Unavailable');

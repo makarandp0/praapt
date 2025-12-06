@@ -3,6 +3,9 @@ import type { ReactNode } from 'react';
 
 import { createApiClient } from '../lib/apiClient';
 
+/** Delay in ms to wait after loading a model before refreshing status */
+const MODEL_READY_DELAY_MS = 500;
+
 interface ModelStatus {
   /** Whether the face service is available */
   faceServiceOk: boolean;
@@ -69,8 +72,8 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
       setStatus((prev) => ({ ...prev, isLoadingModel: true }));
       try {
         await apiClient.loadModel(model);
-        // Wait a moment for model to be ready
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Wait for the model to be ready before refreshing status
+        await new Promise((resolve) => setTimeout(resolve, MODEL_READY_DELAY_MS));
         await refreshStatus();
       } catch (err) {
         console.error('Failed to load model:', err);
