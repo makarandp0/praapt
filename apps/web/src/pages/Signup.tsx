@@ -3,6 +3,7 @@ import { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
+import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
@@ -198,6 +199,8 @@ export function Signup({ apiBase }: SignupProps) {
   return (
     <div className="max-w-md mx-auto space-y-6">
       <h2 className="text-xl font-semibold text-center">Sign Up with Face Recognition</h2>
+
+      <ServiceStatusBanner />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name field */}
