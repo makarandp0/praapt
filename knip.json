@@ -6,8 +6,8 @@
       "project": ["scripts/**/*.mjs"]
     },
     "apps/api": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts", "!src/db.ts"]
+      "entry": ["src/index.ts", "vitest.config.ts"],
+      "project": ["src/**/*.ts", "!src/db.ts", "!src/**/*.test.ts", "!src/**/*.spec.ts"]
     },
     "apps/web": {
       "entry": ["src/main.tsx", "vite.config.ts"],

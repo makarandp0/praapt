@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url';
 import express, { json, static as expressStatic } from 'express';
 
 import { NODE_ENV } from './env.js';
+import { errorHandler } from './lib/errorHandler.js';
+import { logger } from './lib/logger.js';
 import authRoutes from './routes/auth.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
@@ -39,8 +41,7 @@ if (NODE_ENV === 'production') {
     ? path.resolve(process.env.STATIC_PATH)
     : path.join(__dirname, '../../web/dist');
 
-  // eslint-disable-next-line no-console
-  console.log(`Serving static files from: ${staticPath}`);
+  logger.info({ staticPath }, 'Serving static files');
   app.use(expressStatic(staticPath));
 
   // SPA fallback - serve index.html for non-API routes
@@ -49,8 +50,10 @@ if (NODE_ENV === 'production') {
   });
 }
 
+// Global error handler - must be last
+app.use(errorHandler);
+
 const port = Number(process.env.PORT || 3000);
 app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API listening on http://localhost:${port}`);
+  logger.info({ port, env: NODE_ENV }, 'API server started');
 });
