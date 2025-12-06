@@ -1,6 +1,7 @@
 import type { HealthResponse } from '@praapt/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useModelStatus } from '../contexts/ModelStatusContext';
 import { createApiClient } from '../lib/apiClient';
 
 interface StatusPanelProps {
@@ -9,56 +10,54 @@ interface StatusPanelProps {
 
 type StatusType = 'OK' | 'Not OK' | 'Unavailable' | 'Checking...';
 
-interface FaceServiceInfo {
-  status: StatusType;
-  modelsLoaded: boolean;
-  model: string | null;
-}
-
 export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
   console.log('[StatusPanel] Component render');
   const apiClient = useMemo(() => {
     console.log('[StatusPanel] Creating new API client');
     return createApiClient(apiBase);
   }, [apiBase]);
+
+  // Use shared model status context
+  const {
+    faceServiceOk,
+    modelsLoaded,
+    model,
+    isChecking,
+    isLoadingModel,
+    refreshStatus,
+    loadModel: contextLoadModel,
+  } = useModelStatus();
+
   const [health, setHealth] = useState<StatusType>('Checking...');
-  const [faceInfo, setFaceInfo] = useState<FaceServiceInfo>({
-    status: 'Checking...',
-    modelsLoaded: false,
-    model: null,
-  });
-  const [loadingModel, setLoadingModel] = useState<string | null>(null);
   const [config, setConfig] = useState<HealthResponse['config']>(undefined);
   const [showConfig, setShowConfig] = useState(false);
+
+  // Derive face status from context
+  const faceInfo = {
+    status: (isChecking ? 'Checking...' : faceServiceOk ? 'OK' : 'Unavailable') as StatusType,
+    modelsLoaded,
+    model,
+  };
 
   const fetchHealth = useCallback(async () => {
     console.log('[StatusPanel] fetchHealth called');
     console.log('Fetching health status from:', apiBase);
     setHealth('Checking...');
-    setFaceInfo((prev) => ({
-      status: 'Checking...',
-      modelsLoaded: false,
-      model: prev.model, // Keep previous model name during refresh
-    }));
 
     try {
       const d = await apiClient.getHealth();
       console.log('[StatusPanel] Health response received:', d);
       setHealth(d.ok ? 'OK' : 'Not OK');
-      setFaceInfo({
-        status: d.face.ok ? 'OK' : 'Unavailable',
-        modelsLoaded: d.face.modelsLoaded ?? false,
-        model: d.face.model ?? null,
-      });
       if (d.config) {
         setConfig(d.config);
       }
+      // Also refresh the shared context
+      await refreshStatus();
     } catch (err) {
       console.error('Health check failed:', err);
       setHealth('Unavailable');
-      setFaceInfo({ status: 'Unavailable', modelsLoaded: false, model: null });
     }
-  }, [apiBase, apiClient]);
+  }, [apiBase, apiClient, refreshStatus]);
 
   useEffect(() => {
     console.log('[StatusPanel] useEffect triggered - calling fetchHealth');
@@ -91,18 +90,12 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
     }
   };
 
-  const handleLoadModel = async (model: 'buffalo_l' | 'buffalo_s') => {
-    setLoadingModel(model);
+  const handleLoadModel = async (modelName: 'buffalo_l' | 'buffalo_s') => {
     try {
-      await apiClient.loadModel(model);
-      // Refresh health status to show the new model
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      fetchHealth();
+      await contextLoadModel(modelName);
     } catch (err) {
       console.error('Failed to load model:', err);
       alert(`Failed to load model: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setLoadingModel(null);
     }
   };
 
@@ -131,39 +124,20 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
           )}
         </button>
 
-        {/* Model Loading Controls */}
-        {faceInfo.status === 'OK' && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-500">Load:</span>
-            <button
-              onClick={() => handleLoadModel('buffalo_s')}
-              disabled={loadingModel !== null || faceInfo.model === 'buffalo_s'}
-              className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
-                faceInfo.model === 'buffalo_s'
-                  ? 'bg-blue-100 text-blue-800 border-blue-300 cursor-default'
-                  : loadingModel === 'buffalo_s'
-                    ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
-                    : 'bg-white hover:bg-gray-50 border-gray-300 cursor-pointer'
-              }`}
-              title="Small model (~500MB, faster)"
-            >
-              {loadingModel === 'buffalo_s' ? '⟳ Loading...' : 'Small'}
-            </button>
-            <button
-              onClick={() => handleLoadModel('buffalo_l')}
-              disabled={loadingModel !== null || faceInfo.model === 'buffalo_l'}
-              className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
-                faceInfo.model === 'buffalo_l'
-                  ? 'bg-blue-100 text-blue-800 border-blue-300 cursor-default'
-                  : loadingModel === 'buffalo_l'
-                    ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
-                    : 'bg-white hover:bg-gray-50 border-gray-300 cursor-pointer'
-              }`}
-              title="Large model (~1.5GB, more accurate)"
-            >
-              {loadingModel === 'buffalo_l' ? '⟳ Loading...' : 'Large'}
-            </button>
-          </div>
+        {/* Model Loading Control */}
+        {faceInfo.status === 'OK' && !faceInfo.model && (
+          <button
+            onClick={() => handleLoadModel('buffalo_l')}
+            disabled={isLoadingModel}
+            className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
+              isLoadingModel
+                ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
+                : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500 cursor-pointer'
+            }`}
+            title="Load face recognition model"
+          >
+            {isLoadingModel ? '⟳ Loading...' : 'Load Model'}
+          </button>
         )}
 
         {/* Config Toggle */}
