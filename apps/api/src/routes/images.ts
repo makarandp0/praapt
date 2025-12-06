@@ -60,20 +60,18 @@ router.get('/', (_req, res) => {
  * Serve an image by exact filename (used for profile images)
  */
 router.get('/file/:filename', (req, res) => {
-  const { filename } = req.params;
+  // Security: extract just the filename and reject any path containing directory separators
+  const filename = path.basename(req.params.filename);
+  if (filename !== req.params.filename || filename.includes('..')) {
+    return res.status(403).json({ error: 'invalid filename' });
+  }
   const filePath = path.join(IMAGES_DIR, filename);
 
-  // Security: ensure the resolved path is still within IMAGES_DIR
-  const resolvedPath = path.resolve(filePath);
-  if (!resolvedPath.startsWith(path.resolve(IMAGES_DIR))) {
-    return res.status(403).json({ error: 'access denied' });
-  }
-
-  if (!fs.existsSync(resolvedPath)) {
+  if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: `file not found: ${filename}` });
   }
 
-  return res.sendFile(resolvedPath);
+  return res.sendFile(filePath);
 });
 
 /**

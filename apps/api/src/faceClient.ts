@@ -107,6 +107,10 @@ export function cosineDistance(a: number[], b: number[]): number {
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
+  if (normA === 0 || normB === 0) {
+    // If either vector is all zeros, return maximum distance
+    return 2.0;
+  }
   const similarity = dot / (Math.sqrt(normA) * Math.sqrt(normB));
   return 1 - similarity; // cosine distance
 }

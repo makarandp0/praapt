@@ -170,7 +170,7 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('login error', err);
-    return res.status(500).json({ error: 'login failed' });
+    return res.status(500).json({ error: 'Authentication failed' });
   }
 });
 

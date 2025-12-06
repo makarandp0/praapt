@@ -70,6 +70,9 @@ export function Login({ apiBase }: LoginProps) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setCameraOpen(false);
   }, []);
 
@@ -158,7 +161,16 @@ export function Login({ apiBase }: LoginProps) {
     // Start countdown
     setCountdown(retryDelay);
     countdownRef.current = setInterval(() => {
-      setCountdown((prev) => Math.max(0, prev - 1));
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     // Schedule auto-login

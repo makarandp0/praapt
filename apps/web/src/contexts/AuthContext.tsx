@@ -56,7 +56,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     sessionStorage.setItem('auth_user', JSON.stringify(userData));
     if (match) {
       setMatchInfo(match);
-      sessionStorage.setItem('auth_match', JSON.stringify(match));
+      // Store match info without the potentially large loginImage to avoid storage quota errors
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { loginImage: _loginImage, ...rest } = match;
+      sessionStorage.setItem('auth_match', JSON.stringify({ ...rest, loginImage: '' }));
     }
   }, []);
 
@@ -65,7 +68,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setMatchInfo(null);
     sessionStorage.removeItem('auth_user');
     sessionStorage.removeItem('auth_match');
-    sessionStorage.removeItem('auth_login_image');
   }, []);
 
   const value = useMemo(

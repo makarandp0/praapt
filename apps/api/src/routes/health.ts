@@ -1,14 +1,19 @@
 import { HealthResponse } from '@praapt/shared';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { NODE_ENV } from '../env.js';
 import { IMAGES_DIR } from '../lib/imageUtils.js';
+
+const LoadModelBodySchema = z.object({
+  model: z.enum(['buffalo_l', 'buffalo_s']),
+});
 
 const router = Router();
 
 router.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
-  let face: { ok: boolean; modelsLoaded?: boolean; model?: string | null } = { ok: false };
+  let face: { ok: boolean; modelsLoaded?: boolean; model?: string | null };
 
   try {
     const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
@@ -40,10 +45,7 @@ router.get('/health', async (_req, res) => {
 
 router.post('/load-model', async (req, res) => {
   try {
-    const { model } = req.body as { model?: string };
-    if (!model || (model !== 'buffalo_l' && model !== 'buffalo_s')) {
-      return res.status(400).json({ error: "model must be 'buffalo_l' or 'buffalo_s'" });
-    }
+    const { model } = LoadModelBodySchema.parse(req.body);
 
     const { loadModel } = await import('../faceClient.js');
     await loadModel(model);
