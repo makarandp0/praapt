@@ -15,7 +15,7 @@ interface LoginProps {
 export function Login({ apiBase }: LoginProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
+  const { modelsLoaded, isChecking: isCheckingModel, model, refreshStatus } = useModelStatus();
 
   // Check if the login functionality is available
   const isModelReady = modelsLoaded && model !== null;
@@ -115,6 +115,8 @@ export function Login({ apiBase }: LoginProps) {
         if (errorData.topMatches) {
           setFailedMatches(errorData.topMatches);
         }
+        // Refresh status in case face service went down
+        refreshStatus();
         setIsSubmitting(false);
         return;
       }
@@ -132,9 +134,11 @@ export function Login({ apiBase }: LoginProps) {
       setTimeout(() => navigate('/user', { replace: true }), 500);
     } catch (err) {
       setStatus(`Network error: ${err instanceof Error ? err.message : 'unknown'}`);
+      // Refresh status in case face service went down
+      refreshStatus();
       setIsSubmitting(false);
     }
-  }, [apiBase, login, navigate, closeCamera]);
+  }, [apiBase, login, navigate, closeCamera, refreshStatus]);
 
   // Auto-login effect with exponential backoff
   useEffect(() => {
