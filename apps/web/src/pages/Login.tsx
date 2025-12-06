@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
+import { useModelStatus } from '../contexts/ModelStatusContext';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface LoginProps {
@@ -15,9 +16,13 @@ export function Login({ apiBase }: LoginProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
 
   // Get the intended destination after login
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/user';
+
+  // Check if the login functionality is available
+  const isModelReady = modelsLoaded && model !== null;
 
   // Camera state
   const cameraRef = useRef<CameraPreviewRef | null>(null);
@@ -44,8 +49,8 @@ export function Login({ apiBase }: LoginProps) {
 
   // Auto-login state with exponential backoff
   const [autoLoginEnabled, setAutoLoginEnabled] = useState(true);
-  const [retryDelay, setRetryDelay] = useState(5); // Start with 5 seconds
-  const [countdown, setCountdown] = useState(5);
+  const [retryDelay, setRetryDelay] = useState(2); // Start with 2 seconds
+  const [countdown, setCountdown] = useState(2);
   const autoLoginRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -63,8 +68,8 @@ export function Login({ apiBase }: LoginProps) {
       streamRef.current = stream;
       setCameraOpen(true);
       // Reset retry delay when camera opens
-      setRetryDelay(5);
-      setCountdown(5);
+      setRetryDelay(2);
+      setCountdown(2);
       setStatus('Camera ready. Auto-login will attempt shortly...');
     } catch (err) {
       setStatus(`Camera error: ${err instanceof Error ? err.message : 'unknown'}`);
@@ -149,6 +154,8 @@ export function Login({ apiBase }: LoginProps) {
 
     // Only auto-login when camera is open, not submitting, auto-login is enabled, and face is detected
     if (!cameraOpen || isSubmitting || !autoLoginEnabled || !faceDetection.faceDetected) {
+      // Reset countdown when conditions aren't met (e.g., face lost)
+      setCountdown(retryDelay);
       return;
     }
 
@@ -170,7 +177,7 @@ export function Login({ apiBase }: LoginProps) {
     // Schedule auto-login
     autoLoginRef.current = setTimeout(() => {
       handleLogin();
-      // Increase delay exponentially (5 -> 10 -> 20 -> 40 -> max 60 seconds)
+      // Increase delay exponentially (2 -> 4 -> 8 -> 16 -> max 60 seconds)
       setRetryDelay((prev) => Math.min(prev * 2, 60));
     }, retryDelay * 1000);
 
@@ -253,7 +260,15 @@ export function Login({ apiBase }: LoginProps) {
           <div className="text-center space-y-4">
             <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
               <p className="text-gray-500 mb-4">Use your face to log in</p>
-              <Button onClick={openCamera}>Open Camera</Button>
+              <Button onClick={openCamera} disabled={!isModelReady || isCheckingModel}>
+                {isCheckingModel ? 'Checking model...' : 'Open Camera'}
+              </Button>
+              {!isModelReady && !isCheckingModel && (
+                <p className="text-sm text-orange-600 mt-3">
+                  ⚠️ Please load a face recognition model using the controls above before logging
+                  in.
+                </p>
+              )}
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
+import { useModelStatus } from '../contexts/ModelStatusContext';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface SignupProps {
@@ -14,6 +15,10 @@ interface SignupProps {
 export function Signup({ apiBase }: SignupProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
+
+  // Check if the signup functionality is available
+  const isModelReady = modelsLoaded && model !== null;
 
   // Form fields
   const [name, setName] = useState('');
@@ -283,13 +288,30 @@ export function Signup({ apiBase }: SignupProps) {
 
           {/* Options to capture or upload (when no image and camera closed) */}
           {!cameraOpen && !capturedImage && (
-            <div className="flex gap-2">
-              <Button type="button" onClick={openCamera}>
-                Open Camera
-              </Button>
-              <Button type="button" variant="outline" onClick={triggerFileUpload}>
-                Upload Image
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={openCamera}
+                  disabled={!isModelReady || isCheckingModel}
+                >
+                  {isCheckingModel ? 'Checking model...' : 'Open Camera'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={triggerFileUpload}
+                  disabled={!isModelReady || isCheckingModel}
+                >
+                  Upload Image
+                </Button>
+              </div>
+              {!isModelReady && !isCheckingModel && (
+                <p className="text-sm text-orange-600">
+                  ⚠️ Please load a face recognition model using the controls above before signing
+                  up.
+                </p>
+              )}
             </div>
           )}
 

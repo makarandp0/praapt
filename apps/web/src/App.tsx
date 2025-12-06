@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { StatusPanel } from './components/StatusPanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ModelStatusProvider } from './contexts/ModelStatusContext';
 import { Library } from './pages/Library';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -93,7 +94,9 @@ export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ModelStatusProvider apiBase={API_BASE}>
+          <AppRoutes />
+        </ModelStatusProvider>
       </AuthProvider>
     </BrowserRouter>
   );
