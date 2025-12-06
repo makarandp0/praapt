@@ -4,5 +4,5 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "include": ["src", "scripts", "knexfile.ts", "migrations", "seeds"]
+  "include": ["src"]
 }
