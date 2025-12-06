@@ -3,6 +3,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
+import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
@@ -152,8 +153,14 @@ export function Login({ apiBase }: LoginProps) {
       countdownRef.current = null;
     }
 
-    // Only auto-login when camera is open, not submitting, auto-login is enabled, and face is detected
-    if (!cameraOpen || isSubmitting || !autoLoginEnabled || !faceDetection.faceDetected) {
+    // Only auto-login when camera is open, not submitting, auto-login is enabled, model is loaded, and face is detected
+    if (
+      !cameraOpen ||
+      isSubmitting ||
+      !autoLoginEnabled ||
+      !isModelReady ||
+      !faceDetection.faceDetected
+    ) {
       // Reset countdown when conditions aren't met (e.g., face lost)
       setCountdown(retryDelay);
       return;
@@ -193,6 +200,7 @@ export function Login({ apiBase }: LoginProps) {
     cameraOpen,
     isSubmitting,
     autoLoginEnabled,
+    isModelReady,
     retryDelay,
     handleLogin,
     faceDetection.faceDetected,
@@ -201,6 +209,8 @@ export function Login({ apiBase }: LoginProps) {
   return (
     <div className="max-w-md mx-auto space-y-6">
       <h2 className="text-xl font-semibold text-center">Login with Face Recognition</h2>
+
+      <ServiceStatusBanner />
 
       <div className="space-y-4">
         {/* Camera preview */}

@@ -20,6 +20,8 @@ services:
     build:
       context: ./apps/face-py
       dockerfile: Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-local}
     restart: unless-stopped
     environment:
       - INSIGHTFACE_HOME=/models
@@ -37,6 +39,8 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-local}
     restart: unless-stopped
     ports:
       - '3000:3000'

@@ -1,4 +1,3 @@
-import type { HealthResponse } from '@praapt/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useModelStatus } from '../contexts/ModelStatusContext';
@@ -11,9 +10,7 @@ interface StatusPanelProps {
 type StatusType = 'OK' | 'Not OK' | 'Unavailable' | 'Checking...';
 
 export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
-  const apiClient = useMemo(() => {
-    return createApiClient(apiBase);
-  }, [apiBase]);
+  const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
 
   // Use shared model status context
   const {
@@ -27,8 +24,6 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
   } = useModelStatus();
 
   const [health, setHealth] = useState<StatusType>('Checking...');
-  const [config, setConfig] = useState<HealthResponse['config']>(undefined);
-  const [showConfig, setShowConfig] = useState(false);
 
   // Derive face status from context
   const faceInfo = {
@@ -43,12 +38,8 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
     try {
       // Refresh the shared context (which makes the API call)
       await refreshStatus();
-      // Fetch config separately since it's only needed in StatusPanel
       const d = await apiClient.getHealth();
       setHealth(d.ok ? 'OK' : 'Not OK');
-      if (d.config) {
-        setConfig(d.config);
-      }
     } catch (err) {
       console.error('Health check failed:', err);
       setHealth('Unavailable');
@@ -175,39 +166,7 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
             <span>{isLoadingModel ? 'Loading Model...' : 'Load Model'}</span>
           </button>
         )}
-
-        {/* Config Toggle */}
-        <span className="ml-2 text-gray-300">|</span>
-        <button
-          onClick={() => setShowConfig(!showConfig)}
-          className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all"
-          title="Toggle configuration details"
-        >
-          {showConfig ? '▼ Hide Config' : '▶ Show Config'}
-        </button>
       </div>
-
-      {/* Config Panel */}
-      {showConfig && config && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono">
-          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
-            <span className="text-gray-600 font-semibold">API URL:</span>
-            <span className="text-gray-900 break-all">{apiBase}</span>
-
-            <span className="text-gray-600 font-semibold">Face Service URL:</span>
-            <span className="text-gray-900 break-all">{config.faceServiceUrl}</span>
-
-            <span className="text-gray-600 font-semibold">Port:</span>
-            <span className="text-gray-900">{config.port}</span>
-
-            <span className="text-gray-600 font-semibold">Images Dir:</span>
-            <span className="text-gray-900">{config.imagesDir}</span>
-
-            <span className="text-gray-600 font-semibold">CORS Origin:</span>
-            <span className="text-gray-900">{config.corsOrigin}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:build": "docker compose build",
+    "docker:build": "GIT_COMMIT=$(git rev-parse HEAD) docker compose build",
     "docker:restart": "docker compose restart",
     "prod:build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
     "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start"

@@ -1,4 +1,4 @@
-import { HealthResponse } from '@praapt/shared';
+import { FaceHealth, HealthResponse } from '@praapt/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -13,24 +13,27 @@ const router = Router();
 
 router.get('/health', async (_req, res) => {
   const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
-  let face: { ok: boolean; modelsLoaded?: boolean; model?: string | null };
+  let face: FaceHealth = { ok: false, modelsLoaded: false, model: null, commit: 'unknown' };
 
   try {
     const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
     const j = await r.json();
     face = {
+      ...face,
       ok: Boolean(j?.ok),
       modelsLoaded: Boolean(j?.modelsLoaded),
-      model: j?.model || null,
+      model: j?.model ?? face.model,
+      commit: j?.commit ?? face.commit,
     };
   } catch {
-    face = { ok: false };
+    // face already initialized with defaults
   }
 
   const payload: HealthResponse = {
     ok: true,
     service: 'api',
     env: NODE_ENV,
+    commit: process.env.GIT_COMMIT || process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown',
     face,
     config: {
       faceServiceUrl: faceUrl,
