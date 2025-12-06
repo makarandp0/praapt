@@ -12,12 +12,14 @@ Repository Map (high signal first)
    - src/db.ts: Database connection via Drizzle/PG.
    - src/schema.ts: Drizzle schema definitions.
    - drizzle/: SQL migrations.
+   - **Note:** Drizzle migrations are tracked in a separate `drizzle` schema (not `public`). Query `drizzle.__drizzle_migrations` to check migration history.
 4. apps/web (React + Vite)
-   - src/main.tsx | src/main.js: Frontend bootstrap.
-   - src/App.tsx | src/App.js: Primary app component with routing.
-   - src/pages/: Page components (Login, Signup, Library).
+   - src/main.tsx: Frontend bootstrap.
+   - src/App.tsx: Primary app component with routing.
+   - src/pages/: Page components (Login, Signup, Library, User).
    - src/contexts/: React contexts (AuthContext).
-   - src/components/_, src/lib/_: UI and helpers.
+   - src/hooks/: Custom React hooks (e.g., useFaceDetection).
+   - src/components/, src/lib/: UI and helpers.
    - index.css, tailwind config: Styling.
 5. packages/shared (Shared Types)
    - src/index.ts: Zod schemas and TypeScript types shared between API and web.
@@ -30,7 +32,7 @@ Paths To Prioritize
 - packages/shared/src/index.ts (shared Zod schemas - check first for API contracts)
 - apps/api/src/\*_/_.ts
 - apps/api/drizzle/\*.sql
-- apps/web/src/\*_/_.{ts,tsx,js,jsx,css}
+- apps/web/src/\*_/_.{ts,tsx,css}
 - README.md, package.json, apps/\*/package.json, docker-compose.yml
 
 Paths To Avoid (unless directly needed)
@@ -85,7 +87,7 @@ Task-Focused Entry Points (quick checklist)
 
 - API route/behavior issue: apps/api/src/routes/\*.ts, apps/api/src/index.ts
 - DB schema/seed change: apps/api/src/schema.ts, apps/api/drizzle/\*.sql
-- Frontend UI/state change: apps/web/src/App.tsx, apps/web/src/pages/_.tsx, apps/web/src/contexts/_.tsx
+- Frontend UI/state change: apps/web/src/App.tsx, apps/web/src/pages/_.tsx, apps/web/src/contexts/_.tsx, apps/web/src/hooks/\*.ts
 - API contracts/types: packages/shared/src/index.ts (Zod schemas)
 - Project setup/scripts: README.md, root/package.json, apps/_/package.json, scripts/_.mjs
 
@@ -93,3 +95,7 @@ If In Doubt
 
 - Ask for the minimal file list needed for context.
 - Summarize assumptions and confirm before opening more files.
+
+Learning From Mistakes
+
+When you make a mistake or discover something unexpected about this codebase, **add a note to this file** to prevent repeating the same mistake. This helps future LLM sessions avoid known pitfalls.

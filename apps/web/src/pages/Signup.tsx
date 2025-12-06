@@ -1,9 +1,11 @@
 import { SignupBody, SignupResponse, ErrorResponse } from '@praapt/shared';
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
+import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface SignupProps {
   apiBase: string;
@@ -18,26 +20,31 @@ export function Signup({ apiBase }: SignupProps) {
   const [email, setEmail] = useState('');
 
   // Camera state
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cameraRef = useRef<CameraPreviewRef | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
+  // Face detection state
+  const [faceDetection, setFaceDetection] = useState<FaceDetectionResult>({
+    faceDetected: false,
+    faceCount: 0,
+    isLoading: true,
+    error: null,
+    confidence: null,
+    boundingBox: null,
+    detectionMethod: null,
+  });
+
+  // Handle face detection updates from CameraPreview
+  const handleFaceDetectionChange = useCallback((result: FaceDetectionResult) => {
+    setFaceDetection(result);
+  }, []);
+
   // Submission state
   const [status, setStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Attach stream to video element when camera opens
-  useEffect(() => {
-    if (cameraOpen && streamRef.current && videoRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch((err) => {
-        setStatus(`Video play error: ${err instanceof Error ? err.message : 'unknown'}`);
-      });
-    }
-  }, [cameraOpen]);
 
   /** Open the webcam */
   const openCamera = useCallback(async () => {
@@ -65,17 +72,9 @@ export function Signup({ apiBase }: SignupProps) {
 
   /** Capture a frame from the video */
   const capturePhoto = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+    const dataUrl = cameraRef.current?.captureFrame();
+    if (!dataUrl) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
     setCapturedImage(dataUrl);
     closeCamera();
     setStatus('Photo captured! Review and submit.');
@@ -234,16 +233,23 @@ export function Signup({ apiBase }: SignupProps) {
 
           {/* Video preview (when camera is open) */}
           {cameraOpen && (
-            <div className="relative">
-              <video
-                ref={videoRef}
-                className="w-full rounded-lg border border-gray-300"
-                autoPlay
-                playsInline
-                muted
+            <div className="space-y-2">
+              <CameraPreview
+                ref={cameraRef}
+                stream={streamRef.current}
+                isActive={cameraOpen}
+                onFaceDetectionChange={handleFaceDetectionChange}
               />
-              <div className="mt-2 flex gap-2">
-                <Button type="button" onClick={capturePhoto}>
+
+              {/* Waiting for face message */}
+              {!faceDetection.faceDetected && !faceDetection.isLoading && (
+                <div className="text-center text-sm text-orange-600">
+                  Position your face in front of the camera
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button type="button" onClick={capturePhoto} disabled={!faceDetection.faceDetected}>
                   Capture
                 </Button>
                 <Button type="button" variant="outline" onClick={closeCamera}>
@@ -295,9 +301,6 @@ export function Signup({ apiBase }: SignupProps) {
             onChange={handleFileUpload}
             className="hidden"
           />
-
-          {/* Hidden canvas for capturing */}
-          <canvas ref={canvasRef} className="hidden" />
         </div>
 
         {/* Status message */}
