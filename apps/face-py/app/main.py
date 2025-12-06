@@ -41,6 +41,7 @@ def health() -> Dict[str, Any]:
     return {
         "ok": True,
         "service": "face",
+        "commit": os.environ.get("GIT_COMMIT") or os.environ.get("RAILWAY_GIT_COMMIT_SHA") or "unknown",
         "modelsLoaded": model_info["loaded"],
         "model": model_info["model"],
         "cache": {
@@ -140,5 +141,3 @@ def post_clear_cache() -> Dict[str, Any]:
     """
     result = clear_cache()
     return {"ok": True, "message": "Cache cleared", **result}
-
-

@@ -47,15 +47,20 @@ export const CompareImagesResponseSchema = z.object({
 export type CompareImagesResponse = z.infer<typeof CompareImagesResponseSchema>;
 
 // Health check
+export const FaceHealthSchema = z.object({
+  ok: z.boolean(),
+  modelsLoaded: z.boolean().optional(),
+  model: z.string().nullable().optional(),
+  commit: z.string().optional(),
+});
+export type FaceHealth = z.infer<typeof FaceHealthSchema>;
+
 export const HealthResponseSchema = z.object({
   ok: z.literal(true),
   service: z.string(),
   env: z.string(),
-  face: z.object({
-    ok: z.boolean(),
-    modelsLoaded: z.boolean().optional(),
-    model: z.string().nullable().optional(),
-  }),
+  commit: z.string().optional(),
+  face: FaceHealthSchema,
   config: z
     .object({
       faceServiceUrl: z.string(),
