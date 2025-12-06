@@ -194,6 +194,71 @@ Railway automatically redeploys when you push to your connected branch. To confi
 2. Choose branch (e.g., `main` or `production`)
 3. Enable **"Auto-deploy"**
 
+## Database Migrations
+
+Migrations run **automatically** on every deployment as part of container startup. The API container runs `apps/api/dist/scripts/migrate.js` before starting the app, which applies any pending migrations.
+
+### How It Works
+
+1. **Container starts** → Entrypoint script runs migrations → App starts
+2. Knex tracks applied migrations in `knex_migrations` table
+3. Only pending migrations are applied; already-run migrations are skipped
+4. If migrations fail, the container exits (deploy fails)
+
+### Local Development
+
+```bash
+# Start local Postgres
+docker compose up db -d
+
+# Run migrations
+npm run migrate --workspace=@praapt/api
+
+# Rollback last batch (if needed)
+npm run rollback --workspace=@praapt/api
+
+# Run seeds (sample data)
+npm run seed --workspace=@praapt/api
+```
+
+### Creating New Migrations
+
+```bash
+# Create a new migration file (from apps/api directory)
+cd apps/api
+npx knex migrate:make your_migration_name --knexfile knexfile.ts -x ts
+
+# Or using the full path from repo root
+node --loader ts-node/esm node_modules/knex/bin/cli.js \
+  --knexfile apps/api/knexfile.ts \
+  migrate:make your_migration_name -x ts
+```
+
+Migration files go in `apps/api/migrations/` and are compiled to JS during build.
+
+### Production Considerations
+
+- **Migrations are forward-only** – Never run rollbacks in production automatically
+- **Test migrations locally first** – Run against a copy of production data if possible
+- **Keep migrations small** – Break large schema changes into multiple migrations
+- **Add indexes separately** – Create indexes in a separate migration to minimize lock time
+- **No destructive changes** – Avoid `DROP TABLE` or removing columns in the same deploy as code changes
+
+### Manual Migration Commands (Production)
+
+If you need to run migrations manually on Railway:
+
+```bash
+# SSH into Railway service
+railway run --service api bash
+
+# Check migration status
+node apps/api/dist/scripts/migrate.js
+
+# Or use Railway's shell directly
+railway shell --service api
+```
+
 ## Cost Optimization
 
 - **Starter Plan:** ~$5/month for hobby projects
