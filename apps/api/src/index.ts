@@ -1,232 +1,48 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import {
-  CompareImagesBodySchema,
-  HealthResponse,
-  ListImagesResponseSchema,
-  SaveImageBodySchema,
-  SaveImageResponseSchema,
-} from '@praapt/shared';
-import express, { json, Router, static as expressStatic } from 'express';
+import express, { json, static as expressStatic } from 'express';
 
-// import { db } from './db.js';
 import { NODE_ENV } from './env.js';
-import { compareFiles as faceCompareFiles, loadModel as faceLoadModel } from './faceClient.js';
+import authRoutes from './routes/auth.js';
+import healthRoutes from './routes/health.js';
+import imagesRoutes from './routes/images.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-// Allow larger JSON payloads for base64 images in prototypes
+
+// Allow larger JSON payloads for base64 images
 app.use(json({ limit: '10mb' }));
 
-// Configure images directory (env IMAGES_DIR or default to ./images under CWD)
-const IMAGES_DIR = process.env.IMAGES_DIR
-  ? path.resolve(process.env.IMAGES_DIR)
-  : path.join(process.cwd(), 'images');
-fs.mkdirSync(IMAGES_DIR, { recursive: true });
-
-// Helpers
-function sanitizeName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '-')
-    .replace(/-+/g, '-');
-}
-
-function parseImageToBuffer(image: string): { buffer: Buffer; ext: string } {
-  // Supports data URL or raw base64; determine ext from mime if provided
-  if (image.startsWith('data:')) {
-    const [meta, b64] = image.split(',');
-    const m = /data:(.+?);base64/.exec(meta || '');
-    const mime = (m?.[1] || 'image/jpeg').toLowerCase();
-    const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
-    return { buffer: Buffer.from(b64, 'base64'), ext };
-  }
-  // Default to jpeg extension when not specified
-  return { buffer: Buffer.from(image, 'base64'), ext: 'jpg' };
-}
-
-function listImageFiles(): string[] {
-  const entries = fs.readdirSync(IMAGES_DIR, { withFileTypes: true });
-  const files = entries
-    .filter((e) => e.isFile())
-    .map((e) => e.name)
-    .filter((n) => /\.(jpg|jpeg|png|webp)$/i.test(n))
-    .sort();
-  return files;
-}
-
-function fileNameFor(name: string, ext: string): string {
-  return `${sanitizeName(name)}.${ext}`;
-}
-
-// Minimal CORS for dev: allow browser requests from Vite
+// CORS middleware for dev
 app.use((req, res, next) => {
   const origin = process.env.CORS_ORIGIN || '*';
   res.header('Access-Control-Allow-Origin', origin);
   res.header('Vary', 'Origin');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  // End preflight early
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }
   return next();
 });
 
-// API routes (all prefixed with /api in production when serving static files)
-const apiRouter = Router();
-
-apiRouter.get('/health', async (_req, res) => {
-  const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
-  let face: { ok: boolean; modelsLoaded?: boolean; model?: string | null } = { ok: false };
-  try {
-    const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
-    const j = await r.json();
-    face = {
-      ok: Boolean(j?.ok),
-      modelsLoaded: Boolean(j?.modelsLoaded),
-      model: j?.model || null,
-    };
-  } catch {
-    face = { ok: false };
-  }
-  const payload: HealthResponse = {
-    ok: true,
-    service: 'api',
-    env: NODE_ENV,
-    face,
-    config: {
-      faceServiceUrl: faceUrl,
-      port: process.env.PORT || '3000',
-      imagesDir: IMAGES_DIR,
-      corsOrigin: process.env.CORS_ORIGIN || '*',
-    },
-  };
-  return res.json(payload);
-});
-
-apiRouter.post('/load-model', async (req, res) => {
-  try {
-    const { model } = req.body as { model?: string };
-    if (!model || (model !== 'buffalo_l' && model !== 'buffalo_s')) {
-      return res.status(400).json({ error: "model must be 'buffalo_l' or 'buffalo_s'" });
-    }
-    await faceLoadModel(model);
-    return res.json({ ok: true, message: `Model '${model}' loaded successfully`, model });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('load-model error', err);
-    return res.status(500).json({ error: 'failed to load model' });
-  }
-});
-
-// apiRouter.get('/users', async (_req, res) => {
-//   const users = await db('users').select('*').orderBy('id', 'asc');
-//   res.json(users);
-// });
-
-// apiRouter.post('/users', async (req, res) => {
-//   const { email, name } = req.body ?? {};
-//   if (!email) return res.status(400).json({ error: 'email required' });
-//   const [user] = await db('users').insert({ email, name }).returning('*');
-//   res.status(201).json(user);
-// });
-
-// 1) Capture and name the image. Body: { name: string, image: string }
-apiRouter.post('/images', async (req, res) => {
-  try {
-    const { name, image } = SaveImageBodySchema.parse(req.body ?? {});
-    const { buffer, ext } = parseImageToBuffer(image);
-    const fileName = fileNameFor(name, ext);
-    const dest = path.join(IMAGES_DIR, fileName);
-    fs.writeFileSync(dest, buffer);
-    const payload = { ok: true as const, name: sanitizeName(name), file: fileName };
-    // Validate server response shape during dev
-    SaveImageResponseSchema.parse(payload);
-    return res.status(201).json(payload);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('save image error', err);
-    return res.status(500).json({ error: 'failed to save image' });
-  }
-});
-
-// 2) Return names of all images (filename stems)
-apiRouter.get('/images', (_req, res) => {
-  const files = listImageFiles();
-  const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
-  const payload = { ok: true as const, images: names, files };
-  ListImagesResponseSchema.parse(payload);
-  res.json(payload);
-});
-
-// 2.5) Serve individual image by name
-apiRouter.get('/images/:name', (req, res) => {
-  const { name } = req.params;
-  const files = listImageFiles();
-  const base = sanitizeName(String(name));
-  const file = files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base);
-  if (!file) return res.status(404).json({ error: `image not found: ${name}` });
-  const filePath = path.join(IMAGES_DIR, file);
-  return res.sendFile(filePath);
-});
-
-// 3) Compare two images by names (sha256 equality)
-// Body: { a: string, b: string }
-apiRouter.post('/images/compare', async (req, res) => {
-  try {
-    const { a, b } = CompareImagesBodySchema.parse(req.body ?? {});
-    const files = listImageFiles();
-    const findFile = (key: string) => {
-      const base = sanitizeName(String(key));
-      const withExt =
-        files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base) ||
-        files.find((f) => f === key);
-      return withExt ? path.join(IMAGES_DIR, withExt) : null;
-    };
-    const A = findFile(a);
-    const B = findFile(b);
-    if (!A) return res.status(404).json({ error: `image not found: ${a}` });
-    if (!B) return res.status(404).json({ error: `image not found: ${b}` });
-
-    // Face match via Python microservice
-    const result = await faceCompareFiles(A, B);
-    const { distance, threshold, match, meta } = result;
-    return res.json({
-      ok: true,
-      same: Boolean(match),
-      algo: 'face-arcface' as const,
-      a,
-      b,
-      distance,
-      threshold,
-      timing_ms: meta?.timing_ms,
-      model: meta?.model,
-    });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('compare error', err);
-    return res.status(500).json({ error: 'failed to compare images' });
-  }
-});
-
 // Mount API routes
-app.use('/api', apiRouter);
+app.use('/api', healthRoutes);
+app.use('/api/images', imagesRoutes);
+app.use('/api/auth', authRoutes);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {
-  // In Docker: /app/apps/web/dist (from root /app)
-  // In dev: relative from this file location
   const staticPath = process.env.STATIC_PATH
     ? path.resolve(process.env.STATIC_PATH)
     : path.join(__dirname, '../../web/dist');
 
+  // eslint-disable-next-line no-console
   console.log(`Serving static files from: ${staticPath}`);
   app.use(expressStatic(staticPath));
+
   // SPA fallback - serve index.html for non-API routes
   app.get('*', (_req, res) => {
     res.sendFile(path.join(staticPath, 'index.html'));
@@ -238,13 +54,3 @@ app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`API listening on http://localhost:${port}`);
 });
-
-// process.on('SIGINT', async () => {
-//   await db.destroy();
-//   process.exit(0);
-// });
-
-// process.on('SIGTERM', async () => {
-//   await db.destroy();
-//   process.exit(0);
-// });
