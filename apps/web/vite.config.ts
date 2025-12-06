@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 
-import * as react from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 // Verify this config file is actually loaded
@@ -25,7 +25,7 @@ function getGitCommit(): string {
 }
 
 export default defineConfig({
-  plugins: [react.default()],
+  plugins: [react()],
   server: {
     port: 5173,
   },

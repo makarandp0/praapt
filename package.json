@@ -40,7 +40,8 @@
     "docker:build": "GIT_COMMIT=$(git rev-parse HEAD) docker compose build",
     "docker:restart": "docker compose restart",
     "prod:build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
-    "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start"
+    "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.10.0",
@@ -51,6 +52,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "husky": "^9.1.7",
     "knip": "^5.71.0",
     "prettier": "^3.3.3"
   }
