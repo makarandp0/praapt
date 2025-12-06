@@ -11,9 +11,7 @@ interface StatusPanelProps {
 type StatusType = 'OK' | 'Not OK' | 'Unavailable' | 'Checking...';
 
 export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
-  console.log('[StatusPanel] Component render');
   const apiClient = useMemo(() => {
-    console.log('[StatusPanel] Creating new API client');
     return createApiClient(apiBase);
   }, [apiBase]);
 
@@ -40,8 +38,6 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
   };
 
   const fetchHealth = useCallback(async () => {
-    console.log('[StatusPanel] fetchHealth called');
-    console.log('Fetching health status from:', apiBase);
     setHealth('Checking...');
 
     try {
@@ -49,7 +45,6 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
       await refreshStatus();
       // Fetch config separately since it's only needed in StatusPanel
       const d = await apiClient.getHealth();
-      console.log('[StatusPanel] Health response received:', d);
       setHealth(d.ok ? 'OK' : 'Not OK');
       if (d.config) {
         setConfig(d.config);
@@ -58,10 +53,9 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
       console.error('Health check failed:', err);
       setHealth('Unavailable');
     }
-  }, [apiBase, apiClient, refreshStatus]);
+  }, [apiClient, refreshStatus]);
 
   useEffect(() => {
-    console.log('[StatusPanel] useEffect triggered - calling fetchHealth');
     fetchHealth();
   }, [fetchHealth]);
 
