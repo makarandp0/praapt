@@ -5,7 +5,7 @@ import knex, { Knex } from 'knex';
 config();
 
 const connectionString =
-  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/appdb';
+  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/praaptdb';
 
 export const db: Knex = knex({
   client: 'pg',

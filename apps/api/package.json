@@ -9,6 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "migrate": "node --loader ts-node/esm ../../node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:latest",
+    "migrate:status": "node --loader ts-node/esm ../../node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:status",
+    "migrate:make": "node --loader ts-node/esm ../../node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:make -x ts",
     "rollback": "node --loader ts-node/esm ../../node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:rollback",
     "seed": "node --loader ts-node/esm ../../node_modules/knex/bin/cli.js --knexfile knexfile.ts seed:run",
     "typecheck": "tsc --noEmit",
