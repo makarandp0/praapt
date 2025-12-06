@@ -1,7 +1,8 @@
 FROM python:3.11-slim
 
-# Accept git commit hash as build arg
-ARG GIT_COMMIT=unknown
+# Accept git commit hash as build arg (Railway provides RAILWAY_GIT_COMMIT_SHA at build time)
+ARG RAILWAY_GIT_COMMIT_SHA=unknown
+ARG GIT_COMMIT=${RAILWAY_GIT_COMMIT_SHA}
 ENV GIT_COMMIT=${GIT_COMMIT}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -10,8 +10,9 @@ RUN npm install --ignore-scripts
 
 FROM deps AS build
 WORKDIR /app
-# Accept git commit hash as build arg
-ARG GIT_COMMIT=unknown
+# Accept git commit hash as build arg (Railway provides RAILWAY_GIT_COMMIT_SHA at build time)
+ARG RAILWAY_GIT_COMMIT_SHA=unknown
+ARG GIT_COMMIT=${RAILWAY_GIT_COMMIT_SHA}
 ENV GIT_COMMIT=${GIT_COMMIT}
 # Copy the full repo (needed for TypeScript sources)
 COPY . .
@@ -27,8 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
     lsof \
     && rm -rf /var/lib/apt/lists/*
-# Accept git commit hash for runtime (must redeclare ARG - doesn't carry over from build stage)
-ARG GIT_COMMIT=unknown
+# Accept git commit hash for runtime (must redeclare ARG - Railway provides RAILWAY_GIT_COMMIT_SHA)
+ARG RAILWAY_GIT_COMMIT_SHA=unknown
+ARG GIT_COMMIT=${RAILWAY_GIT_COMMIT_SHA}
 ENV GIT_COMMIT=${GIT_COMMIT}
 ENV NODE_ENV=production
 ENV STATIC_PATH=/app/apps/web/dist
