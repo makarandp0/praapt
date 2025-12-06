@@ -102,7 +102,8 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {/* Step 1: API Status */}
         <button
           onClick={fetchHealth}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(health)}`}
@@ -111,37 +112,61 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
           <span>{getStatusIcon(health)}</span>
           <span>API</span>
         </button>
-        <button
-          onClick={fetchHealth}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(faceInfo.status)}`}
-          title="Click to refresh status"
-        >
-          <span>{getStatusIcon(faceInfo.status)}</span>
-          <span>Face</span>
-          {faceInfo.status === 'OK' && (
-            <span className="ml-1 text-[10px] opacity-75">
-              {faceInfo.model ? <>({faceInfo.model})</> : <>(not loaded)</>}
-            </span>
-          )}
-        </button>
 
-        {/* Model Loading Control */}
-        {faceInfo.status === 'OK' && !faceInfo.model && (
+        <span className="text-gray-400">→</span>
+
+        {/* Step 2: Face Service Status */}
+        {faceInfo.status === 'Unavailable' && !isChecking ? (
+          <button
+            onClick={fetchHealth}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
+            title="The face service is sleeping to save resources. Click to wake it up (may take 10-30 seconds)"
+          >
+            <span>💤</span>
+            <span>Wake Up Face Service</span>
+          </button>
+        ) : (
+          <button
+            onClick={fetchHealth}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${getStatusColor(faceInfo.status)}`}
+            title="Click to refresh status"
+          >
+            <span>{getStatusIcon(faceInfo.status)}</span>
+            <span>Face</span>
+          </button>
+        )}
+
+        <span className="text-gray-400">→</span>
+
+        {/* Step 3: Model Status */}
+        {faceInfo.status !== 'OK' ? (
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium bg-gray-50 text-gray-400 border-gray-200">
+            <span>−</span>
+            <span>Model</span>
+          </span>
+        ) : faceInfo.model ? (
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium bg-green-100 text-green-800 border-green-200">
+            <span>✓</span>
+            <span>Model ({faceInfo.model})</span>
+          </span>
+        ) : (
           <button
             onClick={() => handleLoadModel('buffalo_l')}
             disabled={isLoadingModel}
-            className={`px-2 py-1 rounded text-xs font-medium border transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all hover:scale-105 active:scale-95 ${
               isLoadingModel
-                ? 'bg-gray-100 text-gray-500 border-gray-300 cursor-wait'
-                : 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500 cursor-pointer'
+                ? 'bg-yellow-100 text-yellow-800 border-yellow-200 cursor-wait'
+                : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 cursor-pointer'
             }`}
             title="Load face recognition model"
           >
-            {isLoadingModel ? '⟳ Loading...' : 'Load Model'}
+            <span>{isLoadingModel ? '⟳' : '▶'}</span>
+            <span>{isLoadingModel ? 'Loading Model...' : 'Load Model'}</span>
           </button>
         )}
 
         {/* Config Toggle */}
+        <span className="ml-2 text-gray-300">|</span>
         <button
           onClick={() => setShowConfig(!showConfig)}
           className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded bg-white hover:bg-gray-50 transition-all"

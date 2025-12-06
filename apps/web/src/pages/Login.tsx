@@ -1,6 +1,6 @@
 import { LoginBody, LoginResponse, LoginFailureResponse, ErrorResponse } from '@praapt/shared';
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
 import { Button } from '../components/ui/button';
@@ -14,12 +14,8 @@ interface LoginProps {
 
 export function Login({ apiBase }: LoginProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
-
-  // Get the intended destination after login
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/user';
 
   // Check if the login functionality is available
   const isModelReady = modelsLoaded && model !== null;
@@ -133,12 +129,12 @@ export function Login({ apiBase }: LoginProps) {
         topMatches: successData.topMatches,
       });
       setStatus(`Welcome back, ${successData.user.name || successData.user.email}!`);
-      setTimeout(() => navigate(from, { replace: true }), 500);
+      setTimeout(() => navigate('/user', { replace: true }), 500);
     } catch (err) {
       setStatus(`Network error: ${err instanceof Error ? err.message : 'unknown'}`);
       setIsSubmitting(false);
     }
-  }, [apiBase, login, navigate, from, closeCamera]);
+  }, [apiBase, login, navigate, closeCamera]);
 
   // Auto-login effect with exponential backoff
   useEffect(() => {
