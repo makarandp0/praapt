@@ -18,7 +18,7 @@ npm install
 docker compose up -d db face
 
 # Setup database
-npm run migrate
+npm run db:push -w @praapt/api
 
 # Start app
 npm run dev:all
@@ -43,12 +43,110 @@ npm run dev:all   # Start API + frontend
 npm run dev       # API only (:3000)
 npm run dev:web   # Frontend only (:5173)
 
-npm run migrate   # Run database migrations
-npm run seed      # Add sample data (optional)
-
 npm run verify    # Type-check, lint, and build
 
 npx tsx apps/face-py/test-compare-all.ts  # Test: compare all images (requires face service)
+```
+
+## Database Commands (Drizzle ORM)
+
+The project uses **Drizzle ORM** for typesafe database access. Schema is defined in `apps/api/src/schema.ts`.
+
+```bash
+# Run all migrations (schema + custom)
+npm run migrate
+
+# Rollback last custom migration
+npm run rollback
+
+# Development - apply schema changes directly (no migration files)
+npm run db:push -w @praapt/api
+
+# Generate SQL migration file from schema changes
+npm run db:generate -w @praapt/api
+
+# Open Drizzle Studio (visual database browser)
+npm run db:studio -w @praapt/api
+```
+
+### Reset Local Database
+
+To completely reset your local database (removes all data):
+
+```bash
+# Stop containers and remove volumes
+docker compose down -v
+
+# Start fresh database
+docker compose up -d db
+
+# Run migrations
+npm run migrate
+```
+
+### Schema Changes Workflow
+
+1. **Edit schema:** Modify `apps/api/src/schema.ts`
+2. **Development:** Run `npm run db:push -w @praapt/api` to apply changes directly
+3. **Production:** Run `npm run db:generate -w @praapt/api` to create a migration file
+
+### Custom Migrations (with TypeScript code)
+
+For migrations that need code logic (data transformations, seeding, etc.), create a file in `apps/api/src/migrations/`:
+
+```typescript
+// apps/api/src/migrations/001_seed_admin_user.ts
+import { eq } from 'drizzle-orm';
+import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import * as schema from '../schema.js';
+
+type DB = PostgresJsDatabase<typeof schema>;
+
+export async function up(db: DB): Promise<void> {
+  const existing = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.email, 'admin@example.com'));
+  if (existing.length === 0) {
+    await db.insert(schema.users).values({ email: 'admin@example.com', name: 'Admin' });
+  }
+}
+
+export async function down(db: DB): Promise<void> {
+  await db.delete(schema.users).where(eq(schema.users.email, 'admin@example.com'));
+}
+```
+
+Custom migrations:
+
+- Are stored in `apps/api/src/migrations/` (one file per migration)
+- Must export `up(db)` and `down(db)` functions
+- Use numeric prefix for ordering (e.g., `001_`, `002_`)
+- Run automatically after schema migrations via `npm run migrate`
+- Are tracked in `custom_migrations` table (won't run twice)
+- Can be rolled back with `npm run rollback`
+
+### Typesafe Queries
+
+```typescript
+import { db, users, User, NewUser } from './db.js';
+import { eq } from 'drizzle-orm';
+
+// SELECT - returns User[]
+const allUsers = await db.select().from(users);
+
+// SELECT with WHERE
+const user = await db.select().from(users).where(eq(users.email, 'alice@example.com'));
+
+// INSERT with type checking
+const newUser: NewUser = { email: 'dave@example.com', name: 'Dave' };
+await db.insert(users).values(newUser).returning();
+
+// UPDATE
+await db.update(users).set({ name: 'Alice Smith' }).where(eq(users.id, 1));
+
+// DELETE
+await db.delete(users).where(eq(users.id, 1));
 ```
 
 ## Docker Commands
@@ -111,10 +209,12 @@ Production serves frontend at `/` and API at `/api/*` from port 3000.
 
 **Workspaces:**
 
-- `apps/api` – Express + TypeScript + Knex + PostgreSQL
+- `apps/api` – Express + TypeScript + Drizzle ORM + PostgreSQL
 - `apps/web` – React + Vite + Tailwind
 - `apps/face-py` – FastAPI + InsightFace + ONNX Runtime
 - `packages/shared` – Shared TypeScript types
+
+**Database Schema:** `apps/api/src/schema.ts` (typesafe, auto-generates migrations)
 
 **API Endpoints:**
 

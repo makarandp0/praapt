@@ -30,6 +30,7 @@ WORKDIR /app
 
 # Copy built artifacts: API dist, web dist, shared dist, and node_modules
 COPY --from=build /app/apps/api/dist /app/apps/api/dist
+COPY --from=build /app/apps/api/drizzle /app/apps/api/drizzle
 COPY --from=build /app/apps/web/dist /app/apps/web/dist
 COPY --from=build /app/packages/shared/dist /app/packages/shared/dist
 COPY --from=deps /app/node_modules /app/node_modules
