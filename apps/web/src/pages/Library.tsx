@@ -8,9 +8,7 @@ type Props = { apiBase: string };
 const MAX_IMAGES = 8;
 
 export function Library({ apiBase }: Props) {
-  console.log('[Library] Component render');
   const api = useMemo(() => {
-    console.log('[Library] Creating new API client');
     return createApiClient(apiBase);
   }, [apiBase]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -126,9 +124,7 @@ export function Library({ apiBase }: Props) {
     setStatus('Saving image...');
     try {
       const slotName = `slot-${String(addingToSlot + 1).padStart(2, '0')}`;
-      console.log('Saving to slot:', slotName, 'existing:', imageSlots[addingToSlot]);
       await api.saveImage({ name: slotName, image: dataUrl });
-      console.log('Save successful, refreshing...');
       await refresh();
       setSlotTimestamps((prev) => ({ ...prev, [addingToSlot]: `${Date.now()}-${Math.random()}` }));
       closeCamera();
@@ -165,9 +161,7 @@ export function Library({ apiBase }: Props) {
       // Save immediately (backend will overwrite if file exists)
       try {
         const slotName = `slot-${String(slotToUpdate + 1).padStart(2, '0')}`;
-        console.log('Uploading to slot:', slotName, 'existing:', imageSlots[slotToUpdate]);
         await api.saveImage({ name: slotName, image: dataUrl });
-        console.log('Upload successful, refreshing...');
         await refresh();
         const newTimestamp = `${Date.now()}-${Math.random()}`;
         setSlotTimestamps((prev) => {
@@ -181,7 +175,6 @@ export function Library({ apiBase }: Props) {
           );
           return { ...prev, [slotToUpdate]: newTimestamp };
         });
-        console.log('Refresh complete, new timestamp:', newTimestamp);
         setAddingToSlot(null);
         setStatus('');
       } catch (err: unknown) {
