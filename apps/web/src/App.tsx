@@ -18,32 +18,32 @@ function NavBar() {
   const { isAuthenticated, user, logout } = useAuth();
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold">Praapt</h1>
-        <nav className="flex gap-2">
-          {isAuthenticated ? (
-            <>
-              <Link to="/user" className="text-blue-600 hover:underline">
-                Profile
-              </Link>
-              <Link to="/library" className="text-blue-600 hover:underline">
-                Library
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="text-blue-600 hover:underline">
-                Login
-              </Link>
-              <Link to="/signup" className="text-blue-600 hover:underline">
-                Signup
-              </Link>
-            </>
-          )}
-        </nav>
-      </div>
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Praapt</h1>
+          <nav className="flex gap-2">
+            {isAuthenticated ? (
+              <>
+                <Link to="/user" className="text-blue-600 hover:underline">
+                  Profile
+                </Link>
+                <Link to="/library" className="text-blue-600 hover:underline">
+                  Library
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-blue-600 hover:underline">
+                  Login
+                </Link>
+                <Link to="/signup" className="text-blue-600 hover:underline">
+                  Signup
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
         {isAuthenticated && user && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Hello, {user.name || user.email}</span>
@@ -52,8 +52,8 @@ function NavBar() {
             </button>
           </div>
         )}
-        <StatusPanel apiBase={API_BASE} />
       </div>
+      <StatusPanel apiBase={API_BASE} />
     </div>
   );
 }
