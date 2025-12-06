@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -16,42 +17,109 @@ const API_BASE =
 /** Navigation bar with auth-aware links */
 function NavBar() {
   const { isAuthenticated, user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">Praapt</h1>
-          <nav className="flex gap-2">
-            {isAuthenticated ? (
-              <>
-                <Link to="/user" className="text-blue-600 hover:underline">
-                  Profile
-                </Link>
-                <Link to="/library" className="text-blue-600 hover:underline">
-                  Library
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-blue-600 hover:underline">
-                  Login
-                </Link>
-                <Link to="/signup" className="text-blue-600 hover:underline">
-                  Signup
-                </Link>
-              </>
-            )}
-          </nav>
         </div>
-        {isAuthenticated && user && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Hello, {user.name || user.email}</span>
-            <button onClick={logout} className="text-red-600 hover:underline text-sm">
-              Logout
-            </button>
-          </div>
-        )}
+
+        {/* Menu button and dropdown */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {menuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+              {isAuthenticated ? (
+                <>
+                  {user && (
+                    <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                      {user.name || user.email}
+                    </div>
+                  )}
+                  <Link
+                    to="/user"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/library"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Library
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      closeMenu();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Signup
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <StatusPanel apiBase={API_BASE} />
     </div>
