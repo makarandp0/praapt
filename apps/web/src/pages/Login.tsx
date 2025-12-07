@@ -48,8 +48,8 @@ export function Login({ apiBase }: LoginProps) {
   const [autoLoginEnabled, setAutoLoginEnabled] = useState(true);
   const [retryDelay, setRetryDelay] = useState(2); // Start with 2 seconds
   const [countdown, setCountdown] = useState(2);
-  const autoLoginRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const autoLoginRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle face detection updates from CameraPreview
   const handleFaceDetectionChange = useCallback((result: FaceDetectionResult) => {
