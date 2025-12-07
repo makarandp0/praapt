@@ -73,20 +73,8 @@ jobs:
       - name: Run migrations
         run: npm run migrate
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build API
-        run: npm run build
-
-      - name: Verify build output
-        run: npm run verify:build
+      - name: Run CI Suite
+        run: npm run ci
 
       - name: Build Docker image (API)
         run: docker build --build-arg GIT_COMMIT=${{ github.sha }} -f apps/api/Dockerfile -t praapt-api-test .
-
-      - name: API smoke test
-        run: npm run verify

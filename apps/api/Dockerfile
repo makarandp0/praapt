@@ -16,10 +16,8 @@ ARG GIT_COMMIT=${RAILWAY_GIT_COMMIT_SHA}
 ENV GIT_COMMIT=${GIT_COMMIT}
 # Copy the full repo (needed for TypeScript sources)
 COPY . .
-# Build shared package, API, and frontend
-RUN npm --workspace=@praapt/shared run build
-RUN npm --workspace=@praapt/api run build
-RUN npm --workspace=@praapt/web run build
+# Build shared package, API, and frontend via TurboRepo
+RUN npm run build
 
 FROM node:22.18-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \

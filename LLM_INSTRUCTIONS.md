@@ -5,7 +5,7 @@ This guide helps an LLM work efficiently in this repo without parsing the entire
 Repository Map (high signal first)
 
 1. README.md: Project overview, commands, and workflows.
-2. package.json (root): Workspace scripts and tooling entry points.
+2. package.json (root): Workspace scripts, TurboRepo config, and tooling entry points.
 3. apps/api (Express API)
    - src/index.ts: API server entry.
    - src/routes/\*.ts: Route handlers (auth, images, health).
@@ -70,8 +70,9 @@ Working Rules For The LLM
    - Update or add minimal docs only when necessary for the task.
 
 6. Validate With Existing Scripts
-   - Use `npm run typecheck`, `npm run lint`, and relevant workspace scripts.
-   - After making any code changes, run `npm run lint` from the repo root and fix all reported issues. Use `npm run lint:fix` for autofixes, then resolve any remaining problems manually.
+   - Use `npm run ci` to run the full validation suite (build, test, lint, typecheck).
+   - Use `turbo run <task>` (e.g., `turbo run test`) to run specific tasks across workspaces.
+   - After making any code changes, run `npm run lint:fix` for autofixes and resolve remaining issues.
    - For DB work, consult drizzle/ migrations and src/schema.ts; do not alter them unless the task requires.
 
 7. Use Shared Types (packages/shared)

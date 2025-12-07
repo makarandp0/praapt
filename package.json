@@ -15,33 +15,37 @@
     "npm": "10.9.0"
   },
   "scripts": {
-    "dev": "npm --workspace=@praapt/api run dev",
-    "dev:web": "npm --workspace=@praapt/web run dev",
     "dev:all": "node scripts/dev-all.mjs",
-    "build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
-    "start": "npm --workspace=@praapt/api run start",
+    "build": "turbo run build",
+    "start": "NODE_ENV=production npm --workspace=@praapt/api run start",
     "migrate": "npm --workspace=@praapt/api run migrate",
     "rollback": "npm --workspace=@praapt/api run rollback",
-    "test": "npm --workspace=@praapt/api run test",
-    "test:watch": "npm --workspace=@praapt/api run test:watch",
-    "test:coverage": "npm --workspace=@praapt/api run test:coverage",
-    "typecheck": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/shared run typecheck && npm --workspace=@praapt/api run typecheck && npm --workspace=@praapt/web run typecheck",
-    "lint": "npm --workspace=@praapt/shared run lint && npm --workspace=@praapt/api run lint && npm --workspace=@praapt/web run lint",
-    "lint:fix": "npm --workspace=@praapt/shared run lint:fix && npm --workspace=@praapt/api run lint:fix && npm --workspace=@praapt/web run lint:fix",
-    "format": "npm --workspace=@praapt/shared run format && npm --workspace=@praapt/api run format && npm --workspace=@praapt/web run format",
-    "format:check": "npm --workspace=@praapt/shared run format:check && npm --workspace=@praapt/api run format:check && npm --workspace=@praapt/web run format:check",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:coverage": "turbo run test:coverage",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
     "knip": "knip",
     "knip:watch": "knip --watch",
     "verify": "node scripts/verify.mjs",
     "verify:build": "node scripts/verify-build.mjs",
-    "docker:up": "docker compose up -d",
+    "ci": "turbo run build test lint typecheck && npm run verify:build && npm run verify",
+    "docker:up": "GIT_COMMIT=$(git rev-parse HEAD) docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:build": "GIT_COMMIT=$(git rev-parse HEAD) docker compose build",
     "docker:restart": "docker compose restart",
-    "prod:build": "npm --workspace=@praapt/shared run build && npm --workspace=@praapt/api run build && npm --workspace=@praapt/web run build",
-    "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start",
     "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,json,md}": [
+      "prettier --write"
+    ],
+    "*.{js,ts,tsx}": [
+      "eslint --fix"
+    ]
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.10.0",
@@ -54,6 +58,9 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "husky": "^9.1.7",
     "knip": "^5.71.0",
-    "prettier": "^3.3.3"
-  }
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.3.3",
+    "turbo": "^2.6.3"
+  },
+  "packageManager": "npm@10.9.0"
 }
