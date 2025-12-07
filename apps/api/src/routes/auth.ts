@@ -7,7 +7,10 @@ import { Router } from 'express';
 
 import { db, users } from '../db.js';
 import { cosineDistance, embedBase64 } from '../faceClient.js';
+import { asyncHandler } from '../lib/errorHandler.js';
+import { ConflictError, UnauthorizedError, ValidationError } from '../lib/errors.js';
 import { IMAGES_DIR, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
+import { logger } from '../lib/logger.js';
 
 const router = Router();
 
@@ -19,19 +22,20 @@ const FACE_MATCH_THRESHOLD = 0.4;
  * Register a new user with face embedding
  * Body: { email: string, name: string, faceImage: string (base64) }
  */
-router.post('/signup', async (req, res) => {
-  try {
+router.post(
+  '/signup',
+  asyncHandler(async (req, res) => {
     const parseResult = SignupBodySchema.safeParse(req.body);
     if (!parseResult.success) {
       const firstError = parseResult.error.issues[0];
-      return res.status(400).json({ error: firstError?.message || 'Invalid request body' });
+      throw new ValidationError(firstError?.message || 'Invalid request body');
     }
     const { email, name, faceImage } = parseResult.data;
 
     // Check if email already exists
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'email already registered' });
+      throw new ConflictError('Email already registered');
     }
 
     // Get face embedding from face service
@@ -42,7 +46,7 @@ router.post('/signup', async (req, res) => {
       embedding = result.vector;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
-      return res.status(400).json({ error: `Failed to extract face: ${msg}` });
+      throw new ValidationError(`Failed to extract face: ${msg}`);
     }
 
     // Save profile image to disk
@@ -64,6 +68,8 @@ router.post('/signup', async (req, res) => {
       })
       .returning();
 
+    logger.info({ userId: newUser.id, email }, 'User signed up');
+
     return res.status(201).json({
       ok: true,
       user: {
@@ -73,12 +79,8 @@ router.post('/signup', async (req, res) => {
         profileImagePath: newUser.profileImagePath,
       },
     });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('signup error', err);
-    return res.status(500).json({ error: 'signup failed' });
-  }
-});
+  }),
+);
 
 /**
  * POST /auth/login
@@ -86,12 +88,13 @@ router.post('/signup', async (req, res) => {
  * Body: { faceImage: string (base64) }
  * Returns the matched user if face matches within threshold
  */
-router.post('/login', async (req, res) => {
-  try {
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
     const parseResult = LoginBodySchema.safeParse(req.body);
     if (!parseResult.success) {
       const firstError = parseResult.error.issues[0];
-      return res.status(400).json({ error: firstError?.message || 'Invalid request body' });
+      throw new ValidationError(firstError?.message || 'Invalid request body');
     }
     const { faceImage } = parseResult.data;
 
@@ -103,7 +106,7 @@ router.post('/login', async (req, res) => {
       loginEmbedding = result.vector;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
-      return res.status(400).json({ error: `Failed to extract face: ${msg}` });
+      throw new ValidationError(`Failed to extract face: ${msg}`);
     }
 
     // Fetch all users with face embeddings
@@ -111,7 +114,7 @@ router.post('/login', async (req, res) => {
     const usersWithFace = allUsers.filter((u) => u.faceEmbedding && Array.isArray(u.faceEmbedding));
 
     if (usersWithFace.length === 0) {
-      return res.status(401).json({ error: 'No registered users with face data' });
+      throw new UnauthorizedError('No registered users with face data');
     }
 
     // Find best match and top 8 matches
@@ -135,6 +138,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!bestMatch || bestDistance > FACE_MATCH_THRESHOLD) {
+      logger.warn({ bestDistance, threshold: FACE_MATCH_THRESHOLD }, 'Face not recognized');
       return res.status(401).json({
         error: 'Face not recognized',
         distance: bestDistance,
@@ -147,6 +151,11 @@ router.post('/login', async (req, res) => {
         })),
       });
     }
+
+    logger.info(
+      { userId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
+      'User logged in',
+    );
 
     return res.json({
       ok: true,
@@ -167,19 +176,16 @@ router.post('/login', async (req, res) => {
         profileImagePath: user.profileImagePath,
       })),
     });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('login error', err);
-    return res.status(500).json({ error: 'Authentication failed' });
-  }
-});
+  }),
+);
 
 /**
  * GET /auth/users
  * List all registered users (for demo/debug purposes)
  */
-router.get('/users', async (_req, res) => {
-  try {
+router.get(
+  '/users',
+  asyncHandler(async (_req, res) => {
     const allUsers = await db.select().from(users);
     return res.json({
       ok: true,
@@ -192,11 +198,7 @@ router.get('/users', async (_req, res) => {
         faceRegisteredAt: u.faceRegisteredAt,
       })),
     });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('list users error', err);
-    return res.status(500).json({ error: 'failed to list users' });
-  }
-});
+  }),
+);
 
 export default router;

@@ -10,6 +10,8 @@ import {
 import { Router } from 'express';
 
 import { compareFiles } from '../faceClient.js';
+import { asyncHandler } from '../lib/errorHandler.js';
+import { ForbiddenError, NotFoundError } from '../lib/errors.js';
 import {
   fileNameFor,
   IMAGES_DIR,
@@ -17,6 +19,7 @@ import {
   parseImageToBuffer,
   sanitizeName,
 } from '../lib/imageUtils.js';
+import { logger } from '../lib/logger.js';
 
 const router = Router();
 
@@ -25,8 +28,9 @@ const router = Router();
  * Save a new image with a name
  * Body: { name: string, image: string (base64) }
  */
-router.post('/', async (req, res) => {
-  try {
+router.post(
+  '/',
+  asyncHandler(async (req, res) => {
     const { name, image } = SaveImageBodySchema.parse(req.body ?? {});
     const { buffer, ext } = parseImageToBuffer(image);
     const fileName = fileNameFor(name, ext);
@@ -35,13 +39,10 @@ router.post('/', async (req, res) => {
 
     const payload = { ok: true as const, name: sanitizeName(name), file: fileName };
     SaveImageResponseSchema.parse(payload);
+    logger.info({ fileName, name: sanitizeName(name) }, 'Image saved');
     return res.status(201).json(payload);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('save image error', err);
-    return res.status(500).json({ error: 'failed to save image' });
-  }
-});
+  }),
+);
 
 /**
  * GET /images
@@ -59,37 +60,45 @@ router.get('/', (_req, res) => {
  * GET /images/file/:filename
  * Serve an image by exact filename (used for profile images)
  */
-router.get('/file/:filename', (req, res) => {
-  // Security: extract just the filename and reject any path containing directory separators
-  const filename = path.basename(req.params.filename);
-  if (filename !== req.params.filename || filename.includes('..')) {
-    return res.status(403).json({ error: 'invalid filename' });
-  }
-  const filePath = path.join(IMAGES_DIR, filename);
+router.get('/file/:filename', (req, res, next) => {
+  try {
+    // Security: extract just the filename and reject any path containing directory separators
+    const filename = path.basename(req.params.filename);
+    if (filename !== req.params.filename || filename.includes('..')) {
+      throw new ForbiddenError('Invalid filename');
+    }
+    const filePath = path.join(IMAGES_DIR, filename);
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: `file not found: ${filename}` });
-  }
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundError(`File not found: ${filename}`);
+    }
 
-  return res.sendFile(filePath);
+    return res.sendFile(filePath);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
  * GET /images/:name
  * Serve an image by name
  */
-router.get('/:name', (req, res) => {
-  const { name } = req.params;
-  const files = listImageFiles();
-  const base = sanitizeName(String(name));
-  const file = files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base);
+router.get('/:name', (req, res, next) => {
+  try {
+    const { name } = req.params;
+    const files = listImageFiles();
+    const base = sanitizeName(String(name));
+    const file = files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base);
 
-  if (!file) {
-    return res.status(404).json({ error: `image not found: ${name}` });
+    if (!file) {
+      throw new NotFoundError(`Image not found: ${name}`);
+    }
+
+    const filePath = path.join(IMAGES_DIR, file);
+    return res.sendFile(filePath);
+  } catch (err) {
+    next(err);
   }
-
-  const filePath = path.join(IMAGES_DIR, file);
-  return res.sendFile(filePath);
 });
 
 /**
@@ -97,8 +106,9 @@ router.get('/:name', (req, res) => {
  * Compare two images using face recognition
  * Body: { a: string, b: string }
  */
-router.post('/compare', async (req, res) => {
-  try {
+router.post(
+  '/compare',
+  asyncHandler(async (req, res) => {
     const { a, b } = CompareImagesBodySchema.parse(req.body ?? {});
     const files = listImageFiles();
 
@@ -113,11 +123,13 @@ router.post('/compare', async (req, res) => {
     const A = findFile(a);
     const B = findFile(b);
 
-    if (!A) return res.status(404).json({ error: `image not found: ${a}` });
-    if (!B) return res.status(404).json({ error: `image not found: ${b}` });
+    if (!A) throw new NotFoundError(`Image not found: ${a}`);
+    if (!B) throw new NotFoundError(`Image not found: ${b}`);
 
     const result = await compareFiles(A, B);
     const { distance, threshold, match, meta } = result;
+
+    logger.debug({ a, b, distance, match }, 'Images compared');
 
     return res.json({
       ok: true,
@@ -130,11 +142,7 @@ router.post('/compare', async (req, res) => {
       timing_ms: meta?.timing_ms,
       model: meta?.model,
     });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('compare error', err);
-    return res.status(500).json({ error: 'failed to compare images' });
-  }
-});
+  }),
+);
 
 export default router;
