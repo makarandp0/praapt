@@ -39,13 +39,9 @@ Upload or capture images with names, then compare them using AI-powered face rec
 ## Development Commands
 
 ```bash
-npm run dev:all   # Start API + frontend
-npm run dev       # API only (:3000)
-npm run dev:web   # Frontend only (:5173)
-
-npm run verify    # Type-check, lint, and build
-
-npx tsx apps/face-py/test-compare-all.ts  # Test: compare all images (requires face service)
+npm run dev:all   # Start API + frontend (Local Dev)
+npm run ci        # Run full CI suite (Build, Test, Lint, Typecheck, Verify)
+npm start         # Run production build (requires npm run build first)
 ```
 
 ## Database Commands (Drizzle ORM)
@@ -152,10 +148,9 @@ await db.delete(users).where(eq(users.id, 1));
 ## Docker Commands
 
 ```bash
-npm run docker:up       # Start all services (db + face + api)
+npm run docker:up       # Build (if needed) & Start all services
 npm run docker:down     # Stop all services
-npm run docker:logs     # View logs from all services
-npm run docker:build    # Rebuild containers
+npm run docker:logs     # View logs
 npm run docker:restart  # Restart all services
 ```
 
@@ -197,8 +192,8 @@ Docker Compose is for **local development only**. In production, use managed ser
 **Test production build locally:**
 
 ```bash
-npm run prod:build  # Build everything
-npm run prod:start  # Run at http://localhost:3000
+npm run build   # Build everything (Turbo)
+npm start       # Run at http://localhost:3000
 ```
 
 Production serves frontend at `/` and API at `/api/*` from port 3000.

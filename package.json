@@ -15,11 +15,9 @@
     "npm": "10.9.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "dev:web": "npm --workspace=@praapt/web run dev",
     "dev:all": "node scripts/dev-all.mjs",
     "build": "turbo run build",
-    "start": "npm --workspace=@praapt/api run start",
+    "start": "NODE_ENV=production npm --workspace=@praapt/api run start",
     "migrate": "npm --workspace=@praapt/api run migrate",
     "rollback": "npm --workspace=@praapt/api run rollback",
     "test": "turbo run test",
@@ -34,13 +32,11 @@
     "knip:watch": "knip --watch",
     "verify": "node scripts/verify.mjs",
     "verify:build": "node scripts/verify-build.mjs",
-    "docker:up": "docker compose up -d",
+    "ci": "turbo run build test lint typecheck && npm run verify:build && npm run verify",
+    "docker:up": "GIT_COMMIT=$(git rev-parse HEAD) docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:build": "GIT_COMMIT=$(git rev-parse HEAD) docker compose build",
     "docker:restart": "docker compose restart",
-    "prod:build": "turbo run build",
-    "prod:start": "NODE_ENV=production npm --workspace=@praapt/api run start",
     "prepare": "husky"
   },
   "lint-staged": {
