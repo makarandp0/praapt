@@ -46,6 +46,7 @@ describe('errorHandler middleware', () => {
 
     expect(statusSpy).toHaveBeenCalledWith(400);
     expect(jsonSpy).toHaveBeenCalledWith({
+      ok: false,
       error: 'Invalid email',
       code: 'VALIDATION_ERROR',
     });
@@ -58,6 +59,7 @@ describe('errorHandler middleware', () => {
 
     expect(statusSpy).toHaveBeenCalledWith(404);
     expect(jsonSpy).toHaveBeenCalledWith({
+      ok: false,
       error: 'User not found',
       code: 'NOT_FOUND',
     });
@@ -70,6 +72,7 @@ describe('errorHandler middleware', () => {
 
     expect(statusSpy).toHaveBeenCalledWith(500);
     expect(jsonSpy).toHaveBeenCalledWith({
+      ok: false,
       error: 'Database connection failed',
       code: 'INTERNAL_ERROR',
     });
@@ -84,11 +87,10 @@ describe('errorHandler middleware', () => {
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
       expect(statusSpy).toHaveBeenCalledWith(400);
-      expect(jsonSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          code: 'VALIDATION_ERROR',
-        }),
-      );
+      expect(jsonSpy).toHaveBeenCalledWith({
+        ok: false,
+        error: expect.stringContaining('Invalid email'),
+      });
     }
   });
 
@@ -99,8 +101,8 @@ describe('errorHandler middleware', () => {
 
     expect(statusSpy).toHaveBeenCalledWith(500);
     expect(jsonSpy).toHaveBeenCalledWith({
+      ok: false,
       error: 'Internal server error',
-      code: 'INTERNAL_ERROR',
     });
   });
 
@@ -111,8 +113,8 @@ describe('errorHandler middleware', () => {
 
     expect(statusSpy).toHaveBeenCalledWith(500);
     expect(jsonSpy).toHaveBeenCalledWith({
+      ok: false,
       error: 'Internal server error',
-      code: 'INTERNAL_ERROR',
     });
   });
 });

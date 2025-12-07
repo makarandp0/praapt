@@ -12,21 +12,39 @@ module.exports = {
     'plugin:import/typescript',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
-    'prettier'
+    'prettier',
   ],
   rules: {
-    'import/order': ['warn', { 'newlines-between': 'always', alphabetize: { order: 'asc', caseInsensitive: true } }],
+    'import/order': [
+      'warn',
+      { 'newlines-between': 'always', alphabetize: { order: 'asc', caseInsensitive: true } },
+    ],
     'react/react-in-jsx-scope': 'off',
     'react/jsx-uses-react': 'off',
     'react/prop-types': 'off', // Disabled for TypeScript projects - type checking is handled by TypeScript
-    '@typescript-eslint/explicit-module-boundary-types': 'off' // Let TypeScript infer return types
+    '@typescript-eslint/explicit-module-boundary-types': 'off', // Let TypeScript infer return types
+    '@typescript-eslint/consistent-type-assertions': [
+      'error',
+      {
+        assertionStyle: 'never',
+      },
+    ],
   },
+  overrides: [
+    {
+      // Allow type assertions in test files for mocking
+      files: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+      rules: {
+        '@typescript-eslint/consistent-type-assertions': 'off',
+      },
+    },
+  ],
   settings: {
     react: { version: 'detect' },
     'import/resolver': {
       typescript: { project: true },
-      node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] }
-    }
+      node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+    },
   },
-  ignorePatterns: ['**/dist/**', '**/node_modules/**']
+  ignorePatterns: ['**/dist/**', '**/node_modules/**'],
 };

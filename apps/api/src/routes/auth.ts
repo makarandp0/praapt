@@ -1,14 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 
-import { LoginBodySchema, SignupBodySchema } from '@praapt/shared';
+import {
+  LoginBodySchema,
+  LoginResponseSchema,
+  SignupBodySchema,
+  SignupResponseSchema,
+} from '@praapt/shared';
 import { eq } from 'drizzle-orm';
 import { Router } from 'express';
 
 import { db, users } from '../db.js';
 import { cosineDistance, embedBase64 } from '../faceClient.js';
-import { asyncHandler } from '../lib/errorHandler.js';
-import { ConflictError, UnauthorizedError, ValidationError } from '../lib/errors.js';
+import { validatedHandler } from '../lib/errorHandler.js';
+import { ConflictError, ValidationError } from '../lib/errors.js';
 import { IMAGES_DIR, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
 
@@ -24,13 +29,8 @@ const FACE_MATCH_THRESHOLD = 0.4;
  */
 router.post(
   '/signup',
-  asyncHandler(async (req, res) => {
-    const parseResult = SignupBodySchema.safeParse(req.body);
-    if (!parseResult.success) {
-      const firstError = parseResult.error.issues[0];
-      throw new ValidationError(firstError?.message || 'Invalid request body');
-    }
-    const { email, name, faceImage } = parseResult.data;
+  validatedHandler({ body: SignupBodySchema, response: SignupResponseSchema }, async (req, res) => {
+    const { email, name, faceImage } = req.body;
 
     // Check if email already exists
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -46,7 +46,7 @@ router.post(
       embedding = result.vector;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
-      throw new ValidationError(`Failed to extract face: ${msg}`);
+      throw new ValidationError(`Error: Failed to extract face - ${msg}`);
     }
 
     // Save profile image to disk
@@ -70,15 +70,18 @@ router.post(
 
     logger.info({ userId: newUser.id, email }, 'User signed up');
 
-    return res.status(201).json({
-      ok: true,
+    // Set 201 status for created resource
+    res.status(201);
+
+    return {
+      ok: true as const,
       user: {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
         profileImagePath: newUser.profileImagePath,
       },
-    });
+    };
   }),
 );
 
@@ -90,115 +93,101 @@ router.post(
  */
 router.post(
   '/login',
-  asyncHandler(async (req, res) => {
-    const parseResult = LoginBodySchema.safeParse(req.body);
-    if (!parseResult.success) {
-      const firstError = parseResult.error.issues[0];
-      throw new ValidationError(firstError?.message || 'Invalid request body');
-    }
-    const { faceImage } = parseResult.data;
+  validatedHandler(
+    { body: LoginBodySchema, response: LoginResponseSchema, errorStatus: 401 },
+    async (req) => {
+      const { faceImage } = req.body;
 
-    // Get face embedding from the login image
-    let loginEmbedding: number[];
-    try {
-      const b64 = stripDataUrlPrefix(faceImage);
-      const result = await embedBase64(b64);
-      loginEmbedding = result.vector;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'unknown error';
-      throw new ValidationError(`Failed to extract face: ${msg}`);
-    }
+      // Get face embedding from the login image
+      let loginEmbedding: number[];
+      try {
+        const b64 = stripDataUrlPrefix(faceImage);
+        const result = await embedBase64(b64);
+        loginEmbedding = result.vector;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'unknown error';
+        throw new ValidationError(`Error: Failed to extract face - ${msg}`);
+      }
 
-    // Fetch all users with face embeddings
-    const allUsers = await db.select().from(users);
-    const usersWithFace = allUsers.filter((u) => u.faceEmbedding && Array.isArray(u.faceEmbedding));
+      // Fetch all users with face embeddings
+      const allUsers = await db.select().from(users);
 
-    if (usersWithFace.length === 0) {
-      throw new UnauthorizedError('No registered users with face data');
-    }
+      // Type guard to ensure faceEmbedding is number[]
+      function hasFaceEmbedding(
+        user: (typeof allUsers)[0],
+      ): user is (typeof allUsers)[0] & { faceEmbedding: number[] } {
+        return user.faceEmbedding !== null && Array.isArray(user.faceEmbedding);
+      }
 
-    // Find best match and top 8 matches
-    let bestMatch: (typeof usersWithFace)[0] | null = null;
-    let bestDistance = Infinity;
+      const usersWithFace = allUsers.filter(hasFaceEmbedding);
 
-    // Calculate distances for all users
-    const userDistances = usersWithFace.map((user) => ({
-      user,
-      distance: cosineDistance(loginEmbedding, user.faceEmbedding as number[]),
-    }));
+      if (usersWithFace.length === 0) {
+        return {
+          ok: false as const,
+          error: 'Error: No registered users with face data',
+        };
+      }
 
-    // Sort by distance (ascending) and get top 8
-    userDistances.sort((a, b) => a.distance - b.distance);
-    const topMatches = userDistances.slice(0, 8);
+      // Find best match and top 8 matches
+      let bestMatch: (typeof usersWithFace)[0] | null = null;
+      let bestDistance = Infinity;
 
-    // Best match is the first one
-    if (topMatches.length > 0) {
-      bestMatch = topMatches[0].user;
-      bestDistance = topMatches[0].distance;
-    }
+      // Calculate distances for all users
+      const userDistances = usersWithFace.map((user) => ({
+        user,
+        distance: cosineDistance(loginEmbedding, user.faceEmbedding),
+      }));
 
-    if (!bestMatch || bestDistance > FACE_MATCH_THRESHOLD) {
-      logger.warn({ bestDistance, threshold: FACE_MATCH_THRESHOLD }, 'Face not recognized');
-      return res.status(401).json({
-        error: 'Face not recognized',
-        distance: bestDistance,
-        threshold: FACE_MATCH_THRESHOLD,
-        topMatches: topMatches.map(({ user, distance }) => ({
-          email: user.email,
-          name: user.name,
-          distance,
-          profileImagePath: user.profileImagePath,
-        })),
-      });
-    }
+      // Sort by distance (ascending) and get top 8
+      userDistances.sort((a, b) => a.distance - b.distance);
+      const topMatches = userDistances.slice(0, 8);
 
-    logger.info(
-      { userId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
-      'User logged in',
-    );
+      // Best match is the first one
+      if (topMatches.length > 0) {
+        bestMatch = topMatches[0].user;
+        bestDistance = topMatches[0].distance;
+      }
 
-    return res.json({
-      ok: true,
-      user: {
-        id: bestMatch.id,
-        email: bestMatch.email,
-        name: bestMatch.name,
-        profileImagePath: bestMatch.profileImagePath,
-      },
-      match: {
-        distance: bestDistance,
-        threshold: FACE_MATCH_THRESHOLD,
-      },
-      topMatches: topMatches.map(({ user, distance }) => ({
+      const topMatchesFormatted = topMatches.map(({ user, distance }) => ({
         email: user.email,
         name: user.name,
         distance,
         profileImagePath: user.profileImagePath,
-      })),
-    });
-  }),
-);
+      }));
 
-/**
- * GET /auth/users
- * List all registered users (for demo/debug purposes)
- */
-router.get(
-  '/users',
-  asyncHandler(async (_req, res) => {
-    const allUsers = await db.select().from(users);
-    return res.json({
-      ok: true,
-      users: allUsers.map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        profileImagePath: u.profileImagePath,
-        hasFace: Boolean(u.faceEmbedding),
-        faceRegisteredAt: u.faceRegisteredAt,
-      })),
-    });
-  }),
+      if (!bestMatch || bestDistance > FACE_MATCH_THRESHOLD) {
+        logger.warn({ bestDistance, threshold: FACE_MATCH_THRESHOLD }, 'Face not recognized');
+
+        return {
+          ok: false as const,
+          error: 'Error: Face not recognized',
+          distance: bestDistance,
+          threshold: FACE_MATCH_THRESHOLD,
+          topMatches: topMatchesFormatted,
+        };
+      }
+
+      logger.info(
+        { userId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
+        'User logged in',
+      );
+
+      return {
+        ok: true as const,
+        user: {
+          id: bestMatch.id,
+          email: bestMatch.email,
+          name: bestMatch.name,
+          profileImagePath: bestMatch.profileImagePath,
+        },
+        match: {
+          distance: bestDistance,
+          threshold: FACE_MATCH_THRESHOLD,
+        },
+        topMatches: topMatchesFormatted,
+      };
+    },
+  ),
 );
 
 export default router;

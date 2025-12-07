@@ -80,8 +80,65 @@ Working Rules For The LLM
    - After adding new schemas, run `npm run build --workspace=@praapt/shared` to compile.
    - Example: `SignupBodySchema`, `LoginResponseSchema`, `UserSchema`.
 
-8. Environment & Secrets
-   - Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
+8. Discriminated Union API Responses
+   - All API responses use discriminated unions with `ok: true` or `ok: false`.
+   - Use `createApiResponse()` helper from `@praapt/shared` for simple schemas:
+     ```typescript
+     // Creates: { ok: true, users: User[], count: number } | { ok: false, error: string }
+     export const ListUsersResponseSchema = createApiResponse(
+       z.object({ users: z.array(UserSchema), count: z.number() }),
+     );
+     ```
+   - For custom error schemas (like login with topMatches), define directly:
+     ```typescript
+     export const LoginResponseSchema = z.discriminatedUnion('ok', [
+       z.object({ ok: z.literal(true), user: UserSchema, match: MatchSchema }),
+       z.object({ ok: z.literal(false), error: z.string(), topMatches: z.array(...).optional() }),
+     ]);
+     ```
+
+9. Use validatedHandler for API Routes
+   - All API routes must use `validatedHandler` from `apps/api/src/lib/errorHandler.ts`.
+   - Provide `body` schema (for POST/PUT) and `response` schema (required).
+   - Handler returns success or error directly (not via throwing for expected failures).
+   - Use `errorStatus` option to set HTTP status for error responses (default: 400).
+   - **Important**: Use `as const` on `ok` values to preserve literal types:
+     ```typescript
+     router.post('/login', validatedHandler(
+       { body: LoginBodySchema, response: LoginResponseSchema, errorStatus: 401 },
+       async (req) => {
+         const { email } = req.body; // typed
+         if (!match) {
+           return { ok: false as const, error: 'Not found', topMatches };
+         }
+         return { ok: true as const, user: { ... } };
+       }
+     ));
+     ```
+
+10. Unexpected Errors (Exceptions)
+
+- For truly unexpected errors (validation, database, etc.), throw normally.
+- Simple errors (ValidationError, NotFoundError, etc.) return `{ error, code }`.
+- Complex typed errors with schemas are rarely needed now that expected failures use discriminated unions.
+
+11. Web Client Response Handling
+
+- Always check `response.ok` before accessing success-only properties:
+  ```typescript
+  const response = await api.listUsers();
+  if (!response.ok) {
+    throw new Error(response.error);
+  }
+  // TypeScript now knows response.users exists
+  setUsers(response.users);
+  ```
+- Use helper types like `ApiSuccess<T>` and `ApiError<T>` to extract union branches.
+- Use exported types like `ListUser` instead of `ListUsersResponse['users'][number]`.
+
+12. Environment & Secrets
+
+- Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
 
 Task-Focused Entry Points (quick checklist)
 

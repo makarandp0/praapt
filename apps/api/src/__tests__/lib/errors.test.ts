@@ -29,6 +29,7 @@ describe('Custom Error Classes', () => {
     it('should serialize to JSON correctly', () => {
       const error = new ValidationError('Invalid email format');
       expect(error.toJSON()).toEqual({
+        ok: false,
         error: 'Invalid email format',
         code: 'VALIDATION_ERROR',
       });

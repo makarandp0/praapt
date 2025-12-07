@@ -29,6 +29,18 @@ type MigrationModule = {
   down: (db: PostgresJsDatabase<typeof schema>) => Promise<void>;
 };
 
+/** Type guard to check if a module has the required migration functions */
+function isMigrationModule(mod: unknown): mod is MigrationModule {
+  return (
+    typeof mod === 'object' &&
+    mod !== null &&
+    'up' in mod &&
+    typeof mod.up === 'function' &&
+    'down' in mod &&
+    typeof mod.down === 'function'
+  );
+}
+
 /**
  * Load all migration files from the migrations directory.
  * Files must be named with a numeric prefix for ordering (e.g., 001_name.ts)
@@ -53,14 +65,10 @@ async function loadMigrations(): Promise<{ name: string; module: MigrationModule
     const filePath = path.join(migrationsDir, file);
 
     try {
-      const module = (await import(filePath)) as MigrationModule;
+      const module: unknown = await import(filePath);
 
-      if (typeof module.up !== 'function') {
-        console.warn(`Migration ${name} is missing 'up' function, skipping`);
-        continue;
-      }
-      if (typeof module.down !== 'function') {
-        console.warn(`Migration ${name} is missing 'down' function, skipping`);
+      if (!isMigrationModule(module)) {
+        console.warn(`Migration ${name} is missing 'up' or 'down' function, skipping`);
         continue;
       }
 

@@ -1,12 +1,14 @@
-import { SignupBody, SignupResponse, ErrorResponse } from '@praapt/shared';
+import { SignupBody, SignupResponseSchema } from '@praapt/shared';
 import { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
+import { CameraPreview } from '../components/CameraPreview';
 import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
+import { Status, StatusMessage } from '../components/StatusMessage';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
+import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface SignupProps {
@@ -25,11 +27,16 @@ export function Signup({ apiBase }: SignupProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
-  // Camera state
-  const cameraRef = useRef<CameraPreviewRef | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  // Camera state (using hook)
+  const {
+    cameraRef,
+    streamRef,
+    cameraOpen,
+    openCamera: openCameraBase,
+    closeCamera,
+    captureFrame,
+  } = useCamera();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   // Face detection state
@@ -49,42 +56,29 @@ export function Signup({ apiBase }: SignupProps) {
   }, []);
 
   // Submission state
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<Status | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /** Open the webcam */
+  /** Open the webcam with status updates */
   const openCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 },
-      });
-      streamRef.current = stream;
-      setCameraOpen(true);
+    const result = await openCameraBase();
+    if (result.success) {
       setCapturedImage(null);
-      setStatus('Camera ready. Position your face and click Capture.');
-    } catch (err) {
-      setStatus(`Camera error: ${err instanceof Error ? err.message : 'unknown'}`);
+      setStatus({ message: 'Camera ready. Position your face and click Capture.', type: 'info' });
+    } else {
+      setStatus({ message: `Camera error: ${result.error}`, type: 'error' });
     }
-  }, []);
-
-  /** Stop the webcam */
-  const closeCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    setCameraOpen(false);
-  }, []);
+  }, [openCameraBase]);
 
   /** Capture a frame from the video */
   const capturePhoto = useCallback(() => {
-    const dataUrl = cameraRef.current?.captureFrame();
+    const dataUrl = captureFrame();
     if (!dataUrl) return;
 
     setCapturedImage(dataUrl);
     closeCamera();
-    setStatus('Photo captured! Review and submit.');
-  }, [closeCamera]);
+    setStatus({ message: 'Photo captured! Review and submit.', type: 'info' });
+  }, [closeCamera, captureFrame]);
 
   /** Submit signup form */
   const handleSubmit = useCallback(
@@ -92,20 +86,20 @@ export function Signup({ apiBase }: SignupProps) {
       e.preventDefault();
 
       if (!name.trim()) {
-        setStatus('Please enter your name');
+        setStatus({ message: 'Please enter your name', type: 'error' });
         return;
       }
       if (!email.trim()) {
-        setStatus('Please enter your email');
+        setStatus({ message: 'Please enter your email', type: 'error' });
         return;
       }
       if (!capturedImage) {
-        setStatus('Please capture a photo of your face');
+        setStatus({ message: 'Please capture a photo of your face', type: 'error' });
         return;
       }
 
       setIsSubmitting(true);
-      setStatus('Signing up...');
+      setStatus({ message: 'Signing up...', type: 'info' });
 
       try {
         const body: SignupBody = {
@@ -120,22 +114,23 @@ export function Signup({ apiBase }: SignupProps) {
           body: JSON.stringify(body),
         });
 
-        const data = (await response.json()) as SignupResponse | ErrorResponse;
+        const data = SignupResponseSchema.parse(await response.json());
 
-        if (!response.ok) {
-          const errorData = data as ErrorResponse;
-          setStatus(`Signup failed: ${errorData.error || 'Unknown error'}`);
+        if (!data.ok) {
+          setStatus({ message: `Signup failed: ${data.error || 'Unknown error'}`, type: 'error' });
           setIsSubmitting(false);
           return;
         }
 
         // Login the user and redirect
-        const successData = data as SignupResponse;
-        login(successData.user);
-        setStatus('Signup successful! Redirecting...');
+        login(data.user);
+        setStatus({ message: 'Signup successful! Redirecting...', type: 'success' });
         setTimeout(() => navigate('/library'), 500);
       } catch (err) {
-        setStatus(`Network error: ${err instanceof Error ? err.message : 'unknown'}`);
+        setStatus({
+          message: `Network error: ${err instanceof Error ? err.message : 'unknown'}`,
+          type: 'error',
+        });
         setIsSubmitting(false);
       }
     },
@@ -156,25 +151,30 @@ export function Signup({ apiBase }: SignupProps) {
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setStatus('Please select an image file');
+        setStatus({ message: 'Please select an image file', type: 'error' });
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setStatus('Image must be less than 5MB');
+        setStatus({ message: 'Image must be less than 5MB', type: 'error' });
         return;
       }
 
       const reader = new FileReader();
       reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setCapturedImage(dataUrl);
-        closeCamera();
-        setStatus('Image uploaded! Review and submit.');
+        // readAsDataURL always returns a string when successful
+        const dataUrl = reader.result;
+        if (typeof dataUrl === 'string') {
+          setCapturedImage(dataUrl);
+          closeCamera();
+          setStatus({ message: 'Image uploaded! Review and submit.', type: 'info' });
+        } else {
+          setStatus({ message: 'Failed to read image file', type: 'error' });
+        }
       };
       reader.onerror = () => {
-        setStatus('Failed to read image file');
+        setStatus({ message: 'Failed to read image file', type: 'error' });
       };
       reader.readAsDataURL(file);
     },
@@ -189,7 +189,7 @@ export function Signup({ apiBase }: SignupProps) {
   /** Clear image and reset */
   const clearImage = useCallback(() => {
     setCapturedImage(null);
-    setStatus('');
+    setStatus(null);
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -329,13 +329,7 @@ export function Signup({ apiBase }: SignupProps) {
         </div>
 
         {/* Status message */}
-        {status && (
-          <p
-            className={`text-sm ${status.includes('failed') || status.includes('error') ? 'text-red-600' : 'text-gray-600'}`}
-          >
-            {status}
-          </p>
-        )}
+        <StatusMessage status={status} />
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting || !capturedImage}>

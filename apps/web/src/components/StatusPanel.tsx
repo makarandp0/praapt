@@ -26,8 +26,9 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
   const [health, setHealth] = useState<StatusType>('Checking...');
 
   // Derive face status from context
+  const faceStatus: StatusType = isChecking ? 'Checking...' : faceServiceOk ? 'OK' : 'Unavailable';
   const faceInfo = {
-    status: (isChecking ? 'Checking...' : faceServiceOk ? 'OK' : 'Unavailable') as StatusType,
+    status: faceStatus,
     modelsLoaded,
     model,
   };

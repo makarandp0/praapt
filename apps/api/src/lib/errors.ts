@@ -1,23 +1,37 @@
+import type { ZodSchema } from 'zod';
+
 /**
  * Base application error class.
  * All custom errors should extend this.
+ *
+ * Errors can optionally include a Zod schema for validating the error response.
+ * This enables compile-time type checking of error data.
  */
-export abstract class AppError extends Error {
+export abstract class AppError<TData = undefined> extends Error {
   abstract readonly statusCode: number;
   abstract readonly code: string;
   readonly isOperational: boolean = true;
+  readonly data?: TData;
+  readonly schema?: ZodSchema<TData>;
 
-  constructor(message: string) {
+  constructor(message: string, data?: TData, schema?: ZodSchema<TData>) {
     super(message);
     this.name = this.constructor.name;
+    this.data = data;
+    this.schema = schema;
     Error.captureStackTrace(this, this.constructor);
   }
 
-  toJSON() {
-    return {
+  toJSON(): Record<string, unknown> {
+    const base: Record<string, unknown> = {
+      ok: false,
       error: this.message,
       code: this.code,
     };
+    if (this.data !== undefined && typeof this.data === 'object' && this.data !== null) {
+      Object.assign(base, this.data);
+    }
+    return base;
   }
 }
 
@@ -35,13 +49,27 @@ export class ValidationError extends AppError {
 
 /**
  * 401 Unauthorized - Authentication required or failed
+ * Supports typed additional data via generic parameter.
+ *
+ * Usage:
+ * ```
+ * // Simple error
+ * throw new UnauthorizedError('Error: Not logged in');
+ *
+ * // With typed data and schema validation
+ * throw new UnauthorizedError('Error: Face not recognized', {
+ *   distance: 0.5,
+ *   threshold: 0.4,
+ *   topMatches: [...]
+ * }, LoginFailureResponseSchema);
+ * ```
  */
-export class UnauthorizedError extends AppError {
+export class UnauthorizedError<TData = undefined> extends AppError<TData> {
   readonly statusCode = 401;
   readonly code = 'UNAUTHORIZED';
 
-  constructor(message: string = 'Unauthorized') {
-    super(message);
+  constructor(message: string = 'Unauthorized', data?: TData, schema?: ZodSchema<TData>) {
+    super(message, data, schema);
   }
 }
 

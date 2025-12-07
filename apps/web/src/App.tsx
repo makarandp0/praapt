@@ -10,6 +10,7 @@ import { Library } from './pages/Library';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { User } from './pages/User';
+import { Users } from './pages/Users';
 import { Version } from './pages/Version';
 
 // API base URL - same server in prod, localhost:3000 in dev
@@ -25,7 +26,11 @@ function NavBar() {
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current &&
+        event.target instanceof Node &&
+        !menuRef.current.contains(event.target)
+      ) {
         setMenuOpen(false);
       }
     }
@@ -90,6 +95,13 @@ function NavBar() {
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Library
+                  </Link>
+                  <Link
+                    to="/users"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Users
                   </Link>
                   <Link
                     to="/version"
@@ -180,6 +192,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Library apiBase={API_BASE} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users apiBase={API_BASE} />
               </ProtectedRoute>
             }
           />

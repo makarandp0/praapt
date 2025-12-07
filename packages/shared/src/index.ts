@@ -1,4 +1,61 @@
-import { z } from 'zod';
+import { z, ZodObject, ZodRawShape } from 'zod';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// API Response Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Default error response schema (used when no custom error is specified)
+ */
+export const DefaultErrorSchema = z.object({
+  ok: z.literal(false),
+  error: z.string(),
+});
+export type DefaultError = z.infer<typeof DefaultErrorSchema>;
+
+/**
+ * Creates a discriminated union API response schema.
+ *
+ * @param success - The success response schema (ok: true added automatically)
+ * @param error - Optional custom error schema (ok: false added automatically).
+ *                Defaults to { ok: false, error: string }
+ *
+ * @example
+ * // Simple response with default error
+ * const ListUsersResponseSchema = createApiResponse(
+ *   z.object({ users: z.array(UserSchema), count: z.number() })
+ * );
+ * // Type: { ok: true, users: User[], count: number } | { ok: false, error: string }
+ *
+ * @example
+ * // Response with custom error
+ * const LoginResponseSchema = createApiResponse(
+ *   z.object({ user: UserSchema, match: MatchSchema }),
+ *   z.object({ error: z.string(), topMatches: z.array(MatchSchema) })
+ * );
+ * // Type: { ok: true, user: User, match: Match } | { ok: false, error: string, topMatches: Match[] }
+ */
+export function createApiResponse<
+  TSuccess extends ZodRawShape,
+  TError extends ZodRawShape = { error: z.ZodString },
+>(success: ZodObject<TSuccess>, error?: ZodObject<TError>) {
+  const successSchema = success.extend({ ok: z.literal(true) });
+  const errorSchema = error
+    ? error.extend({ ok: z.literal(false) })
+    : z.object({ ok: z.literal(false), error: z.string() });
+
+  return z.discriminatedUnion('ok', [successSchema, errorSchema]);
+}
+
+/**
+ * Helper type to extract the success type from an API response schema
+ */
+export type ApiSuccess<T> = T extends { ok: true } ? T : never;
+
+/**
+ * Helper type to extract the error type from an API response schema
+ */
+export type ApiError<T> = T extends { ok: false } ? T : never;
 
 // Common primitives
 export const ImageName = z.string().trim().min(1, 'name required');
@@ -11,19 +68,21 @@ export const SaveImageBodySchema = z.object({
 });
 export type SaveImageBody = z.infer<typeof SaveImageBodySchema>;
 
-export const SaveImageResponseSchema = z.object({
-  ok: z.literal(true),
-  name: z.string(),
-  file: z.string(),
-});
+export const SaveImageResponseSchema = createApiResponse(
+  z.object({
+    name: z.string(),
+    file: z.string(),
+  }),
+);
 export type SaveImageResponse = z.infer<typeof SaveImageResponseSchema>;
 
 // List images
-export const ListImagesResponseSchema = z.object({
-  ok: z.literal(true),
-  images: z.array(z.string()),
-  files: z.array(z.string()),
-});
+export const ListImagesResponseSchema = createApiResponse(
+  z.object({
+    images: z.array(z.string()),
+    files: z.array(z.string()),
+  }),
+);
 export type ListImagesResponse = z.infer<typeof ListImagesResponseSchema>;
 
 // Compare images
@@ -33,17 +92,18 @@ export const CompareImagesBodySchema = z.object({
 });
 export type CompareImagesBody = z.infer<typeof CompareImagesBodySchema>;
 
-export const CompareImagesResponseSchema = z.object({
-  ok: z.literal(true),
-  same: z.boolean(),
-  algo: z.literal('face-arcface'),
-  a: z.string(),
-  b: z.string(),
-  distance: z.number(),
-  threshold: z.number(),
-  timing_ms: z.number().optional(),
-  model: z.string().optional(),
-});
+export const CompareImagesResponseSchema = createApiResponse(
+  z.object({
+    same: z.boolean(),
+    algo: z.literal('face-arcface'),
+    a: z.string(),
+    b: z.string(),
+    distance: z.number(),
+    threshold: z.number(),
+    timing_ms: z.number().optional(),
+    model: z.string().optional(),
+  }),
+);
 export type CompareImagesResponse = z.infer<typeof CompareImagesResponseSchema>;
 
 // Health check
@@ -55,22 +115,40 @@ export const FaceHealthSchema = z.object({
 });
 export type FaceHealth = z.infer<typeof FaceHealthSchema>;
 
-export const HealthResponseSchema = z.object({
-  ok: z.literal(true),
-  service: z.string(),
-  env: z.string(),
-  commit: z.string().optional(),
-  face: FaceHealthSchema,
-  config: z
-    .object({
-      faceServiceUrl: z.string(),
-      port: z.string(),
-      imagesDir: z.string(),
-      corsOrigin: z.string(),
-    })
-    .optional(),
-});
+export const HealthResponseSchema = createApiResponse(
+  z.object({
+    service: z.string(),
+    env: z.string(),
+    commit: z.string().optional(),
+    face: FaceHealthSchema,
+    config: z
+      .object({
+        faceServiceUrl: z.string(),
+        port: z.string(),
+        imagesDir: z.string(),
+        corsOrigin: z.string(),
+      })
+      .optional(),
+  }),
+);
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
+export type HealthSuccess = ApiSuccess<HealthResponse>;
+export type HealthConfig = HealthSuccess['config'];
+
+/** POST /load-model request body */
+export const LoadModelBodySchema = z.object({
+  model: z.enum(['buffalo_l', 'buffalo_s']),
+});
+export type LoadModelBody = z.infer<typeof LoadModelBodySchema>;
+
+/** POST /load-model response */
+export const LoadModelResponseSchema = createApiResponse(
+  z.object({
+    message: z.string(),
+    model: z.string(),
+  }),
+);
+export type LoadModelResponse = z.infer<typeof LoadModelResponseSchema>;
 
 // Error response
 export const ErrorResponseSchema = z.object({ error: z.string() });
@@ -98,10 +176,7 @@ export const SignupBodySchema = z.object({
 export type SignupBody = z.infer<typeof SignupBodySchema>;
 
 /** POST /auth/signup response */
-export const SignupResponseSchema = z.object({
-  ok: z.literal(true),
-  user: UserSchema,
-});
+export const SignupResponseSchema = createApiResponse(z.object({ user: UserSchema }));
 export type SignupResponse = z.infer<typeof SignupResponseSchema>;
 
 /** POST /auth/login request body */
@@ -110,51 +185,64 @@ export const LoginBodySchema = z.object({
 });
 export type LoginBody = z.infer<typeof LoginBodySchema>;
 
-/** POST /auth/login response */
-export const LoginResponseSchema = z.object({
+/** Top match schema (reused in success and error) */
+const TopMatchSchema = z.object({
+  email: z.string(),
+  name: z.string().nullable(),
+  distance: z.number(),
+  profileImagePath: z.string().nullable(),
+});
+
+/** Login success data */
+const LoginSuccessSchema = z.object({
   ok: z.literal(true),
   user: UserSchema,
   match: z.object({
     distance: z.number(),
     threshold: z.number(),
   }),
-  topMatches: z.array(
-    z.object({
-      email: z.string(),
-      name: z.string().nullable(),
-      distance: z.number(),
-      profileImagePath: z.string().nullable(),
-    }),
-  ),
+  topMatches: z.array(TopMatchSchema),
 });
-export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 
-/** Login failure response (401) */
-export const LoginFailureResponseSchema = z.object({
+/** Login error data (custom error with face match details) */
+const LoginErrorSchema = z.object({
+  ok: z.literal(false),
   error: z.string(),
   distance: z.number().optional(),
   threshold: z.number().optional(),
-  topMatches: z
-    .array(
-      z.object({
-        email: z.string(),
-        name: z.string().nullable(),
-        distance: z.number(),
-        profileImagePath: z.string().nullable(),
-      }),
-    )
-    .optional(),
+  topMatches: z.array(TopMatchSchema).optional(),
 });
-export type LoginFailureResponse = z.infer<typeof LoginFailureResponseSchema>;
 
-/** GET /auth/users response */
-export const ListUsersResponseSchema = z.object({
-  ok: z.literal(true),
-  users: z.array(
-    UserSchema.extend({
-      hasFace: z.boolean(),
-      faceRegisteredAt: z.string().nullable(), // ISO timestamp
-    }),
-  ),
+/** POST /auth/login response - discriminated union */
+export const LoginResponseSchema = z.discriminatedUnion('ok', [
+  LoginSuccessSchema,
+  LoginErrorSchema,
+]);
+export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+
+/** Helper type for login success */
+export type LoginSuccess = ApiSuccess<LoginResponse>;
+
+/** Helper type for login error */
+export type LoginError = ApiError<LoginResponse>;
+
+/** User schema for list users */
+export const ListUserSchema = z.object({
+  id: z.number(),
+  email: z.string().email(),
+  name: z.string().nullable(),
+  profileImagePath: z.string().nullable(),
+  faceRegisteredAt: z.string().nullable(), // ISO timestamp
+  createdAt: z.string().nullable(), // ISO timestamp
+  updatedAt: z.string().nullable(), // ISO timestamp
 });
+export type ListUser = z.infer<typeof ListUserSchema>;
+
+/** GET /users response */
+export const ListUsersResponseSchema = createApiResponse(
+  z.object({
+    users: z.array(ListUserSchema),
+    count: z.number(),
+  }),
+);
 export type ListUsersResponse = z.infer<typeof ListUsersResponseSchema>;

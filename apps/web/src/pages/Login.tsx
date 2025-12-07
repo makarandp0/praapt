@@ -1,12 +1,14 @@
-import { LoginBody, LoginResponse, LoginFailureResponse, ErrorResponse } from '@praapt/shared';
+import { LoginBody, LoginResponseSchema } from '@praapt/shared';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CameraPreview, CameraPreviewRef } from '../components/CameraPreview';
+import { CameraPreview } from '../components/CameraPreview';
 import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
+import { Status, StatusMessage } from '../components/StatusMessage';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
+import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface LoginProps {
@@ -21,10 +23,15 @@ export function Login({ apiBase }: LoginProps) {
   // Check if the login functionality is available
   const isModelReady = modelsLoaded && model !== null;
 
-  // Camera state
-  const cameraRef = useRef<CameraPreviewRef | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
+  // Camera state (using hook)
+  const {
+    cameraRef,
+    streamRef,
+    cameraOpen,
+    openCamera: openCameraBase,
+    closeCamera,
+    captureFrame,
+  } = useCamera();
 
   // Face detection state (updated via callback from CameraPreview)
   const [faceDetection, setFaceDetection] = useState<FaceDetectionResult>({
@@ -38,7 +45,7 @@ export function Login({ apiBase }: LoginProps) {
   });
 
   // Submission state
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<Status | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failedMatches, setFailedMatches] = useState<
     Array<{ email: string; name: string | null; distance: number; profileImagePath: string | null }>
@@ -56,42 +63,29 @@ export function Login({ apiBase }: LoginProps) {
     setFaceDetection(result);
   }, []);
 
-  /** Open the webcam */
+  /** Open the webcam with status updates */
   const openCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 },
-      });
-      streamRef.current = stream;
-      setCameraOpen(true);
+    const result = await openCameraBase();
+    if (result.success) {
       // Reset retry delay when camera opens
       setRetryDelay(2);
       setCountdown(2);
-      setStatus('Camera ready. Auto-login will attempt shortly...');
-    } catch (err) {
-      setStatus(`Camera error: ${err instanceof Error ? err.message : 'unknown'}`);
+      setStatus({ message: 'Camera ready. Auto-login will attempt shortly...', type: 'info' });
+    } else {
+      setStatus({ message: `Camera error: ${result.error}`, type: 'error' });
     }
-  }, []);
-
-  /** Stop the webcam */
-  const closeCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    setCameraOpen(false);
-  }, []);
+  }, [openCameraBase]);
 
   /** Capture and submit for face login */
   const handleLogin = useCallback(async () => {
-    const dataUrl = cameraRef.current?.captureFrame();
+    const dataUrl = captureFrame();
     if (!dataUrl) {
-      setStatus('Camera not ready');
+      setStatus({ message: 'Camera not ready', type: 'error' });
       return;
     }
 
     setIsSubmitting(true);
-    setStatus('Verifying face...');
+    setStatus({ message: 'Verifying face...', type: 'info' });
 
     try {
       const body: LoginBody = { faceImage: dataUrl };
@@ -102,19 +96,18 @@ export function Login({ apiBase }: LoginProps) {
         body: JSON.stringify(body),
       });
 
-      const data = (await response.json()) as LoginResponse | LoginFailureResponse | ErrorResponse;
+      const data = LoginResponseSchema.parse(await response.json());
 
-      if (!response.ok) {
-        const errorData = data as LoginFailureResponse;
-        const msg = errorData.error || 'Login failed';
+      if (!data.ok) {
+        const msg = data.error || 'Login failed';
         const extra =
-          errorData.distance !== undefined
-            ? ` (distance: ${errorData.distance.toFixed(3)}, threshold: ${errorData.threshold})`
+          data.distance !== undefined
+            ? ` (distance: ${data.distance.toFixed(3)}, threshold: ${data.threshold})`
             : '';
-        setStatus(`${msg}${extra}`);
+        setStatus({ message: `${msg}${extra}`, type: 'error' });
         // Store top matches for display
-        if (errorData.topMatches) {
-          setFailedMatches(errorData.topMatches);
+        if (data.topMatches) {
+          setFailedMatches(data.topMatches);
         }
         // Refresh status in case face service went down
         refreshStatus();
@@ -124,22 +117,27 @@ export function Login({ apiBase }: LoginProps) {
 
       // Login successful - clear failed matches
       setFailedMatches([]);
-      const successData = data as LoginResponse;
       closeCamera();
-      login(successData.user, {
-        ...successData.match,
+      login(data.user, {
+        ...data.match,
         loginImage: dataUrl,
-        topMatches: successData.topMatches,
+        topMatches: data.topMatches,
       });
-      setStatus(`Welcome back, ${successData.user.name || successData.user.email}!`);
+      setStatus({
+        message: `Welcome back, ${data.user.name || data.user.email}!`,
+        type: 'success',
+      });
       setTimeout(() => navigate('/user', { replace: true }), 500);
     } catch (err) {
-      setStatus(`Network error: ${err instanceof Error ? err.message : 'unknown'}`);
+      setStatus({
+        message: `Network error: ${err instanceof Error ? err.message : 'unknown'}`,
+        type: 'error',
+      });
       // Refresh status in case face service went down
       refreshStatus();
       setIsSubmitting(false);
     }
-  }, [apiBase, login, navigate, closeCamera, refreshStatus]);
+  }, [apiBase, login, navigate, closeCamera, refreshStatus, captureFrame]);
 
   // Auto-login effect with exponential backoff
   useEffect(() => {
@@ -284,21 +282,7 @@ export function Login({ apiBase }: LoginProps) {
         )}
 
         {/* Status message */}
-        {status && (
-          <p
-            className={`text-sm text-center ${
-              status.includes('failed') ||
-              status.includes('error') ||
-              status.includes('not recognized')
-                ? 'text-red-600'
-                : status.includes('Welcome')
-                  ? 'text-green-600'
-                  : 'text-gray-600'
-            }`}
-          >
-            {status}
-          </p>
-        )}
+        <StatusMessage status={status} centered />
 
         {/* Failed matches display */}
         {failedMatches.length > 0 && (

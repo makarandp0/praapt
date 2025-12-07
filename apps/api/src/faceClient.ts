@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import { z } from 'zod';
+
 const FACE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
 
 async function fileToBase64(p: string): Promise<string> {
@@ -7,16 +9,44 @@ async function fileToBase64(p: string): Promise<string> {
   return buf.toString('base64');
 }
 
-export interface CompareFilesResult {
-  ok: true;
-  distance: number;
-  threshold: number;
-  match: boolean;
-  meta?: {
-    timing_ms?: number;
-    model?: string;
-  };
+/** Extract error message from unknown JSON response */
+function getErrorMessage(json: unknown, fallback = 'unknown error'): string {
+  if (typeof json === 'object' && json !== null && !Array.isArray(json)) {
+    if ('detail' in json && typeof json.detail === 'string') return json.detail;
+    if ('error' in json && typeof json.error === 'string') return json.error;
+  }
+  return fallback;
 }
+
+/** Schema for face comparison result */
+const CompareFilesResultSchema = z.object({
+  ok: z.literal(true),
+  distance: z.number(),
+  threshold: z.number(),
+  match: z.boolean(),
+  meta: z
+    .object({
+      timing_ms: z.number().optional(),
+      model: z.string().optional(),
+    })
+    .optional(),
+});
+
+export type CompareFilesResult = z.infer<typeof CompareFilesResultSchema>;
+
+/** Schema for face embedding result */
+const EmbedResultSchema = z.object({
+  ok: z.literal(true),
+  vector: z.array(z.number()),
+  meta: z.object({
+    faces: z.number(),
+    bbox: z.array(z.number()),
+    det_score: z.number(),
+    cached: z.boolean(),
+  }),
+});
+
+export type EmbedResult = z.infer<typeof EmbedResultSchema>;
 
 export async function compareFiles(
   aPath: string,
@@ -29,12 +59,12 @@ export async function compareFiles(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ a_b64: a, b_b64: b, threshold }),
   });
-  const json = await res.json();
+  const json: unknown = await res.json();
   if (!res.ok) {
-    const msg = json?.detail || json?.error || 'face service error';
-    throw new Error(String(msg));
+    const msg = getErrorMessage(json);
+    throw new Error(msg);
   }
-  return json as CompareFilesResult;
+  return CompareFilesResultSchema.parse(json);
 }
 
 export async function loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<void> {
@@ -48,18 +78,6 @@ export async function loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<void>
     const msg = json?.detail || json?.error || 'failed to load model';
     throw new Error(String(msg));
   }
-}
-
-/** Result from embedding a face image */
-export interface EmbedResult {
-  ok: true;
-  vector: number[];
-  meta: {
-    faces: number;
-    bbox: number[];
-    det_score: number;
-    cached: boolean;
-  };
 }
 
 /**
@@ -83,12 +101,12 @@ export async function embedBase64(imageBase64: string): Promise<EmbedResult> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ image_b64: imageBase64 }),
   });
-  const json = await res.json();
+  const json: unknown = await res.json();
   if (!res.ok) {
-    const msg = json?.detail || json?.error || 'failed to get embedding';
-    throw new Error(String(msg));
+    const msg = getErrorMessage(json);
+    throw new Error(msg);
   }
-  return json as EmbedResult;
+  return EmbedResultSchema.parse(json);
 }
 
 /**
