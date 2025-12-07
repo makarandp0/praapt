@@ -48,6 +48,9 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
     setStatus((prev) => ({ ...prev, isChecking: true }));
     try {
       const health = await apiClient.getHealth();
+      if (!health.ok) {
+        throw new Error(health.error);
+      }
       setStatus((prev) => ({
         ...prev,
         faceServiceOk: health.face.ok,

@@ -1,4 +1,4 @@
-import type { HealthResponse } from '@praapt/shared';
+import type { HealthConfig } from '@praapt/shared';
 import { useEffect, useState } from 'react';
 
 interface ConfigProps {
@@ -6,7 +6,7 @@ interface ConfigProps {
 }
 
 export function Config({ apiBase }: ConfigProps) {
-  const [config, setConfig] = useState<HealthResponse['config'] | null>(null);
+  const [config, setConfig] = useState<HealthConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

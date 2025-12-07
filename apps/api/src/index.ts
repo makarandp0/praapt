@@ -9,6 +9,7 @@ import { logger } from './lib/logger.js';
 import authRoutes from './routes/auth.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
+import usersRoutes from './routes/users.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,7 @@ app.use((req, res, next) => {
 app.use('/api', healthRoutes);
 app.use('/api/images', imagesRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {

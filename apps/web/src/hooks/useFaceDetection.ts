@@ -1,6 +1,20 @@
-import * as blazeface from '@tensorflow-models/blazeface';
 import '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as blazeface from '@tensorflow-models/blazeface';
 import { useEffect, useRef, useState, useCallback } from 'react';
+
+/**
+ * Extracts coordinate values from blazeface topLeft/bottomRight which can be
+ * either [number, number] tuples or tf.Tensor1D depending on returnTensors flag
+ */
+function getCoordinate(coord: [number, number] | tf.Tensor1D, index: 0 | 1): number {
+  if (Array.isArray(coord)) {
+    return coord[index];
+  }
+  // For tensors, we'd need to call .dataSync() but we always call with returnTensors: false
+  // This should not happen in our usage
+  return 0;
+}
 
 export interface FaceDetectionResult {
   /** Whether a face is currently detected */
@@ -285,10 +299,12 @@ export function useFaceDetection(
             boundingBox:
               hasFace && topFace
                 ? {
-                    x: (topFace.topLeft as number[])[0],
-                    y: (topFace.topLeft as number[])[1],
-                    width: (topFace.bottomRight as number[])[0] - (topFace.topLeft as number[])[0],
-                    height: (topFace.bottomRight as number[])[1] - (topFace.topLeft as number[])[1],
+                    x: getCoordinate(topFace.topLeft, 0),
+                    y: getCoordinate(topFace.topLeft, 1),
+                    width:
+                      getCoordinate(topFace.bottomRight, 0) - getCoordinate(topFace.topLeft, 0),
+                    height:
+                      getCoordinate(topFace.bottomRight, 1) - getCoordinate(topFace.topLeft, 1),
                   }
                 : null,
             detectionMethod: 'blazeface',
@@ -304,10 +320,9 @@ export function useFaceDetection(
             faceCount: faces.length,
             isLoading: false,
             error: null,
-            confidence:
-              hasFace && topFace
-                ? ((topFace as unknown as { confidence?: number }).confidence ?? 0.9)
-                : null,
+            // FaceDetector API doesn't provide confidence in the standard spec
+            // so we use a high default when a face is detected
+            confidence: hasFace ? 0.9 : null,
             boundingBox:
               hasFace && topFace
                 ? {

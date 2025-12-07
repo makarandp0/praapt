@@ -7,11 +7,16 @@ import {
   HealthResponseSchema,
   ListImagesResponse,
   ListImagesResponseSchema,
+  ListUsersResponse,
+  ListUsersResponseSchema,
   SaveImageBody,
   SaveImageBodySchema,
   SaveImageResponse,
   SaveImageResponseSchema,
 } from '@praapt/shared';
+
+// Re-export for convenience
+export type { ListUsersResponse } from '@praapt/shared';
 
 /**
  * Type-safe API client for the Praapt API.
@@ -115,6 +120,28 @@ export class ApiClient {
 
     const data = await response.json();
     return CompareImagesResponseSchema.parse(data);
+  }
+
+  /**
+   * List all users
+   */
+  async listUsers(): Promise<ListUsersResponse> {
+    const response = await fetch(`${this.baseUrl}/users`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error?.error || 'Failed to list users');
+    }
+
+    const data = await response.json();
+    return ListUsersResponseSchema.parse(data);
+  }
+
+  /**
+   * Get profile image URL for a user
+   */
+  getProfileImageUrl(profileImagePath: string): string {
+    return `${this.baseUrl}/images/${encodeURIComponent(profileImagePath)}`;
   }
 }
 

@@ -44,10 +44,13 @@ export function Library({ apiBase }: Props) {
 
   const refresh = async () => {
     try {
-      const { images: imgs } = await api.listImages();
+      const response = await api.listImages();
+      if (!response.ok) {
+        throw new Error(response.error);
+      }
       // Parse image names to slot numbers (format: slot-01, slot-02, etc.)
       const slotMap: Record<number, string> = {};
-      imgs.forEach((img: string) => {
+      response.images.forEach((img: string) => {
         const match = img.match(/^slot-(\d+)$/);
         if (match) {
           const slotNum = parseInt(match[1], 10) - 1; // Convert to 0-indexed
@@ -216,6 +219,9 @@ export function Library({ apiBase }: Props) {
     setCompareError(null);
     try {
       const res = await api.compareImages({ a: img1, b: img2 });
+      if (!res.ok) {
+        throw new Error(res.error);
+      }
       setCompareResult({
         same: res.same,
         algo: res.algo,
