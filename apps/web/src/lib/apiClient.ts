@@ -141,7 +141,7 @@ export class ApiClient {
    * Get profile image URL for a user
    */
   getProfileImageUrl(profileImagePath: string): string {
-    return `${this.baseUrl}/images/${encodeURIComponent(profileImagePath)}`;
+    return `${this.baseUrl}/images/file/${encodeURIComponent(profileImagePath)}`;
   }
 }
 
