@@ -17,7 +17,7 @@ interface SignupProps {
 
 export function Signup({ apiBase }: SignupProps) {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout, user } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
 
   // Check if the signup functionality is available
@@ -58,6 +58,7 @@ export function Signup({ apiBase }: SignupProps) {
   // Submission state
   const [status, setStatus] = useState<Status | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   /** Open the webcam with status updates */
   const openCamera = useCallback(async () => {
@@ -122,10 +123,11 @@ export function Signup({ apiBase }: SignupProps) {
           return;
         }
 
-        // Login the user and redirect
+        // Login the user and show success state
         login(data.user);
-        setStatus({ message: 'Signup successful! Redirecting...', type: 'success' });
-        setTimeout(() => navigate('/library'), 500);
+        setStatus({ message: 'Signup successful!', type: 'success' });
+        setSignupSuccess(true);
+        setIsSubmitting(false);
       } catch (err) {
         setStatus({
           message: `Network error: ${err instanceof Error ? err.message : 'unknown'}`,
@@ -134,7 +136,8 @@ export function Signup({ apiBase }: SignupProps) {
         setIsSubmitting(false);
       }
     },
-    [name, email, capturedImage, apiBase, login, navigate],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate is stable
+    [name, email, capturedImage, apiBase, login],
   );
 
   /** Reset to retake photo */
@@ -195,6 +198,80 @@ export function Signup({ apiBase }: SignupProps) {
       fileInputRef.current.value = '';
     }
   }, []);
+
+  // Handler to try login
+  const handleTryLogin = useCallback(() => {
+    logout();
+    navigate('/login');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate is stable
+  }, [logout]);
+
+  // If signup was successful, show success screen
+  if (signupSuccess && capturedImage) {
+    return (
+      <div className="max-w-md mx-auto space-y-6">
+        <div className="text-center space-y-4">
+          {/* Success Icon */}
+          <div className="flex justify-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-10 h-10 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Success Message */}
+          <h2 className="text-2xl font-bold text-gray-900">Sign Up Successful!</h2>
+          <p className="text-gray-600">
+            Welcome, <span className="font-semibold text-gray-900">{user?.name || name}</span>! Your
+            account has been created successfully.
+          </p>
+        </div>
+
+        {/* Face Image Preview */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700 text-center">
+            Your Registered Face Image
+          </h3>
+          <div className="relative rounded-lg overflow-hidden border-2 border-green-200 shadow-sm">
+            <img src={capturedImage} alt="Your registered face" className="w-full" />
+          </div>
+          <p className="text-xs text-gray-500 text-center">
+            This is the face image we&rsquo;ll use to recognize you during login
+          </p>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+          <h3 className="text-sm font-semibold text-blue-900">Try Face Recognition Login</h3>
+          <p className="text-sm text-blue-800">
+            Now that you&rsquo;re registered, try logging out and logging back in using your face!
+            This will demonstrate the face recognition login flow.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button onClick={handleTryLogin} className="w-full" size="lg">
+            Try Face Recognition Login
+          </Button>
+          <Button onClick={() => navigate('/library')} variant="outline" className="w-full">
+            Continue to Library
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto space-y-6">
