@@ -70,15 +70,16 @@ Working Rules For The LLM
    - Update or add minimal docs only when necessary for the task.
 
 6. Validate With Existing Scripts
-   - Use `npm run ci` to run the full validation suite (build, test, lint, typecheck).
+   - Use `pnpm check` to run the full validation suite (build, typecheck, lint, test).
    - Use `turbo run <task>` (e.g., `turbo run test`) to run specific tasks across workspaces.
-   - After making any code changes, run `npm run lint:fix` for autofixes and resolve remaining issues.
+   - After making any code changes, run `pnpm lint:fix` for autofixes and resolve remaining issues.
+   - **Note:** The pre-push hook automatically runs `pnpm check` before pushing. If it fails, fix issues before pushing.
    - For DB work, consult drizzle/ migrations and src/schema.ts; do not alter them unless the task requires.
 
 7. Use Shared Types (packages/shared)
    - All API request/response types MUST be defined as Zod schemas in `packages/shared/src/index.ts`.
    - Import types from `@praapt/shared` in both API routes and web pages.
-   - After adding new schemas, run `npm run build --workspace=@praapt/shared` to compile.
+   - After adding new schemas, run `pnpm build --filter=@praapt/shared` to compile.
    - Example: `SignupBodySchema`, `LoginResponseSchema`, `UserSchema`.
 
 8. Discriminated Union API Responses
