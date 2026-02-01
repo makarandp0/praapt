@@ -20,6 +20,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@praapt/tsconfig": "workspace:*",
     "typescript": "^5.7.2"
   }
 }

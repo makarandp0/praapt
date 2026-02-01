@@ -384,7 +384,7 @@ declare global {
     maxDetectedFaces?: number;
   }
 
-  // eslint-disable-next-line no-var
+   
   var FaceDetector: {
     new (options?: FaceDetectorOptions): FaceDetector;
     prototype: FaceDetector;

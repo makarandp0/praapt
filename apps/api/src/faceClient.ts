@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import { z } from 'zod';
 
-const FACE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
+const FACE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8001';
 
 async function fileToBase64(p: string): Promise<string> {
   const buf = await fs.promises.readFile(p);
@@ -73,10 +73,10 @@ export async function loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<void>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model }),
   });
-  const json = await res.json();
+  const json: unknown = await res.json();
   if (!res.ok) {
-    const msg = json?.detail || json?.error || 'failed to load model';
-    throw new Error(String(msg));
+    const msg = getErrorMessage(json, 'failed to load model');
+    throw new Error(msg);
   }
 }
 
