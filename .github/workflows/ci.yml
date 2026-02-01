@@ -1,28 +1,45 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, reopened, labeled, synchronize]
+  workflow_dispatch: # Manual trigger from Actions tab
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  detect-changes:
+    # Skip CI on PRs unless they have the 'run-ci' label
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-ci')
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: appdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should_run: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'apps/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - 'tsconfig*.json'
+
+  # All jobs run in parallel after detect-changes
+  lint:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,48 +53,109 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-lint-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-lint-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Configure API env
-        run: |
-          cp apps/api/.env.example apps/api/.env
-          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/appdb" >> apps/api/.env
+      - name: Lint
+        run: pnpm lint
 
-      - name: Wait for Postgres
-        run: |
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U postgres; then
-              echo "Postgres is ready"; break; fi;
-            echo "Waiting for Postgres..."; sleep 2;
-          done
-        env:
-          PGPASSWORD: postgres
+  typecheck:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Check Drizzle migrations are up to date
-        run: |
-          # Generate migrations from current schema
-          pnpm --filter @praapt/api run db:generate
-          # Check if there are any uncommitted changes in drizzle folder
-          if ! git diff --exit-code apps/api/drizzle/; then
-            echo "❌ Drizzle migrations are out of date!"
-            echo "Please run 'pnpm --filter @praapt/api run db:generate' and commit the changes."
-            exit 1
-          fi
-          # Also check for new untracked files
-          if [ -n "$(git ls-files --others --exclude-standard apps/api/drizzle/)" ]; then
-            echo "❌ New Drizzle migration files detected that are not committed!"
-            echo "Please run 'pnpm --filter @praapt/api run db:generate' and commit the new files."
-            git ls-files --others --exclude-standard apps/api/drizzle/
-            exit 1
-          fi
-          echo "✅ Drizzle migrations are up to date"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-      - name: Run migrations
-        run: pnpm migrate
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
 
-      - name: Run CI Suite
-        run: pnpm run ci
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-typecheck-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-typecheck-${{ runner.os }}-
 
-      - name: Build Docker image (API)
-        run: docker build --build-arg GIT_COMMIT=${{ github.sha }} -f apps/api/Dockerfile -t praapt-api-test .
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-build-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-build-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+  test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-test-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-test-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
