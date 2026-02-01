@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '../components/ui/button';
 import { createApiClient } from '../lib/apiClient';
@@ -42,7 +42,7 @@ export function Library({ apiBase }: Props) {
     };
   }, []);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const response = await api.listImages();
       if (!response.ok) {
@@ -63,12 +63,11 @@ export function Library({ apiBase }: Props) {
     } catch (err: unknown) {
       setStatus(err instanceof Error ? err.message : 'Failed to load images');
     }
-  };
+  }, [api]);
 
   useEffect(() => {
     void refresh();
-     
-  }, []);
+  }, [refresh]);
 
   const openCamera = async (slot: number) => {
     setAddingToSlot(slot);

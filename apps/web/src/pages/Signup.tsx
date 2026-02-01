@@ -204,7 +204,7 @@ export function Signup({ apiBase }: SignupProps) {
     logout();
     navigate('/login');
      
-  }, [logout]);
+  }, [logout, navigate]);
 
   // If signup was successful, show success screen
   if (signupSuccess && capturedImage) {
