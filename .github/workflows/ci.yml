@@ -27,14 +27,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Configure API env
         run: |
@@ -54,27 +57,27 @@ jobs:
       - name: Check Drizzle migrations are up to date
         run: |
           # Generate migrations from current schema
-          npm --workspace=@praapt/api run db:generate
+          pnpm --filter @praapt/api run db:generate
           # Check if there are any uncommitted changes in drizzle folder
           if ! git diff --exit-code apps/api/drizzle/; then
             echo "❌ Drizzle migrations are out of date!"
-            echo "Please run 'npm --workspace=@praapt/api run db:generate' and commit the changes."
+            echo "Please run 'pnpm --filter @praapt/api run db:generate' and commit the changes."
             exit 1
           fi
           # Also check for new untracked files
           if [ -n "$(git ls-files --others --exclude-standard apps/api/drizzle/)" ]; then
             echo "❌ New Drizzle migration files detected that are not committed!"
-            echo "Please run 'npm --workspace=@praapt/api run db:generate' and commit the new files."
+            echo "Please run 'pnpm --filter @praapt/api run db:generate' and commit the new files."
             git ls-files --others --exclude-standard apps/api/drizzle/
             exit 1
           fi
           echo "✅ Drizzle migrations are up to date"
 
       - name: Run migrations
-        run: npm run migrate
+        run: pnpm migrate
 
       - name: Run CI Suite
-        run: npm run ci
+        run: pnpm run ci
 
       - name: Build Docker image (API)
         run: docker build --build-arg GIT_COMMIT=${{ github.sha }} -f apps/api/Dockerfile -t praapt-api-test .

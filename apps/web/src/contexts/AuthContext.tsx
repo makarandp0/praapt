@@ -57,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (match) {
       setMatchInfo(match);
       // Store match info without the potentially large loginImage to avoid storage quota errors
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       const { loginImage: _loginImage, ...rest } = match;
       sessionStorage.setItem('auth_match', JSON.stringify({ ...rest, loginImage: '' }));
     }

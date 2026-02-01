@@ -1,6 +1,22 @@
 import { z, ZodObject, ZodRawShape } from 'zod';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Contract Types (for typed API definitions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  type HttpMethod,
+  type PathParamsObject,
+  type ApiContract,
+  defineContract,
+  type InferBody,
+  type InferQuery,
+  type InferResponse,
+  type InferParams,
+  type InferPath,
+} from './contracts/index.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // API Response Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 

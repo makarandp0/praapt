@@ -11,24 +11,31 @@ import { validatedHandler } from '../lib/errorHandler.js';
 import { IMAGES_DIR } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
 
+/** Type predicate for checking if a value is a record object */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 const router = Router();
 
 router.get(
   '/health',
   validatedHandler({ response: HealthResponseSchema }, async () => {
-    const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8000';
+    const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8001';
     let face: FaceHealth = { ok: false, modelsLoaded: false, model: null, commit: 'unknown' };
 
     try {
       const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
-      const j = await r.json();
-      face = {
-        ...face,
-        ok: Boolean(j?.ok),
-        modelsLoaded: Boolean(j?.modelsLoaded),
-        model: j?.model ?? face.model,
-        commit: j?.commit ?? face.commit,
-      };
+      const j: unknown = await r.json();
+      if (isRecord(j)) {
+        face = {
+          ...face,
+          ok: Boolean(j.ok),
+          modelsLoaded: Boolean(j.modelsLoaded),
+          model: typeof j.model === 'string' ? j.model : face.model,
+          commit: typeof j.commit === 'string' ? j.commit : face.commit,
+        };
+      }
     } catch {
       // face already initialized with defaults
     }

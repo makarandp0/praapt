@@ -136,7 +136,7 @@ export function Signup({ apiBase }: SignupProps) {
         setIsSubmitting(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate is stable
+     
     [name, email, capturedImage, apiBase, login],
   );
 
@@ -203,8 +203,8 @@ export function Signup({ apiBase }: SignupProps) {
   const handleTryLogin = useCallback(() => {
     logout();
     navigate('/login');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate is stable
-  }, [logout]);
+     
+  }, [logout, navigate]);
 
   // If signup was successful, show success screen
   if (signupSuccess && capturedImage) {

@@ -48,7 +48,7 @@ function run(cmd, args, opts = {}) {
 
   if (apiFree) {
     log(`API port ${desiredApiPort} is free — starting API dev server...`);
-    apiChild = run('npm', ['--workspace=@praapt/api', 'run', 'dev'], {
+    apiChild = run('pnpm', ['--filter', '@praapt/api', 'run', 'dev'], {
       env: { ...process.env, PORT: String(desiredApiPort) },
       name: 'api',
     });
@@ -67,8 +67,8 @@ function run(cmd, args, opts = {}) {
 
   // Ensure the web gets the correct API URL (if API is on the standard port, it's already correct).
   const webEnv = { ...process.env, VITE_API_URL: `${apiUrl}/api` };
-  const webArgs = ['--workspace=@praapt/web', 'run', 'dev', '--', '--port', String(webPort)];
-  const webChild = run('npm', webArgs, { env: webEnv, name: 'web' });
+  const webArgs = ['--filter', '@praapt/web', 'run', 'dev', '--', '--port', String(webPort)];
+  const webChild = run('pnpm', webArgs, { env: webEnv, name: 'web' });
 
   const shutdown = () => {
     log('Shutting down dev processes...');

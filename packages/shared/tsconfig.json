@@ -1,12 +1,11 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@praapt/tsconfig/base.json",
   "compilerOptions": {
     "outDir": "dist",
     "declaration": true,
-    "emitDeclarationOnly": false,
+    "noEmit": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext"
   },
   "include": ["src"]
 }
-
