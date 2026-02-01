@@ -1,8 +1,38 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { createServer } from 'node:net';
+import { basename } from 'node:path';
 
 const log = (s) => process.stdout.write(s + '\n');
+
+/**
+ * Get the current worktree name (directory name of git root).
+ */
+function getWorktreeName() {
+  try {
+    const gitRoot = execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim();
+    return basename(gitRoot);
+  } catch {
+    return basename(process.cwd());
+  }
+}
+
+/**
+ * Calculate port offset from worktree name (deterministic hash).
+ * Returns offset in increments of 10 (0, 10, 20, ... 990).
+ * Main/master worktrees get offset 0, others get a hash-based offset.
+ */
+function getPortOffset(worktree = getWorktreeName()) {
+  if (['main', 'master', 'praapt'].includes(worktree)) {
+    return 0;
+  }
+  // Simple hash similar to cksum - sum of char codes
+  let hash = 0;
+  for (const char of worktree) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return (hash % 100) * 10;
+}
 
 async function isPortFree(port, host = '127.0.0.1') {
   return await new Promise((resolve) => {
@@ -13,13 +43,6 @@ async function isPortFree(port, host = '127.0.0.1') {
       })
       .listen(port, host);
   });
-}
-
-async function findFreePort(start, host = '127.0.0.1', max = 20) {
-  for (let p = start; p < start + max; p++) {
-    if (await isPortFree(p, host)) return p;
-  }
-  throw new Error(`No free port found starting at ${start}`);
 }
 
 function run(cmd, args, opts = {}) {
@@ -39,33 +62,42 @@ function run(cmd, args, opts = {}) {
 }
 
 (async () => {
-  const desiredApiPort = Number(process.env.PORT || 3000);
-  const desiredWebPort = Number(process.env.WEB_PORT || 5173);
+  // Calculate worktree-specific ports
+  const worktree = getWorktreeName();
+  const offset = getPortOffset(worktree);
 
-  const apiFree = await isPortFree(desiredApiPort);
+  const baseApiPort = 3000;
+  const baseWebPort = 5173;
+
+  const apiPort = baseApiPort + offset;
+  const webPort = baseWebPort + offset;
+
+  log(`Worktree '${worktree}' → offset ${offset}`);
+  log(`  API: http://localhost:${apiPort}`);
+  log(`  Web: http://localhost:${webPort}`);
+  log('');
+
+  const apiFree = await isPortFree(apiPort);
   let apiChild = null;
-  let apiUrl = `http://localhost:${desiredApiPort}`;
+  const apiUrl = `http://localhost:${apiPort}`;
 
   if (apiFree) {
-    log(`API port ${desiredApiPort} is free — starting API dev server...`);
+    log(`API port ${apiPort} is free — starting API dev server...`);
     apiChild = run('pnpm', ['--filter', '@praapt/api', 'run', 'dev'], {
-      env: { ...process.env, PORT: String(desiredApiPort) },
+      env: { ...process.env, PORT: String(apiPort) },
       name: 'api',
     });
   } else {
-    log(`API port ${desiredApiPort} is busy — assuming API is already running at ${apiUrl}.`);
+    log(`API port ${apiPort} is busy — assuming API is already running at ${apiUrl}.`);
   }
 
-  // For web, if the default port is busy, we'll find a free port and start another dev server.
-  const webFree = await isPortFree(desiredWebPort);
-  const webPort = webFree ? desiredWebPort : await findFreePort(desiredWebPort + 1);
+  const webFree = await isPortFree(webPort);
   if (!webFree) {
-    log(`Web port ${desiredWebPort} is busy — starting Web on ${webPort}.`);
-  } else {
-    log(`Web port ${desiredWebPort} is free — starting Web on ${webPort}.`);
+    log(`Web port ${webPort} is busy — another instance may be running.`);
+    process.exit(1);
   }
 
-  // Ensure the web gets the correct API URL (if API is on the standard port, it's already correct).
+  log(`Web port ${webPort} is free — starting Web dev server...`);
   const webEnv = { ...process.env, VITE_API_URL: `${apiUrl}/api` };
   const webArgs = ['--filter', '@praapt/web', 'run', 'dev', '--', '--port', String(webPort)];
   const webChild = run('pnpm', webArgs, { env: webEnv, name: 'web' });
