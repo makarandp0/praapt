@@ -2,6 +2,7 @@
   "extends": "@praapt/tsconfig/server.json",
   "compilerOptions": {
     "rootDir": "src",
+    "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src"]
