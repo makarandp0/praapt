@@ -2,6 +2,7 @@
 description: Create a pull request with automated checks and description generation
 allowed-tools:
   - Bash
+  - Bash(gh:*)
   - Read
   - Glob
   - Grep
