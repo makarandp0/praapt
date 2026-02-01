@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1
 
 FROM node:22.18-bookworm-slim AS deps
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 WORKDIR /app
-COPY package.json .
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN npm install --ignore-scripts
+COPY packages/tsconfig/package.json packages/tsconfig/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 WORKDIR /app
@@ -17,7 +20,7 @@ ENV GIT_COMMIT=${GIT_COMMIT}
 # Copy the full repo (needed for TypeScript sources)
 COPY . .
 # Build shared package, API, and frontend via TurboRepo
-RUN npm run build
+RUN pnpm run build
 
 FROM node:22.18-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
