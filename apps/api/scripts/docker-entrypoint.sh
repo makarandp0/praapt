@@ -6,11 +6,11 @@ echo "=== Starting API Service ==="
 # Run database migrations if DATABASE_URL is set
 if [ -n "$DATABASE_URL" ]; then
   echo "Running database migrations..."
-  node apps/api/dist/migrate.js
+  node dist/migrate.js
   echo "Migrations complete."
 else
   echo "Warning: DATABASE_URL not set, skipping migrations."
 fi
 
 echo "Starting application..."
-exec node apps/api/dist/index.js
+exec node dist/index.js
