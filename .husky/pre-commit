@@ -1,3 +1,1 @@
-echo "🔍 Running pre-commit checks (typecheck + lint)..."
-npx lint-staged
-echo "✅ Pre-commit checks passed!"
+pnpm exec lint-staged
