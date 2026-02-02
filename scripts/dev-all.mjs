@@ -99,6 +99,27 @@ async function isPortFree(port, host = '127.0.0.1') {
   });
 }
 
+/**
+ * Kill any process using the given port.
+ */
+function killPort(port) {
+  try {
+    const pids = execSync(`lsof -ti :${port}`, { encoding: 'utf8' }).trim();
+    if (pids) {
+      for (const pid of pids.split('\n')) {
+        try {
+          execSync(`kill ${pid}`, { stdio: 'ignore' });
+          log(`Killed process on port ${port} (PID ${pid})`);
+        } catch {
+          // Process may have already exited
+        }
+      }
+    }
+  } catch {
+    // No process found on port (lsof returns non-zero)
+  }
+}
+
 function run(cmd, args, opts = {}) {
   const child = spawn(cmd, args, {
     stdio: ['inherit', 'pipe', 'pipe'],
@@ -136,27 +157,19 @@ function run(cmd, args, opts = {}) {
   await ensureDatabase(dbPort);
   log('');
 
-  const apiFree = await isPortFree(apiPort);
-  let apiChild = null;
+  // Kill any existing processes on our ports
+  killPort(apiPort);
+  killPort(webPort);
+
   const apiUrl = `http://localhost:${apiPort}`;
 
-  if (apiFree) {
-    log(`API port ${apiPort} is free — starting API dev server...`);
-    apiChild = run('pnpm', ['--filter', '@praapt/api', 'run', 'dev'], {
-      env: { ...process.env, PORT: String(apiPort) },
-      name: 'api',
-    });
-  } else {
-    log(`API port ${apiPort} is busy — assuming API is already running at ${apiUrl}.`);
-  }
+  log(`Starting API dev server on port ${apiPort}...`);
+  const apiChild = run('pnpm', ['--filter', '@praapt/api', 'run', 'dev'], {
+    env: { ...process.env, PORT: String(apiPort) },
+    name: 'api',
+  });
 
-  const webFree = await isPortFree(webPort);
-  if (!webFree) {
-    log(`Web port ${webPort} is busy — another instance may be running.`);
-    process.exit(1);
-  }
-
-  log(`Web port ${webPort} is free — starting Web dev server...`);
+  log(`Starting Web dev server on port ${webPort}...`);
   const webEnv = { ...process.env, VITE_API_URL: `${apiUrl}/api` };
   const webArgs = ['--filter', '@praapt/web', 'run', 'dev', '--', '--port', String(webPort)];
   const webChild = run('pnpm', webArgs, { env: webEnv, name: 'web' });
