@@ -15,7 +15,7 @@ interface FaceMatchDemoProps {
   apiBase: string;
 }
 
-export function Login({ apiBase }: FaceMatchDemoProps) {
+export function FaceDemo({ apiBase }: FaceMatchDemoProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model, refreshStatus } = useModelStatus();
@@ -337,9 +337,9 @@ export function Login({ apiBase }: FaceMatchDemoProps) {
 
       {/* Link to register face */}
       <p className="text-center text-sm text-gray-600">
-        Want to register a face?{' '}
+        Want to register a new face?{' '}
         <a href="/signup" className="text-blue-600 hover:underline">
-          Register
+          Register Face
         </a>
       </p>
     </div>
