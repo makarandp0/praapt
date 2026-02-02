@@ -67,23 +67,23 @@ export {
   ErrorResponseSchema,
   type ErrorResponse,
 
-  // Auth schemas
-  UserSchema,
-  type User,
+  // Auth schemas (Face Registration)
+  FaceRegistrationSchema,
+  type FaceRegistration,
   SignupBodySchema,
   type SignupBody,
   SignupResponseSchema,
   type SignupResponse,
-  LoginBodySchema,
-  type LoginBody,
-  LoginResponseSchema,
-  type LoginResponse,
-  type LoginSuccess,
-  type LoginError,
+  FaceLoginBodySchema,
+  type FaceLoginBody,
+  FaceLoginResponseSchema,
+  type FaceLoginResponse,
+  type FaceLoginSuccess,
+  type FaceLoginError,
 
-  // Users
-  ListUserSchema,
-  type ListUser,
-  ListUsersResponseSchema,
-  type ListUsersResponse,
+  // Face Registrations
+  ListFaceRegistrationSchema,
+  type ListFaceRegistration,
+  ListFaceRegistrationsResponseSchema,
+  type ListFaceRegistrationsResponse,
 } from './schemas.js';

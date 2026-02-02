@@ -6,7 +6,8 @@ echo "=== Starting API Service ==="
 # Run database migrations if DATABASE_URL is set
 if [ -n "$DATABASE_URL" ]; then
   echo "Running database migrations..."
-  node dist/migrate.js
+  # Use tsx to run migrations (supports TypeScript migration files)
+  npx tsx dist/migrate.js
   echo "Migrations complete."
 else
   echo "Warning: DATABASE_URL not set, skipping migrations."

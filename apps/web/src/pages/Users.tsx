@@ -1,4 +1,4 @@
-import { ListUser } from '@praapt/shared';
+import { ListFaceRegistration } from '@praapt/shared';
 import { useEffect, useMemo, useState } from 'react';
 
 import { createApiClient } from '../lib/apiClient';
@@ -8,34 +8,34 @@ type Props = { apiBase: string };
 export function Users({ apiBase }: Props) {
   const api = useMemo(() => createApiClient(apiBase), [apiBase]);
 
-  const [users, setUsers] = useState<ListUser[]>([]);
+  const [registrations, setRegistrations] = useState<ListFaceRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchUsers() {
+    async function fetchRegistrations() {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.listUsers();
+        const response = await api.listFaceRegistrations();
         if (!response.ok) {
           throw new Error(response.error);
         }
-        setUsers(response.users);
+        setRegistrations(response.registrations);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load users');
+        setError(err instanceof Error ? err.message : 'Failed to load registrations');
       } finally {
         setLoading(false);
       }
     }
 
-    void fetchUsers();
+    void fetchRegistrations();
   }, [api]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">Loading users...</div>
+        <div className="text-gray-500">Loading face registrations...</div>
       </div>
     );
   }
@@ -51,53 +51,53 @@ export function Users({ apiBase }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">All Users</h2>
-        <span className="text-sm text-gray-500">{users.length} users</span>
+        <h2 className="text-xl font-semibold">Face Registrations</h2>
+        <span className="text-sm text-gray-500">{registrations.length} registrations</span>
       </div>
 
-      {users.length === 0 ? (
+      {registrations.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-500">No users registered yet.</p>
+          <p className="text-gray-500">No face registrations yet.</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {users.map((user) => (
+          {registrations.map((reg) => (
             <div
-              key={user.id}
+              key={reg.id}
               className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-4">
                 {/* Profile image */}
                 <div className="flex-shrink-0">
-                  {user.profileImagePath ? (
+                  {reg.profileImagePath ? (
                     <img
-                      src={api.getProfileImageUrl(user.profileImagePath)}
-                      alt={user.name || user.email}
+                      src={api.getProfileImageUrl(reg.profileImagePath)}
+                      alt={reg.name || reg.email}
                       className="w-16 h-16 rounded-full object-cover border border-gray-200"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
                       <span className="text-2xl text-gray-400">
-                        {(user.name || user.email).charAt(0).toUpperCase()}
+                        {(reg.name || reg.email).charAt(0).toUpperCase()}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* User info */}
+                {/* Registration info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{user.name || 'No name'}</h3>
-                  <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                  <h3 className="font-medium text-gray-900 truncate">{reg.name || 'No name'}</h3>
+                  <p className="text-sm text-gray-500 truncate">{reg.email}</p>
 
-                  {user.faceRegisteredAt && (
+                  {reg.faceRegisteredAt && (
                     <p className="text-xs text-gray-400 mt-1">
-                      Face registered: {new Date(user.faceRegisteredAt).toLocaleDateString()}
+                      Face registered: {new Date(reg.faceRegisteredAt).toLocaleDateString()}
                     </p>
                   )}
 
-                  {user.createdAt && (
+                  {reg.createdAt && (
                     <p className="text-xs text-gray-400">
-                      Joined: {new Date(user.createdAt).toLocaleDateString()}
+                      Created: {new Date(reg.createdAt).toLocaleDateString()}
                     </p>
                   )}
                 </div>

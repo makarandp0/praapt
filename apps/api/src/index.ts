@@ -7,9 +7,9 @@ import { NODE_ENV } from './env.js';
 import { errorHandler } from './lib/errorHandler.js';
 import { logger } from './lib/logger.js';
 import authRoutes from './routes/auth.js';
+import faceRegistrationsRoutes from './routes/faceRegistrations.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
-import usersRoutes from './routes/users.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,11 +31,11 @@ app.use((req, res, next) => {
   return next();
 });
 
-// Mount API routes
+// Mount API routes - all routes define their full paths relative to /api
 app.use('/api', healthRoutes);
-app.use('/api/images', imagesRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
+app.use('/api', imagesRoutes);
+app.use('/api', authRoutes);
+app.use('/api', faceRegistrationsRoutes);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {

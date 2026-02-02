@@ -1,14 +1,16 @@
 import { pgTable, serial, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
 /**
- * Users table schema
+ * Face registrations table schema
+ * Stores face embeddings for face-based login.
  * - Basic user info: email, name
  * - Face recognition: embedding vector (512-dim), profile image path
  */
-export const users = pgTable('users', {
+export const faceRegistrations = pgTable('face_registrations', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name'),
+  notes: text('notes'), // Optional notes field
   // Face recognition fields
   faceEmbedding: jsonb('face_embedding').$type<number[]>(),
   profileImagePath: text('profile_image_path'),
@@ -18,5 +20,5 @@ export const users = pgTable('users', {
 });
 
 // Infer types from schema for use throughout the app
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
+export type FaceRegistration = typeof faceRegistrations.$inferSelect;
+export type NewFaceRegistration = typeof faceRegistrations.$inferInsert;

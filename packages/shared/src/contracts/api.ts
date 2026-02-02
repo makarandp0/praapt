@@ -1,13 +1,13 @@
 import {
   CompareImagesBodySchema,
   CompareImagesResponseSchema,
+  FaceLoginBodySchema,
+  FaceLoginResponseSchema,
   HealthResponseSchema,
+  ListFaceRegistrationsResponseSchema,
   ListImagesResponseSchema,
-  ListUsersResponseSchema,
   LoadModelBodySchema,
   LoadModelResponseSchema,
-  LoginBodySchema,
-  LoginResponseSchema,
   SaveImageBodySchema,
   SaveImageResponseSchema,
   SignupBodySchema,
@@ -43,11 +43,11 @@ export const signup = defineContract({
   response: SignupResponseSchema,
 });
 
-export const login = defineContract({
+export const faceLogin = defineContract({
   method: 'POST',
-  path: '/auth/login',
-  body: LoginBodySchema,
-  response: LoginResponseSchema,
+  path: '/auth/facelogin',
+  body: FaceLoginBodySchema,
+  response: FaceLoginResponseSchema,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,11 +75,11 @@ export const compareImages = defineContract({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Users Contracts
+// Face Registrations Contracts
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const listUsers = defineContract({
+export const listFaceRegistrations = defineContract({
   method: 'GET',
-  path: '/users',
-  response: ListUsersResponseSchema,
+  path: '/face-registrations',
+  response: ListFaceRegistrationsResponseSchema,
 });

@@ -1,4 +1,4 @@
-import { LoginBody, LoginResponseSchema } from '@praapt/shared';
+import { FaceLoginBody, FaceLoginResponseSchema } from '@praapt/shared';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -88,15 +88,15 @@ export function Login({ apiBase }: LoginProps) {
     setStatus({ message: 'Verifying face...', type: 'info' });
 
     try {
-      const body: LoginBody = { faceImage: dataUrl };
+      const body: FaceLoginBody = { faceImage: dataUrl };
 
-      const response = await fetch(`${apiBase}/auth/login`, {
+      const response = await fetch(`${apiBase}/auth/facelogin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
-      const data = LoginResponseSchema.parse(await response.json());
+      const data = FaceLoginResponseSchema.parse(await response.json());
 
       if (!data.ok) {
         const msg = data.error || 'Login failed';

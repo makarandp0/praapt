@@ -4,6 +4,8 @@ allowed-tools:
   - Bash
   - Bash(gh:*)
   - Read
+  - Write
+  - Edit
   - Glob
   - Grep
 ---
@@ -21,13 +23,17 @@ pnpm check
 
 If checks fail, stop and help fix the issues before proceeding.
 
-## 2. Gather Context
+## 2. Update LLM Instructions
+
+Run the /updateAgentsFile workflow to capture any learnings from this work into LLM_INSTRUCTIONS.md. If updates are made, commit them before proceeding.
+
+## 3. Gather Context
 
 - Run `git log main..HEAD --oneline` to see all commits being merged
 - Run `git diff main...HEAD --stat` to understand the scope of changes
 - Check if there are uncommitted changes that should be included
 
-## 3. Generate PR Description
+## 4. Generate PR Description
 
 Based on the commits and changes, create a PR with:
 
@@ -54,7 +60,7 @@ Based on the commits and changes, create a PR with:
 [Any additional context, breaking changes, or follow-up items]
 ```
 
-## 4. Create the PR
+## 5. Create the PR
 
 Use `gh pr create` with the generated title and body. Target the `main` branch.
 

@@ -155,17 +155,17 @@ export const ErrorResponseSchema = z.object({ error: z.string() });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Auth schemas
+// Auth schemas (Face Registration)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** User object returned from auth endpoints */
-export const UserSchema = z.object({
+/** Face registration object returned from auth endpoints */
+export const FaceRegistrationSchema = z.object({
   id: z.number(),
   email: z.string().email(),
   name: z.string().nullable(),
   profileImagePath: z.string().nullable(),
 });
-export type User = z.infer<typeof UserSchema>;
+export type FaceRegistration = z.infer<typeof FaceRegistrationSchema>;
 
 /** POST /auth/signup request body */
 export const SignupBodySchema = z.object({
@@ -176,14 +176,14 @@ export const SignupBodySchema = z.object({
 export type SignupBody = z.infer<typeof SignupBodySchema>;
 
 /** POST /auth/signup response */
-export const SignupResponseSchema = createApiResponse(z.object({ user: UserSchema }));
+export const SignupResponseSchema = createApiResponse(z.object({ user: FaceRegistrationSchema }));
 export type SignupResponse = z.infer<typeof SignupResponseSchema>;
 
-/** POST /auth/login request body */
-export const LoginBodySchema = z.object({
+/** POST /auth/facelogin request body */
+export const FaceLoginBodySchema = z.object({
   faceImage: z.string().min(1, 'face image required (base64)'),
 });
-export type LoginBody = z.infer<typeof LoginBodySchema>;
+export type FaceLoginBody = z.infer<typeof FaceLoginBodySchema>;
 
 /** Top match schema (reused in success and error) */
 const TopMatchSchema = z.object({
@@ -193,10 +193,10 @@ const TopMatchSchema = z.object({
   profileImagePath: z.string().nullable(),
 });
 
-/** Login success data */
-const LoginSuccessSchema = z.object({
+/** Face login success data */
+const FaceLoginSuccessSchema = z.object({
   ok: z.literal(true),
-  user: UserSchema,
+  user: FaceRegistrationSchema,
   match: z.object({
     distance: z.number(),
     threshold: z.number(),
@@ -204,8 +204,8 @@ const LoginSuccessSchema = z.object({
   topMatches: z.array(TopMatchSchema),
 });
 
-/** Login error data (custom error with face match details) */
-const LoginErrorSchema = z.object({
+/** Face login error data (custom error with face match details) */
+const FaceLoginErrorSchema = z.object({
   ok: z.literal(false),
   error: z.string(),
   distance: z.number().optional(),
@@ -213,21 +213,21 @@ const LoginErrorSchema = z.object({
   topMatches: z.array(TopMatchSchema).optional(),
 });
 
-/** POST /auth/login response - discriminated union */
-export const LoginResponseSchema = z.discriminatedUnion('ok', [
-  LoginSuccessSchema,
-  LoginErrorSchema,
+/** POST /auth/facelogin response - discriminated union */
+export const FaceLoginResponseSchema = z.discriminatedUnion('ok', [
+  FaceLoginSuccessSchema,
+  FaceLoginErrorSchema,
 ]);
-export type LoginResponse = z.infer<typeof LoginResponseSchema>;
+export type FaceLoginResponse = z.infer<typeof FaceLoginResponseSchema>;
 
-/** Helper type for login success */
-export type LoginSuccess = ApiSuccess<LoginResponse>;
+/** Helper type for face login success */
+export type FaceLoginSuccess = ApiSuccess<FaceLoginResponse>;
 
-/** Helper type for login error */
-export type LoginError = ApiError<LoginResponse>;
+/** Helper type for face login error */
+export type FaceLoginError = ApiError<FaceLoginResponse>;
 
-/** User schema for list users */
-export const ListUserSchema = z.object({
+/** Face registration schema for list endpoint */
+export const ListFaceRegistrationSchema = z.object({
   id: z.number(),
   email: z.string().email(),
   name: z.string().nullable(),
@@ -236,13 +236,13 @@ export const ListUserSchema = z.object({
   createdAt: z.string().nullable(), // ISO timestamp
   updatedAt: z.string().nullable(), // ISO timestamp
 });
-export type ListUser = z.infer<typeof ListUserSchema>;
+export type ListFaceRegistration = z.infer<typeof ListFaceRegistrationSchema>;
 
-/** GET /users response */
-export const ListUsersResponseSchema = createApiResponse(
+/** GET /face-registrations response */
+export const ListFaceRegistrationsResponseSchema = createApiResponse(
   z.object({
-    users: z.array(ListUserSchema),
+    registrations: z.array(ListFaceRegistrationSchema),
     count: z.number(),
   }),
 );
-export type ListUsersResponse = z.infer<typeof ListUsersResponseSchema>;
+export type ListFaceRegistrationsResponse = z.infer<typeof ListFaceRegistrationsResponseSchema>;

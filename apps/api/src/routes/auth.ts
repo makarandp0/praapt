@@ -5,7 +5,7 @@ import { Contracts } from '@praapt/shared';
 import { eq } from 'drizzle-orm';
 import { Router } from 'express';
 
-import { db, users } from '../db.js';
+import { db, faceRegistrations } from '../db.js';
 import { cosineDistance, embedBase64 } from '../faceClient.js';
 import { ConflictError, ValidationError } from '../lib/errors.js';
 import { IMAGES_DIR, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
@@ -20,13 +20,17 @@ const FACE_MATCH_THRESHOLD = 0.4;
 
 /**
  * POST /auth/signup
- * Register a new user with face embedding
+ * Register a new face registration with face embedding
  */
 routes.fromContract(Contracts.signup, async (req, res) => {
   const { email, name, faceImage } = req.body;
 
   // Check if email already exists
-  const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const existing = await db
+    .select()
+    .from(faceRegistrations)
+    .where(eq(faceRegistrations.email, email))
+    .limit(1);
   if (existing.length > 0) {
     throw new ConflictError('Email already registered');
   }
@@ -49,9 +53,9 @@ routes.fromContract(Contracts.signup, async (req, res) => {
   const imageBuffer = Buffer.from(stripDataUrlPrefix(faceImage), 'base64');
   fs.writeFileSync(profilePath, imageBuffer);
 
-  // Insert user into database
-  const [newUser] = await db
-    .insert(users)
+  // Insert face registration into database
+  const [newRegistration] = await db
+    .insert(faceRegistrations)
     .values({
       email,
       name,
@@ -61,7 +65,7 @@ routes.fromContract(Contracts.signup, async (req, res) => {
     })
     .returning();
 
-  logger.info({ userId: newUser.id, email }, 'User signed up');
+  logger.info({ registrationId: newRegistration.id, email }, 'Face registration created');
 
   // Set 201 status for created resource
   res.status(201);
@@ -69,20 +73,20 @@ routes.fromContract(Contracts.signup, async (req, res) => {
   return {
     ok: true as const,
     user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      profileImagePath: newUser.profileImagePath,
+      id: newRegistration.id,
+      email: newRegistration.email,
+      name: newRegistration.name,
+      profileImagePath: newRegistration.profileImagePath,
     },
   };
 });
 
 /**
- * POST /auth/login
+ * POST /auth/facelogin
  * Login by face matching
  */
 routes.fromContract(
-  Contracts.login,
+  Contracts.faceLogin,
   async (req) => {
     const { faceImage } = req.body;
 
@@ -97,50 +101,50 @@ routes.fromContract(
       throw new ValidationError(`Error: Failed to extract face - ${msg}`);
     }
 
-    // Fetch all users with face embeddings
-    const allUsers = await db.select().from(users);
+    // Fetch all face registrations with embeddings
+    const allRegistrations = await db.select().from(faceRegistrations);
 
     // Type guard to ensure faceEmbedding is number[]
     function hasFaceEmbedding(
-      user: (typeof allUsers)[0],
-    ): user is (typeof allUsers)[0] & { faceEmbedding: number[] } {
-      return user.faceEmbedding !== null && Array.isArray(user.faceEmbedding);
+      reg: (typeof allRegistrations)[0],
+    ): reg is (typeof allRegistrations)[0] & { faceEmbedding: number[] } {
+      return reg.faceEmbedding !== null && Array.isArray(reg.faceEmbedding);
     }
 
-    const usersWithFace = allUsers.filter(hasFaceEmbedding);
+    const registrationsWithFace = allRegistrations.filter(hasFaceEmbedding);
 
-    if (usersWithFace.length === 0) {
+    if (registrationsWithFace.length === 0) {
       return {
         ok: false as const,
-        error: 'Error: No registered users with face data',
+        error: 'Error: No registered faces found',
       };
     }
 
     // Find best match and top 8 matches
-    let bestMatch: (typeof usersWithFace)[0] | null = null;
+    let bestMatch: (typeof registrationsWithFace)[0] | null = null;
     let bestDistance = Infinity;
 
-    // Calculate distances for all users
-    const userDistances = usersWithFace.map((user) => ({
-      user,
-      distance: cosineDistance(loginEmbedding, user.faceEmbedding),
+    // Calculate distances for all registrations
+    const regDistances = registrationsWithFace.map((reg) => ({
+      reg,
+      distance: cosineDistance(loginEmbedding, reg.faceEmbedding),
     }));
 
     // Sort by distance (ascending) and get top 8
-    userDistances.sort((a, b) => a.distance - b.distance);
-    const topMatches = userDistances.slice(0, 8);
+    regDistances.sort((a, b) => a.distance - b.distance);
+    const topMatches = regDistances.slice(0, 8);
 
     // Best match is the first one
     if (topMatches.length > 0) {
-      bestMatch = topMatches[0].user;
+      bestMatch = topMatches[0].reg;
       bestDistance = topMatches[0].distance;
     }
 
-    const topMatchesFormatted = topMatches.map(({ user, distance }) => ({
-      email: user.email,
-      name: user.name,
+    const topMatchesFormatted = topMatches.map(({ reg, distance }) => ({
+      email: reg.email,
+      name: reg.name,
       distance,
-      profileImagePath: user.profileImagePath,
+      profileImagePath: reg.profileImagePath,
     }));
 
     if (!bestMatch || bestDistance > FACE_MATCH_THRESHOLD) {
@@ -156,8 +160,8 @@ routes.fromContract(
     }
 
     logger.info(
-      { userId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
-      'User logged in',
+      { registrationId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
+      'Face login successful',
     );
 
     return {
