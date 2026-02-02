@@ -13,11 +13,22 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     DO $$
     BEGIN
       IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        INSERT INTO face_registrations (email, name, created_at, updated_at)
-        SELECT email, name, created_at, updated_at
-        FROM users
-        WHERE deleted_at IS NULL
-        ON CONFLICT (email) DO NOTHING;
+        -- Check if deleted_at column exists (may not in older schemas)
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'deleted_at'
+        ) THEN
+          INSERT INTO face_registrations (email, name, created_at, updated_at)
+          SELECT email, name, created_at, updated_at
+          FROM users
+          WHERE deleted_at IS NULL
+          ON CONFLICT (email) DO NOTHING;
+        ELSE
+          INSERT INTO face_registrations (email, name, created_at, updated_at)
+          SELECT email, name, created_at, updated_at
+          FROM users
+          ON CONFLICT (email) DO NOTHING;
+        END IF;
       END IF;
     END $$;
   `);
