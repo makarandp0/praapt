@@ -67,19 +67,21 @@ export {
   ErrorResponseSchema,
   type ErrorResponse,
 
-  // Auth schemas (Face Registration)
+  // Face Registration schemas
   FaceRegistrationSchema,
   type FaceRegistration,
   SignupBodySchema,
   type SignupBody,
   SignupResponseSchema,
   type SignupResponse,
-  FaceLoginBodySchema,
-  type FaceLoginBody,
-  FaceLoginResponseSchema,
-  type FaceLoginResponse,
-  type FaceLoginSuccess,
-  type FaceLoginError,
+
+  // Demo: Face Match schemas
+  FaceMatchBodySchema,
+  type FaceMatchBody,
+  FaceMatchResponseSchema,
+  type FaceMatchResponse,
+  type FaceMatchSuccess,
+  type FaceMatchError,
 
   // Face Registrations
   ListFaceRegistrationSchema,

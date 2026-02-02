@@ -2,8 +2,8 @@ import {
   Contracts,
   type CompareImagesBody,
   type CompareImagesResponse,
-  type FaceLoginBody,
-  type FaceLoginResponse,
+  type FaceMatchBody,
+  type FaceMatchResponse,
   type HealthResponse,
   type ListFaceRegistrationsResponse,
   type ListImagesResponse,
@@ -20,7 +20,7 @@ import { callContract } from './contractClient.js';
 // Re-export types for convenience
 export type {
   ListFaceRegistrationsResponse,
-  FaceLoginResponse,
+  FaceMatchResponse,
   SignupResponse,
   HealthResponse,
   ListImagesResponse,
@@ -61,10 +61,10 @@ export class ApiClient {
   }
 
   /**
-   * Login with face recognition
+   * Demo: Find matching face registration
    */
-  async faceLogin(body: FaceLoginBody): Promise<FaceLoginResponse> {
-    return callContract(this.baseUrl, Contracts.faceLogin, { body });
+  async faceMatch(body: FaceMatchBody): Promise<FaceMatchResponse> {
+    return callContract(this.baseUrl, Contracts.faceMatch, { body });
   }
 
   /**

@@ -1,8 +1,8 @@
 import {
   CompareImagesBodySchema,
   CompareImagesResponseSchema,
-  FaceLoginBodySchema,
-  FaceLoginResponseSchema,
+  FaceMatchBodySchema,
+  FaceMatchResponseSchema,
   HealthResponseSchema,
   ListFaceRegistrationsResponseSchema,
   ListImagesResponseSchema,
@@ -33,21 +33,25 @@ export const loadModel = defineContract({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Auth Contracts
+// Face Registration Contracts
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const signup = defineContract({
   method: 'POST',
-  path: '/auth/signup',
+  path: '/face-registrations',
   body: SignupBodySchema,
   response: SignupResponseSchema,
 });
 
-export const faceLogin = defineContract({
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const faceMatch = defineContract({
   method: 'POST',
-  path: '/auth/facelogin',
-  body: FaceLoginBodySchema,
-  response: FaceLoginResponseSchema,
+  path: '/demo/face-match',
+  body: FaceMatchBodySchema,
+  response: FaceMatchResponseSchema,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

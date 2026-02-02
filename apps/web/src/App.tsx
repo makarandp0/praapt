@@ -6,8 +6,8 @@ import { StatusPanel } from './components/StatusPanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ModelStatusProvider } from './contexts/ModelStatusContext';
 import { Config } from './pages/Config';
+import { FaceDemo } from './pages/FaceDemo';
 import { Library } from './pages/Library';
-import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { User } from './pages/User';
 import { Users } from './pages/Users';
@@ -87,7 +87,7 @@ function NavBar() {
                     onClick={closeMenu}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Profile
+                    Match Result
                   </Link>
                   <Link
                     to="/library"
@@ -101,7 +101,7 @@ function NavBar() {
                     onClick={closeMenu}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Users
+                    Registrations
                   </Link>
                   <Link
                     to="/version"
@@ -124,24 +124,24 @@ function NavBar() {
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
-                    Logout
+                    Clear Session
                   </button>
                 </>
               ) : (
                 <>
                   <Link
-                    to="/login"
+                    to="/facedemo"
                     onClick={closeMenu}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Login
+                    Face Demo
                   </Link>
                   <Link
                     to="/signup"
                     onClick={closeMenu}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Signup
+                    Register Face
                   </Link>
                   <Link
                     to="/version"
@@ -175,7 +175,7 @@ function AppRoutes() {
       <NavBar />
       <div className="pt-4">
         <Routes>
-          <Route path="/login" element={<Login apiBase={API_BASE} />} />
+          <Route path="/facedemo" element={<FaceDemo apiBase={API_BASE} />} />
           <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
@@ -203,7 +203,9 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/user" replace />} />
+          {/* Redirect old /login route to /facedemo */}
+          <Route path="/login" element={<Navigate to="/facedemo" replace />} />
+          <Route path="/" element={<Navigate to="/facedemo" replace />} />
         </Routes>
       </div>
     </div>

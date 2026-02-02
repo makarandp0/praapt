@@ -179,11 +179,11 @@ export type SignupBody = z.infer<typeof SignupBodySchema>;
 export const SignupResponseSchema = createApiResponse(z.object({ user: FaceRegistrationSchema }));
 export type SignupResponse = z.infer<typeof SignupResponseSchema>;
 
-/** POST /auth/facelogin request body */
-export const FaceLoginBodySchema = z.object({
+/** POST /demo/face-match request body */
+export const FaceMatchBodySchema = z.object({
   faceImage: z.string().min(1, 'face image required (base64)'),
 });
-export type FaceLoginBody = z.infer<typeof FaceLoginBodySchema>;
+export type FaceMatchBody = z.infer<typeof FaceMatchBodySchema>;
 
 /** Top match schema (reused in success and error) */
 const TopMatchSchema = z.object({
@@ -193,10 +193,10 @@ const TopMatchSchema = z.object({
   profileImagePath: z.string().nullable(),
 });
 
-/** Face login success data */
-const FaceLoginSuccessSchema = z.object({
+/** Face match success data */
+const FaceMatchSuccessSchema = z.object({
   ok: z.literal(true),
-  user: FaceRegistrationSchema,
+  matchedRegistration: FaceRegistrationSchema,
   match: z.object({
     distance: z.number(),
     threshold: z.number(),
@@ -204,8 +204,8 @@ const FaceLoginSuccessSchema = z.object({
   topMatches: z.array(TopMatchSchema),
 });
 
-/** Face login error data (custom error with face match details) */
-const FaceLoginErrorSchema = z.object({
+/** Face match error data (custom error with face match details) */
+const FaceMatchErrorSchema = z.object({
   ok: z.literal(false),
   error: z.string(),
   distance: z.number().optional(),
@@ -213,18 +213,18 @@ const FaceLoginErrorSchema = z.object({
   topMatches: z.array(TopMatchSchema).optional(),
 });
 
-/** POST /auth/facelogin response - discriminated union */
-export const FaceLoginResponseSchema = z.discriminatedUnion('ok', [
-  FaceLoginSuccessSchema,
-  FaceLoginErrorSchema,
+/** POST /demo/face-match response - discriminated union */
+export const FaceMatchResponseSchema = z.discriminatedUnion('ok', [
+  FaceMatchSuccessSchema,
+  FaceMatchErrorSchema,
 ]);
-export type FaceLoginResponse = z.infer<typeof FaceLoginResponseSchema>;
+export type FaceMatchResponse = z.infer<typeof FaceMatchResponseSchema>;
 
-/** Helper type for face login success */
-export type FaceLoginSuccess = ApiSuccess<FaceLoginResponse>;
+/** Helper type for face match success */
+export type FaceMatchSuccess = ApiSuccess<FaceMatchResponse>;
 
-/** Helper type for face login error */
-export type FaceLoginError = ApiError<FaceLoginResponse>;
+/** Helper type for face match error */
+export type FaceMatchError = ApiError<FaceMatchResponse>;
 
 /** Face registration schema for list endpoint */
 export const ListFaceRegistrationSchema = z.object({
