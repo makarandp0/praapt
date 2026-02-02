@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 
 import { runner, type RunnerOption } from 'node-pg-migrate';
 
-import { DATABASE_URL } from './env.js';
+import { getConfig } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +22,7 @@ async function runMigrations(): Promise<void> {
     console.log('Running migrations...');
 
     const options: RunnerOption = {
-      databaseUrl: DATABASE_URL,
+      databaseUrl: getConfig().databaseUrl,
       dir: migrationsDir,
       direction: 'up',
       migrationsTable: 'pgmigrations',
