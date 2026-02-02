@@ -2,8 +2,8 @@ import type { MigrationBuilder } from 'node-pg-migrate';
 
 /**
  * Migrate data from legacy `users` table to `face_registrations`.
- * Only copies email, name, created_at, updated_at.
- * Uses ON CONFLICT to skip duplicates (by email).
+ * Copies all relevant columns including face_embedding and profile_image_path.
+ * Uses ON CONFLICT to skip duplicates (by email), then updates missing fields.
  *
  * This migration only runs if the `users` table exists (production).
  * On fresh/local databases without `users`, this is a no-op.
@@ -18,16 +18,22 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
           SELECT 1 FROM information_schema.columns
           WHERE table_name = 'users' AND column_name = 'deleted_at'
         ) THEN
-          INSERT INTO face_registrations (email, name, created_at, updated_at)
-          SELECT email, name, created_at, updated_at
+          INSERT INTO face_registrations (email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at)
+          SELECT email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at
           FROM users
           WHERE deleted_at IS NULL
-          ON CONFLICT (email) DO NOTHING;
+          ON CONFLICT (email) DO UPDATE SET
+            face_embedding = EXCLUDED.face_embedding,
+            profile_image_path = EXCLUDED.profile_image_path,
+            face_registered_at = EXCLUDED.face_registered_at;
         ELSE
-          INSERT INTO face_registrations (email, name, created_at, updated_at)
-          SELECT email, name, created_at, updated_at
+          INSERT INTO face_registrations (email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at)
+          SELECT email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at
           FROM users
-          ON CONFLICT (email) DO NOTHING;
+          ON CONFLICT (email) DO UPDATE SET
+            face_embedding = EXCLUDED.face_embedding,
+            profile_image_path = EXCLUDED.profile_image_path,
+            face_registered_at = EXCLUDED.face_registered_at;
         END IF;
       END IF;
     END $$;
