@@ -52,7 +52,7 @@ routes.fromContract(Contracts.listImages, async () => {
  * GET /images/file/:filename
  * Serve an image by exact filename (used for profile images)
  */
-router.get('/file/:filename', (req, res, next) => {
+router.get('/images/file/:filename', (req, res, next) => {
   try {
     // Security: extract just the filename and reject any path containing directory separators
     const filename = path.basename(req.params.filename);
@@ -75,7 +75,7 @@ router.get('/file/:filename', (req, res, next) => {
  * GET /images/:name
  * Serve an image by name
  */
-router.get('/:name', (req, res, next) => {
+router.get('/images/:name', (req, res, next) => {
   try {
     const { name } = req.params;
     const files = listImageFiles();
