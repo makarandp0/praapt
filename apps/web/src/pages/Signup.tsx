@@ -1,5 +1,5 @@
-import { SignupBody, SignupResponseSchema } from '@praapt/shared';
-import { useRef, useState, useCallback } from 'react';
+import { SignupBody } from '@praapt/shared';
+import { useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CameraPreview } from '../components/CameraPreview';
@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
 import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
+import { createApiClient } from '../lib/apiClient';
 
 interface SignupProps {
   apiBase: string;
@@ -19,6 +20,7 @@ export function Signup({ apiBase }: SignupProps) {
   const navigate = useNavigate();
   const { login, logout, user } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
+  const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
 
   // Check if the signup functionality is available
   const isModelReady = modelsLoaded && model !== null;
@@ -100,7 +102,7 @@ export function Signup({ apiBase }: SignupProps) {
       }
 
       setIsSubmitting(true);
-      setStatus({ message: 'Signing up...', type: 'info' });
+      setStatus({ message: 'Registering face...', type: 'info' });
 
       try {
         const body: SignupBody = {
@@ -109,23 +111,17 @@ export function Signup({ apiBase }: SignupProps) {
           faceImage: capturedImage,
         };
 
-        const response = await fetch(`${apiBase}/auth/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        const data = SignupResponseSchema.parse(await response.json());
+        const data = await apiClient.signup(body);
 
         if (!data.ok) {
-          setStatus({ message: `Signup failed: ${data.error || 'Unknown error'}`, type: 'error' });
+          setStatus({ message: `Registration failed: ${data.error || 'Unknown error'}`, type: 'error' });
           setIsSubmitting(false);
           return;
         }
 
         // Login the user and show success state
         login(data.user);
-        setStatus({ message: 'Signup successful!', type: 'success' });
+        setStatus({ message: 'Face registered successfully!', type: 'success' });
         setSignupSuccess(true);
         setIsSubmitting(false);
       } catch (err) {
@@ -136,8 +132,7 @@ export function Signup({ apiBase }: SignupProps) {
         setIsSubmitting(false);
       }
     },
-     
-    [name, email, capturedImage, apiBase, login],
+    [name, email, capturedImage, apiClient, login],
   );
 
   /** Reset to retake photo */
@@ -199,11 +194,10 @@ export function Signup({ apiBase }: SignupProps) {
     }
   }, []);
 
-  // Handler to try login
-  const handleTryLogin = useCallback(() => {
+  // Handler to try face match demo
+  const handleTryFaceDemo = useCallback(() => {
     logout();
-    navigate('/login');
-     
+    navigate('/facedemo');
   }, [logout, navigate]);
 
   // If signup was successful, show success screen
@@ -231,10 +225,10 @@ export function Signup({ apiBase }: SignupProps) {
           </div>
 
           {/* Success Message */}
-          <h2 className="text-2xl font-bold text-gray-900">Sign Up Successful!</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Face Registered!</h2>
           <p className="text-gray-600">
             Welcome, <span className="font-semibold text-gray-900">{user?.name || name}</span>! Your
-            account has been created successfully.
+            face has been registered successfully.
           </p>
         </div>
 
@@ -247,23 +241,23 @@ export function Signup({ apiBase }: SignupProps) {
             <img src={capturedImage} alt="Your registered face" className="w-full" />
           </div>
           <p className="text-xs text-gray-500 text-center">
-            This is the face image we&rsquo;ll use to recognize you during login
+            This is the face image we&rsquo;ll use to match against
           </p>
         </div>
 
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-          <h3 className="text-sm font-semibold text-blue-900">Try Face Recognition Login</h3>
+          <h3 className="text-sm font-semibold text-blue-900">Try Face Match Demo</h3>
           <p className="text-sm text-blue-800">
-            Now that you&rsquo;re registered, try logging out and logging back in using your face!
-            This will demonstrate the face recognition login flow.
+            Now that you&rsquo;re registered, try the face match demo to see if your face is
+            recognized!
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <Button onClick={handleTryLogin} className="w-full" size="lg">
-            Try Face Recognition Login
+          <Button onClick={handleTryFaceDemo} className="w-full" size="lg">
+            Try Face Match Demo
           </Button>
           <Button onClick={() => navigate('/library')} variant="outline" className="w-full">
             Continue to Library
@@ -275,7 +269,7 @@ export function Signup({ apiBase }: SignupProps) {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      <h2 className="text-xl font-semibold text-center">Sign Up with Face Recognition</h2>
+      <h2 className="text-xl font-semibold text-center">Register Face</h2>
 
       <ServiceStatusBanner />
 
@@ -388,8 +382,8 @@ export function Signup({ apiBase }: SignupProps) {
               </div>
               {!isModelReady && !isCheckingModel && (
                 <p className="text-sm text-orange-600">
-                  ⚠️ Please load a face recognition model using the controls above before signing
-                  up.
+                  ⚠️ Please load a face recognition model using the controls above before
+                  registering.
                 </p>
               )}
             </div>
@@ -410,15 +404,15 @@ export function Signup({ apiBase }: SignupProps) {
 
         {/* Submit button */}
         <Button type="submit" className="w-full" disabled={isSubmitting || !capturedImage}>
-          {isSubmitting ? 'Signing up...' : 'Sign Up'}
+          {isSubmitting ? 'Registering...' : 'Register Face'}
         </Button>
       </form>
 
-      {/* Link to login */}
+      {/* Link to face demo */}
       <p className="text-center text-sm text-gray-600">
-        Already have an account?{' '}
-        <a href="/login" className="text-blue-600 hover:underline">
-          Log in
+        Already registered?{' '}
+        <a href="/facedemo" className="text-blue-600 hover:underline">
+          Try Face Match
         </a>
       </p>
     </div>
