@@ -22,7 +22,10 @@ Repository Map (high signal first)
    - src/components/, src/lib/: UI and helpers.
    - index.css, tailwind config: Styling.
 5. packages/shared (Shared Types)
-   - src/index.ts: Zod schemas and TypeScript types shared between API and web.
+   - src/index.ts: Re-exports schemas and contracts.
+   - src/schemas.ts: Zod schemas for API request/response types.
+   - src/contracts/api.ts: API contract definitions (method, path, schemas).
+   - src/contracts/types.ts: Contract type definitions and inference helpers.
    - **Always use these shared types for API request/response contracts.**
 6. docker-compose.yml: Local Postgres.
 7. scripts/\*.mjs: Repo scripts (e.g., verification).
@@ -99,20 +102,28 @@ Working Rules For The LLM
      ]);
      ```
 
-9. Use validatedHandler for API Routes
-   - All API routes must use `validatedHandler` from `apps/api/src/lib/errorHandler.ts`.
-   - Provide `body` schema (for POST/PUT) and `response` schema (required).
-   - Handler returns success or error directly (not via throwing for expected failures).
-   - Use `errorStatus` option to set HTTP status for error responses (default: 400).
-   - **Important**: Use `as const` on `ok` values to preserve literal types:
+9. Contract-Based API Routes (Preferred)
+   - Define contracts in `packages/shared/src/contracts/api.ts` using `defineContract()`.
+   - Backend: Use `createRouteBuilder(router).fromContract(Contracts.xyz, handler)`.
+   - Frontend: Use `callContract(baseUrl, Contracts.xyz, { body })` from `contractClient.ts`.
+   - Contracts are the single source of truth for method, path, and schemas.
+   - **Example (backend)**:
+     ```typescript
+     const routes = createRouteBuilder(router);
+     routes.fromContract(Contracts.login, async (req) => {
+       const { faceImage } = req.body; // typed from contract
+       return { ok: true as const, user, match, topMatches };
+     }, { errorStatus: 401 });
+     ```
+   - **Note**: File-serving routes (e.g., `GET /images/:name`) don't use contracts—they return binary data, not JSON.
+
+10. Legacy validatedHandler (still supported)
+   - Direct `validatedHandler` usage still works for routes not yet migrated.
+   - Use `as const` on `ok` values to preserve literal types:
      ```typescript
      router.post('/login', validatedHandler(
        { body: LoginBodySchema, response: LoginResponseSchema, errorStatus: 401 },
        async (req) => {
-         const { email } = req.body; // typed
-         if (!match) {
-           return { ok: false as const, error: 'Not found', topMatches };
-         }
          return { ok: true as const, user: { ... } };
        }
      ));
@@ -158,3 +169,6 @@ If In Doubt
 Learning From Mistakes
 
 When you make a mistake or discover something unexpected about this codebase, **add a note to this file** to prevent repeating the same mistake. This helps future LLM sessions avoid known pitfalls.
+
+- **Circular dependency in shared package**: Schemas are in `schemas.ts`, contracts are in `contracts/api.ts`. Contracts import from `schemas.ts` (not `index.ts`) to avoid circular imports. If you add new schemas, put them in `schemas.ts`. TypeScript compiles circular imports successfully, but Node.js fails at runtime with "Cannot access X before initialization".
+- **AnyApiContract type**: When writing generic functions that accept any contract, use `AnyApiContract` from `@praapt/shared`—don't try to define your own with `z.ZodTypeAny` constraints (causes import issues in packages without direct zod dependency).

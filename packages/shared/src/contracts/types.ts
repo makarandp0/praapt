@@ -97,3 +97,9 @@ export type InferParams<C> = C extends ApiContract<infer P, z.ZodTypeAny | undef
 export type InferPath<C> = C extends ApiContract<infer P, z.ZodTypeAny | undefined, z.ZodTypeAny | undefined, z.ZodTypeAny>
   ? P
   : never;
+
+/**
+ * Any API contract type - used for accepting contracts with any body/query configuration.
+ * This is useful when you need a generic constraint that accepts any valid contract.
+ */
+export type AnyApiContract = ApiContract<string, z.ZodTypeAny | undefined, z.ZodTypeAny | undefined, z.ZodTypeAny>;
