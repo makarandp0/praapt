@@ -1,17 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import {
-  CompareImagesBodySchema,
-  CompareImagesResponseSchema,
-  ListImagesResponseSchema,
-  SaveImageBodySchema,
-  SaveImageResponseSchema,
-} from '@praapt/shared';
+import { Contracts } from '@praapt/shared';
 import { Router } from 'express';
 
 import { compareFiles } from '../faceClient.js';
-import { validatedHandler } from '../lib/errorHandler.js';
 import { ForbiddenError, NotFoundError } from '../lib/errors.js';
 import {
   fileNameFor,
@@ -21,47 +14,39 @@ import {
   sanitizeName,
 } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
+import { createRouteBuilder } from '../lib/routeBuilder.js';
 
 const router = Router();
+const routes = createRouteBuilder(router);
 
 /**
  * POST /images
  * Save a new image with a name
- * Body: { name: string, image: string (base64) }
  */
-router.post(
-  '/',
-  validatedHandler(
-    { body: SaveImageBodySchema, response: SaveImageResponseSchema },
-    async (req, res) => {
-      const { name, image } = req.body;
-      const { buffer, ext } = parseImageToBuffer(image);
-      const fileName = fileNameFor(name, ext);
-      const dest = path.join(IMAGES_DIR, fileName);
-      fs.writeFileSync(dest, buffer);
+routes.fromContract(Contracts.saveImage, async (req, res) => {
+  const { name, image } = req.body;
+  const { buffer, ext } = parseImageToBuffer(image);
+  const fileName = fileNameFor(name, ext);
+  const dest = path.join(IMAGES_DIR, fileName);
+  fs.writeFileSync(dest, buffer);
 
-      logger.info({ fileName, name: sanitizeName(name) }, 'Image saved');
+  logger.info({ fileName, name: sanitizeName(name) }, 'Image saved');
 
-      // Set 201 status for created resource
-      res.status(201);
+  // Set 201 status for created resource
+  res.status(201);
 
-      return { ok: true as const, name: sanitizeName(name), file: fileName };
-    },
-  ),
-);
+  return { ok: true as const, name: sanitizeName(name), file: fileName };
+});
 
 /**
  * GET /images
  * List all saved images
  */
-router.get(
-  '/',
-  validatedHandler({ response: ListImagesResponseSchema }, async () => {
-    const files = listImageFiles();
-    const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
-    return { ok: true as const, images: names, files };
-  }),
-);
+routes.fromContract(Contracts.listImages, async () => {
+  const files = listImageFiles();
+  const names = files.map((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, ''));
+  return { ok: true as const, images: names, files };
+});
 
 /**
  * GET /images/file/:filename
@@ -111,48 +96,41 @@ router.get('/:name', (req, res, next) => {
 /**
  * POST /images/compare
  * Compare two images using face recognition
- * Body: { a: string, b: string }
  */
-router.post(
-  '/compare',
-  validatedHandler(
-    { body: CompareImagesBodySchema, response: CompareImagesResponseSchema },
-    async (req) => {
-      const { a, b } = req.body;
-      const files = listImageFiles();
+routes.fromContract(Contracts.compareImages, async (req) => {
+  const { a, b } = req.body;
+  const files = listImageFiles();
 
-      const findFile = (key: string) => {
-        const base = sanitizeName(String(key));
-        const withExt =
-          files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base) ||
-          files.find((f) => f === key);
-        return withExt ? path.join(IMAGES_DIR, withExt) : null;
-      };
+  const findFile = (key: string) => {
+    const base = sanitizeName(String(key));
+    const withExt =
+      files.find((f) => f.replace(/\.(jpg|jpeg|png|webp)$/i, '') === base) ||
+      files.find((f) => f === key);
+    return withExt ? path.join(IMAGES_DIR, withExt) : null;
+  };
 
-      const A = findFile(a);
-      const B = findFile(b);
+  const A = findFile(a);
+  const B = findFile(b);
 
-      if (!A) throw new NotFoundError(`Image not found: ${a}`);
-      if (!B) throw new NotFoundError(`Image not found: ${b}`);
+  if (!A) throw new NotFoundError(`Image not found: ${a}`);
+  if (!B) throw new NotFoundError(`Image not found: ${b}`);
 
-      const result = await compareFiles(A, B);
-      const { distance, threshold, match, meta } = result;
+  const result = await compareFiles(A, B);
+  const { distance, threshold, match, meta } = result;
 
-      logger.debug({ a, b, distance, match }, 'Images compared');
+  logger.debug({ a, b, distance, match }, 'Images compared');
 
-      return {
-        ok: true as const,
-        same: Boolean(match),
-        algo: 'face-arcface' as const,
-        a,
-        b,
-        distance,
-        threshold,
-        timing_ms: meta?.timing_ms,
-        model: meta?.model,
-      };
-    },
-  ),
-);
+  return {
+    ok: true as const,
+    same: Boolean(match),
+    algo: 'face-arcface' as const,
+    a,
+    b,
+    distance,
+    threshold,
+    timing_ms: meta?.timing_ms,
+    model: meta?.model,
+  };
+});
 
 export default router;

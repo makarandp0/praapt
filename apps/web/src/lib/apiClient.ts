@@ -1,26 +1,37 @@
 import {
-  CompareImagesBody,
-  CompareImagesBodySchema,
-  CompareImagesResponse,
-  CompareImagesResponseSchema,
-  HealthResponse,
-  HealthResponseSchema,
-  ListImagesResponse,
-  ListImagesResponseSchema,
-  ListUsersResponse,
-  ListUsersResponseSchema,
-  SaveImageBody,
-  SaveImageBodySchema,
-  SaveImageResponse,
-  SaveImageResponseSchema,
+  Contracts,
+  type CompareImagesBody,
+  type CompareImagesResponse,
+  type HealthResponse,
+  type ListImagesResponse,
+  type ListUsersResponse,
+  type LoginBody,
+  type LoginResponse,
+  type SaveImageBody,
+  type SaveImageResponse,
+  type SignupBody,
+  type SignupResponse,
+  type LoadModelBody,
+  type LoadModelResponse,
 } from '@praapt/shared';
 
-// Re-export for convenience
-export type { ListUsersResponse } from '@praapt/shared';
+import { callContract } from './contractClient.js';
+
+// Re-export types for convenience
+export type {
+  ListUsersResponse,
+  LoginResponse,
+  SignupResponse,
+  HealthResponse,
+  ListImagesResponse,
+  SaveImageResponse,
+  CompareImagesResponse,
+  LoadModelResponse,
+} from '@praapt/shared';
 
 /**
  * Type-safe API client for the Praapt API.
- * All methods validate requests and responses using Zod schemas.
+ * Uses contract-based calls for automatic validation.
  */
 export class ApiClient {
   constructor(private baseUrl: string) {}
@@ -29,68 +40,44 @@ export class ApiClient {
    * Check health status of API and face service
    */
   async getHealth(): Promise<HealthResponse> {
-    const response = await fetch(`${this.baseUrl}/health`);
-    const data = await response.json();
-    return HealthResponseSchema.parse(data);
+    return callContract(this.baseUrl, Contracts.getHealth);
   }
 
   /**
    * Load a face recognition model
    */
-  async loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<{
-    ok: boolean;
-    message: string;
-    model: string;
-  }> {
-    const response = await fetch(`${this.baseUrl}/load-model`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model }),
+  async loadModel(model: LoadModelBody['model']): Promise<LoadModelResponse> {
+    return callContract(this.baseUrl, Contracts.loadModel, {
+      body: { model },
     });
+  }
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error?.error || 'Failed to load model');
-    }
+  /**
+   * Sign up a new user
+   */
+  async signup(body: SignupBody): Promise<SignupResponse> {
+    return callContract(this.baseUrl, Contracts.signup, { body });
+  }
 
-    return response.json();
+  /**
+   * Login with face recognition
+   */
+  async login(body: LoginBody): Promise<LoginResponse> {
+    return callContract(this.baseUrl, Contracts.login, { body });
   }
 
   /**
    * Save an image with a name
    */
   async saveImage(body: SaveImageBody): Promise<SaveImageResponse> {
-    // Validate request body
-    const validatedBody = SaveImageBodySchema.parse(body);
-
-    const response = await fetch(`${this.baseUrl}/images`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validatedBody),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error?.error || 'Failed to save image');
-    }
-
-    const data = await response.json();
-    return SaveImageResponseSchema.parse(data);
+    return callContract(this.baseUrl, Contracts.saveImage, { body });
   }
 
   /**
    * List all saved images
    */
   async listImages(): Promise<ListImagesResponse> {
-    const response = await fetch(`${this.baseUrl}/images`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error?.error || 'Failed to list images');
-    }
-
-    const data = await response.json();
-    return ListImagesResponseSchema.parse(data);
+    return callContract(this.baseUrl, Contracts.listImages);
   }
 
   /**
@@ -104,37 +91,14 @@ export class ApiClient {
    * Compare two images by name
    */
   async compareImages(body: CompareImagesBody): Promise<CompareImagesResponse> {
-    // Validate request body
-    const validatedBody = CompareImagesBodySchema.parse(body);
-
-    const response = await fetch(`${this.baseUrl}/images/compare`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validatedBody),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error?.error || 'Failed to compare images');
-    }
-
-    const data = await response.json();
-    return CompareImagesResponseSchema.parse(data);
+    return callContract(this.baseUrl, Contracts.compareImages, { body });
   }
 
   /**
    * List all users
    */
   async listUsers(): Promise<ListUsersResponse> {
-    const response = await fetch(`${this.baseUrl}/users`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error?.error || 'Failed to list users');
-    }
-
-    const data = await response.json();
-    return ListUsersResponseSchema.parse(data);
+    return callContract(this.baseUrl, Contracts.listUsers);
   }
 
   /**
