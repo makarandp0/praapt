@@ -11,8 +11,8 @@ Repository Map (high signal first)
    - src/routes/\*.ts: Route handlers (auth, images, health).
    - src/db.ts: Database connection via Drizzle/PG.
    - src/schema.ts: Drizzle schema definitions.
-   - drizzle/: SQL migrations.
-   - **Note:** Drizzle migrations are tracked in a separate `drizzle` schema (not `public`). Query `drizzle.__drizzle_migrations` to check migration history.
+   - migrations/: Database migrations (node-pg-migrate).
+   - **Note:** Migrations are tracked in the `pgmigrations` table in `public` schema.
 4. apps/web (React + Vite)
    - src/main.tsx: Frontend bootstrap.
    - src/App.tsx: Primary app component with routing.
@@ -34,7 +34,7 @@ Paths To Prioritize
 
 - packages/shared/src/index.ts (shared Zod schemas - check first for API contracts)
 - apps/api/src/\*_/_.ts
-- apps/api/drizzle/\*.sql
+- apps/api/migrations/\*.ts
 - apps/web/src/\*_/_.{ts,tsx,css}
 - README.md, package.json, apps/\*/package.json, docker-compose.yml
 
@@ -156,7 +156,7 @@ Working Rules For The LLM
 Task-Focused Entry Points (quick checklist)
 
 - API route/behavior issue: apps/api/src/routes/\*.ts, apps/api/src/index.ts
-- DB schema/seed change: apps/api/src/schema.ts, apps/api/drizzle/\*.sql
+- DB schema/seed change: apps/api/src/schema.ts, apps/api/migrations/\*.ts
 - Frontend UI/state change: apps/web/src/App.tsx, apps/web/src/pages/_.tsx, apps/web/src/contexts/_.tsx, apps/web/src/hooks/\*.ts
 - API contracts/types: packages/shared/src/index.ts (Zod schemas)
 - Project setup/scripts: README.md, root/package.json, apps/_/package.json, scripts/_.mjs
@@ -171,4 +171,84 @@ Learning From Mistakes
 When you make a mistake or discover something unexpected about this codebase, **add a note to this file** to prevent repeating the same mistake. This helps future LLM sessions avoid known pitfalls.
 
 - **Circular dependency in shared package**: Schemas are in `schemas.ts`, contracts are in `contracts/api.ts`. Contracts import from `schemas.ts` (not `index.ts`) to avoid circular imports. If you add new schemas, put them in `schemas.ts`. TypeScript compiles circular imports successfully, but Node.js fails at runtime with "Cannot access X before initialization".
+- **Contract paths are relative to Express mount points**: If `app.use('/api/auth', authRoutes)` mounts auth routes, and a contract has `path: '/auth/login'`, the full path becomes `/api/auth/auth/login` (doubled). The contract path should be `/login` to get `/api/auth/login`. Check how routes are mounted in `apps/api/src/index.ts` before defining contract paths.
 - **AnyApiContract type**: When writing generic functions that accept any contract, use `AnyApiContract` from `@praapt/shared`—don't try to define your own with `z.ZodTypeAny` constraints (causes import issues in packages without direct zod dependency).
+
+## Database Migrations (node-pg-migrate)
+
+This project uses **node-pg-migrate** for database migrations. Drizzle ORM is still used for queries, but migrations are handled separately for a simpler, more predictable workflow.
+
+### Why node-pg-migrate?
+
+- **Simple**: No snapshots, no journals, just numbered TypeScript migration files
+- **Predictable**: You write the SQL, you know exactly what runs
+- **Explicit**: Uses standard `up`/`down` migration pattern
+- **CI-friendly**: Works in scripts without human interaction
+
+### Migration Workflow
+
+```bash
+# 1. Create a new migration (from apps/api directory)
+pnpm migrate:create my_descriptive_name
+
+# 2. Edit the generated file in apps/api/migrations/
+#    The file will have a timestamp prefix like: 1738000000000_my-descriptive-name.ts
+
+# 3. Run migrations
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/praaptdb" pnpm migrate
+
+# Or use the CLI directly for up/down:
+DATABASE_URL="..." pnpm migrate:up    # Run pending migrations
+DATABASE_URL="..." pnpm migrate:down  # Rollback one migration
+```
+
+### Migration File Pattern
+
+```typescript
+import type { MigrationBuilder } from 'node-pg-migrate';
+
+export async function up(pgm: MigrationBuilder): Promise<void> {
+  pgm.sql(`
+    ALTER TABLE face_registrations ADD COLUMN role TEXT;
+  `);
+}
+
+export async function down(pgm: MigrationBuilder): Promise<void> {
+  pgm.sql(`
+    ALTER TABLE face_registrations DROP COLUMN role;
+  `);
+}
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/api/src/schema.ts` | Drizzle table definitions (keep in sync with migrations) |
+| `apps/api/migrations/*.ts` | Migration files (timestamped) |
+| `pgmigrations` table | Tracks applied migrations (auto-managed by node-pg-migrate) |
+
+### Important Notes
+
+- **Keep schema.ts in sync**: After running a migration, update `src/schema.ts` to match the new database state
+- **Idempotent migrations**: Use `IF NOT EXISTS` / `IF EXISTS` for safety when possible
+- **Rollbacks**: The `down` function should cleanly undo the `up` function
+
+### Database Connection
+
+For local development with Docker:
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/praaptdb?sslmode=disable"
+```
+
+### Checking Migration Status
+
+```bash
+# List applied migrations
+docker exec $(docker ps -q --filter "ancestor=postgres:16") \
+  psql -U postgres -d praaptdb -c "SELECT * FROM pgmigrations ORDER BY id;"
+
+# List current tables
+docker exec $(docker ps -q --filter "ancestor=postgres:16") \
+  psql -U postgres -d praaptdb -c "\dt public.*"
+```

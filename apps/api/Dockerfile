@@ -43,9 +43,9 @@ WORKDIR /app
 # Copy the deployed API (includes node_modules with all deps)
 COPY --from=build /app/deploy /app/apps/api
 
-# Copy API dist and drizzle from build
+# Copy API dist and migrations from build
 COPY --from=build /app/apps/api/dist /app/apps/api/dist
-COPY --from=build /app/apps/api/drizzle /app/apps/api/drizzle
+COPY --from=build /app/apps/api/migrations /app/apps/api/migrations
 
 # Copy web dist and shared dist
 COPY --from=build /app/apps/web/dist /app/apps/web/dist

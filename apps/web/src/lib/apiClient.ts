@@ -2,25 +2,25 @@ import {
   Contracts,
   type CompareImagesBody,
   type CompareImagesResponse,
+  type FaceLoginBody,
+  type FaceLoginResponse,
   type HealthResponse,
+  type ListFaceRegistrationsResponse,
   type ListImagesResponse,
-  type ListUsersResponse,
-  type LoginBody,
-  type LoginResponse,
+  type LoadModelBody,
+  type LoadModelResponse,
   type SaveImageBody,
   type SaveImageResponse,
   type SignupBody,
   type SignupResponse,
-  type LoadModelBody,
-  type LoadModelResponse,
 } from '@praapt/shared';
 
 import { callContract } from './contractClient.js';
 
 // Re-export types for convenience
 export type {
-  ListUsersResponse,
-  LoginResponse,
+  ListFaceRegistrationsResponse,
+  FaceLoginResponse,
   SignupResponse,
   HealthResponse,
   ListImagesResponse,
@@ -62,8 +62,8 @@ export class ApiClient {
   /**
    * Login with face recognition
    */
-  async login(body: LoginBody): Promise<LoginResponse> {
-    return callContract(this.baseUrl, Contracts.login, { body });
+  async faceLogin(body: FaceLoginBody): Promise<FaceLoginResponse> {
+    return callContract(this.baseUrl, Contracts.faceLogin, { body });
   }
 
   /**
@@ -95,10 +95,10 @@ export class ApiClient {
   }
 
   /**
-   * List all users
+   * List all face registrations
    */
-  async listUsers(): Promise<ListUsersResponse> {
-    return callContract(this.baseUrl, Contracts.listUsers);
+  async listFaceRegistrations(): Promise<ListFaceRegistrationsResponse> {
+    return callContract(this.baseUrl, Contracts.listFaceRegistrations);
   }
 
   /**

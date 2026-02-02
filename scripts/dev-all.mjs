@@ -1,9 +1,63 @@
 #!/usr/bin/env node
 import { spawn, execSync } from 'node:child_process';
-import { createServer } from 'node:net';
+import { createServer, createConnection } from 'node:net';
 import { basename } from 'node:path';
 
 const log = (s) => process.stdout.write(s + '\n');
+
+/**
+ * Check if the Postgres database is reachable on the given port.
+ */
+async function isDbReachable(port = 5433, host = 'localhost') {
+  return await new Promise((resolve) => {
+    const socket = createConnection({ port, host });
+    socket.setTimeout(1000);
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+}
+
+/**
+ * Ensure the database container is running. Start it if not.
+ */
+async function ensureDatabase(dbPort = 5433) {
+  const reachable = await isDbReachable(dbPort);
+  if (reachable) {
+    log(`Database is already running on port ${dbPort}.`);
+    return;
+  }
+
+  log(`Database not reachable on port ${dbPort} — starting Docker Compose db service...`);
+  try {
+    execSync('docker compose up -d db', { stdio: 'inherit' });
+  } catch {
+    log('Failed to start database. Is Docker running?');
+    process.exit(1);
+  }
+
+  // Wait for db to become healthy
+  log('Waiting for database to be ready...');
+  const maxRetries = 30;
+  for (let i = 0; i < maxRetries; i++) {
+    if (await isDbReachable(dbPort)) {
+      log('Database is ready.');
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  log('Database did not become ready in time.');
+  process.exit(1);
+}
 
 /**
  * Get the current worktree name (directory name of git root).
@@ -68,6 +122,7 @@ function run(cmd, args, opts = {}) {
 
   const baseApiPort = 3000;
   const baseWebPort = 5173;
+  const dbPort = 5433;
 
   const apiPort = baseApiPort + offset;
   const webPort = baseWebPort + offset;
@@ -75,6 +130,10 @@ function run(cmd, args, opts = {}) {
   log(`Worktree '${worktree}' → offset ${offset}`);
   log(`  API: http://localhost:${apiPort}`);
   log(`  Web: http://localhost:${webPort}`);
+  log('');
+
+  // Ensure database is running before starting API
+  await ensureDatabase(dbPort);
   log('');
 
   const apiFree = await isPortFree(apiPort);
