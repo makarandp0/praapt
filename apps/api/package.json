@@ -12,6 +12,7 @@
     "migrate:create": "node-pg-migrate create --migration-file-language ts --migrations-dir migrations",
     "migrate:up": "node-pg-migrate up --migrations-dir migrations --tsconfig tsconfig.json",
     "migrate:down": "node-pg-migrate down --migrations-dir migrations --tsconfig tsconfig.json",
+    "rollback": "node-pg-migrate down --migrations-dir migrations --tsconfig tsconfig.json",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",

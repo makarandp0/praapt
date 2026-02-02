@@ -38,14 +38,14 @@ export const loadModel = defineContract({
 
 export const signup = defineContract({
   method: 'POST',
-  path: '/signup',
+  path: '/auth/signup',
   body: SignupBodySchema,
   response: SignupResponseSchema,
 });
 
 export const faceLogin = defineContract({
   method: 'POST',
-  path: '/facelogin',
+  path: '/auth/facelogin',
   body: FaceLoginBodySchema,
   response: FaceLoginResponseSchema,
 });
@@ -80,6 +80,6 @@ export const compareImages = defineContract({
 
 export const listFaceRegistrations = defineContract({
   method: 'GET',
-  path: '/',
+  path: '/face-registrations',
   response: ListFaceRegistrationsResponseSchema,
 });

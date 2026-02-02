@@ -32,6 +32,7 @@ export type {
 /**
  * Type-safe API client for the Praapt API.
  * Uses contract-based calls for automatic validation.
+ * Contract paths are full paths relative to the API base URL (/api).
  */
 export class ApiClient {
   constructor(private baseUrl: string) {}

@@ -31,11 +31,11 @@ app.use((req, res, next) => {
   return next();
 });
 
-// Mount API routes
+// Mount API routes - all routes define their full paths relative to /api
 app.use('/api', healthRoutes);
-app.use('/api/images', imagesRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/face-registrations', faceRegistrationsRoutes);
+app.use('/api', imagesRoutes);
+app.use('/api', authRoutes);
+app.use('/api', faceRegistrationsRoutes);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {
