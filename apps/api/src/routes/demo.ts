@@ -1,14 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-
 import { Contracts } from '@praapt/shared';
-import { eq } from 'drizzle-orm';
 import { Router } from 'express';
 
 import { db, faceRegistrations } from '../db.js';
 import { cosineDistance, embedBase64 } from '../faceClient.js';
-import { ConflictError, ValidationError } from '../lib/errors.js';
-import { IMAGES_DIR, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
+import { ValidationError } from '../lib/errors.js';
+import { stripDataUrlPrefix } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
 import { createRouteBuilder } from '../lib/routeBuilder.js';
 
@@ -19,83 +15,21 @@ const routes = createRouteBuilder(router);
 const FACE_MATCH_THRESHOLD = 0.4;
 
 /**
- * POST /auth/signup
- * Register a new face registration with face embedding
- */
-routes.fromContract(Contracts.signup, async (req, res) => {
-  const { email, name, faceImage } = req.body;
-
-  // Check if email already exists
-  const existing = await db
-    .select()
-    .from(faceRegistrations)
-    .where(eq(faceRegistrations.email, email))
-    .limit(1);
-  if (existing.length > 0) {
-    throw new ConflictError('Email already registered');
-  }
-
-  // Get face embedding from face service
-  let embedding: number[];
-  try {
-    const b64 = stripDataUrlPrefix(faceImage);
-    const result = await embedBase64(b64);
-    embedding = result.vector;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'unknown error';
-    throw new ValidationError(`Error: Failed to extract face - ${msg}`);
-  }
-
-  // Save profile image to disk
-  const safeName = sanitizeName(name);
-  const profileFileName = `profile-${safeName}-${Date.now()}.jpg`;
-  const profilePath = path.join(IMAGES_DIR, profileFileName);
-  const imageBuffer = Buffer.from(stripDataUrlPrefix(faceImage), 'base64');
-  fs.writeFileSync(profilePath, imageBuffer);
-
-  // Insert face registration into database
-  const [newRegistration] = await db
-    .insert(faceRegistrations)
-    .values({
-      email,
-      name,
-      faceEmbedding: embedding,
-      profileImagePath: profileFileName,
-      faceRegisteredAt: new Date(),
-    })
-    .returning();
-
-  logger.info({ registrationId: newRegistration.id, email }, 'Face registration created');
-
-  // Set 201 status for created resource
-  res.status(201);
-
-  return {
-    ok: true as const,
-    user: {
-      id: newRegistration.id,
-      email: newRegistration.email,
-      name: newRegistration.name,
-      profileImagePath: newRegistration.profileImagePath,
-    },
-  };
-});
-
-/**
- * POST /auth/facelogin
- * Login by face matching
+ * POST /demo/face-match
+ * Demo endpoint: Find the best matching face registration for an input image.
+ * This is NOT authentication - just a demo of face matching capabilities.
  */
 routes.fromContract(
-  Contracts.faceLogin,
+  Contracts.faceMatch,
   async (req) => {
     const { faceImage } = req.body;
 
-    // Get face embedding from the login image
-    let loginEmbedding: number[];
+    // Get face embedding from the input image
+    let inputEmbedding: number[];
     try {
       const b64 = stripDataUrlPrefix(faceImage);
       const result = await embedBase64(b64);
-      loginEmbedding = result.vector;
+      inputEmbedding = result.vector;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
       throw new ValidationError(`Error: Failed to extract face - ${msg}`);
@@ -127,7 +61,7 @@ routes.fromContract(
     // Calculate distances for all registrations
     const regDistances = registrationsWithFace.map((reg) => ({
       reg,
-      distance: cosineDistance(loginEmbedding, reg.faceEmbedding),
+      distance: cosineDistance(inputEmbedding, reg.faceEmbedding),
     }));
 
     // Sort by distance (ascending) and get top 8
@@ -161,12 +95,12 @@ routes.fromContract(
 
     logger.info(
       { registrationId: bestMatch.id, email: bestMatch.email, distance: bestDistance },
-      'Face login successful',
+      'Face match found',
     );
 
     return {
       ok: true as const,
-      user: {
+      matchedRegistration: {
         id: bestMatch.id,
         email: bestMatch.email,
         name: bestMatch.name,
@@ -179,7 +113,7 @@ routes.fromContract(
       topMatches: topMatchesFormatted,
     };
   },
-  { errorStatus: 401 },
+  { errorStatus: 400 },
 );
 
 export default router;

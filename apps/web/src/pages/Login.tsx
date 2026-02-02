@@ -1,4 +1,4 @@
-import { FaceLoginBody, FaceLoginResponseSchema } from '@praapt/shared';
+import { FaceMatchBody, FaceMatchResponseSchema } from '@praapt/shared';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,11 +11,11 @@ import { useModelStatus } from '../contexts/ModelStatusContext';
 import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
-interface LoginProps {
+interface FaceMatchDemoProps {
   apiBase: string;
 }
 
-export function Login({ apiBase }: LoginProps) {
+export function Login({ apiBase }: FaceMatchDemoProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model, refreshStatus } = useModelStatus();
@@ -70,14 +70,14 @@ export function Login({ apiBase }: LoginProps) {
       // Reset retry delay when camera opens
       setRetryDelay(2);
       setCountdown(2);
-      setStatus({ message: 'Camera ready. Auto-login will attempt shortly...', type: 'info' });
+      setStatus({ message: 'Camera ready. Auto-match will attempt shortly...', type: 'info' });
     } else {
       setStatus({ message: `Camera error: ${result.error}`, type: 'error' });
     }
   }, [openCameraBase]);
 
-  /** Capture and submit for face login */
-  const handleLogin = useCallback(async () => {
+  /** Capture and submit for face matching */
+  const handleFaceMatch = useCallback(async () => {
     const dataUrl = captureFrame();
     if (!dataUrl) {
       setStatus({ message: 'Camera not ready', type: 'error' });
@@ -85,21 +85,21 @@ export function Login({ apiBase }: LoginProps) {
     }
 
     setIsSubmitting(true);
-    setStatus({ message: 'Verifying face...', type: 'info' });
+    setStatus({ message: 'Matching face...', type: 'info' });
 
     try {
-      const body: FaceLoginBody = { faceImage: dataUrl };
+      const body: FaceMatchBody = { faceImage: dataUrl };
 
-      const response = await fetch(`${apiBase}/auth/facelogin`, {
+      const response = await fetch(`${apiBase}/demo/face-match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
-      const data = FaceLoginResponseSchema.parse(await response.json());
+      const data = FaceMatchResponseSchema.parse(await response.json());
 
       if (!data.ok) {
-        const msg = data.error || 'Login failed';
+        const msg = data.error || 'No match found';
         const extra =
           data.distance !== undefined
             ? ` (distance: ${data.distance.toFixed(3)}, threshold: ${data.threshold})`
@@ -115,16 +115,16 @@ export function Login({ apiBase }: LoginProps) {
         return;
       }
 
-      // Login successful - clear failed matches
+      // Match found - clear failed matches and show result
       setFailedMatches([]);
       closeCamera();
-      login(data.user, {
+      login(data.matchedRegistration, {
         ...data.match,
         loginImage: dataUrl,
         topMatches: data.topMatches,
       });
       setStatus({
-        message: `Welcome back, ${data.user.name || data.user.email}!`,
+        message: `Match found: ${data.matchedRegistration.name || data.matchedRegistration.email}!`,
         type: 'success',
       });
       setTimeout(() => navigate('/user', { replace: true }), 500);
@@ -181,7 +181,7 @@ export function Login({ apiBase }: LoginProps) {
 
     // Schedule auto-login
     autoLoginRef.current = setTimeout(() => {
-      handleLogin();
+      handleFaceMatch();
       // Increase delay exponentially (2 -> 4 -> 8 -> 16 -> max 60 seconds)
       setRetryDelay((prev) => Math.min(prev * 2, 60));
     }, retryDelay * 1000);
@@ -200,13 +200,16 @@ export function Login({ apiBase }: LoginProps) {
     autoLoginEnabled,
     isModelReady,
     retryDelay,
-    handleLogin,
+    handleFaceMatch,
     faceDetection.faceDetected,
   ]);
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      <h2 className="text-xl font-semibold text-center">Login with Face Recognition</h2>
+      <h2 className="text-xl font-semibold text-center">Face Match Demo</h2>
+      <p className="text-center text-sm text-gray-500">
+        Test face matching against registered faces
+      </p>
 
       <ServiceStatusBanner />
 
@@ -221,10 +224,10 @@ export function Login({ apiBase }: LoginProps) {
               onFaceDetectionChange={handleFaceDetectionChange}
             />
 
-            {/* Auto-login countdown - only show when face is detected */}
+            {/* Auto-match countdown - only show when face is detected */}
             {autoLoginEnabled && !isSubmitting && faceDetection.faceDetected && (
               <div className="text-center text-sm text-green-600">
-                Auto-login in <span className="font-mono font-bold">{countdown}</span> seconds...
+                Auto-match in <span className="font-mono font-bold">{countdown}</span> seconds...
               </div>
             )}
 
@@ -234,24 +237,24 @@ export function Login({ apiBase }: LoginProps) {
               !faceDetection.faceDetected &&
               !faceDetection.isLoading && (
                 <div className="text-center text-sm text-orange-600">
-                  Position your face in front of the camera to login
+                  Position your face in front of the camera to find a match
                 </div>
               )}
 
             <div className="flex gap-2">
               <Button
-                onClick={handleLogin}
+                onClick={handleFaceMatch}
                 disabled={isSubmitting || !faceDetection.faceDetected}
                 className="flex-1"
               >
-                {isSubmitting ? 'Verifying...' : 'Login Now'}
+                {isSubmitting ? 'Matching...' : 'Find Match'}
               </Button>
               <Button variant="outline" onClick={closeCamera} disabled={isSubmitting}>
                 Cancel
               </Button>
             </div>
 
-            {/* Auto-login toggle */}
+            {/* Auto-match toggle */}
             <div className="flex items-center justify-center gap-2">
               <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                 <input
@@ -260,21 +263,20 @@ export function Login({ apiBase }: LoginProps) {
                   onChange={(e) => setAutoLoginEnabled(e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                Auto-retry login
+                Auto-retry matching
               </label>
             </div>
           </div>
         ) : (
           <div className="text-center space-y-4">
             <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
-              <p className="text-gray-500 mb-4">Use your face to log in</p>
+              <p className="text-gray-500 mb-4">Find a matching face registration</p>
               <Button onClick={openCamera} disabled={!isModelReady || isCheckingModel}>
                 {isCheckingModel ? 'Checking model...' : 'Open Camera'}
               </Button>
               {!isModelReady && !isCheckingModel && (
                 <p className="text-sm text-orange-600 mt-3">
-                  ⚠️ Please load a face recognition model using the controls above before logging
-                  in.
+                  ⚠️ Please load a face recognition model using the controls above first.
                 </p>
               )}
             </div>
@@ -333,11 +335,11 @@ export function Login({ apiBase }: LoginProps) {
         )}
       </div>
 
-      {/* Link to signup */}
+      {/* Link to register face */}
       <p className="text-center text-sm text-gray-600">
-        Don&apos;t have an account?{' '}
+        Want to register a face?{' '}
         <a href="/signup" className="text-blue-600 hover:underline">
-          Sign up
+          Register
         </a>
       </p>
     </div>

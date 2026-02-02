@@ -6,7 +6,7 @@ import express, { json, static as expressStatic } from 'express';
 import { NODE_ENV } from './env.js';
 import { errorHandler } from './lib/errorHandler.js';
 import { logger } from './lib/logger.js';
-import authRoutes from './routes/auth.js';
+import demoRoutes from './routes/demo.js';
 import faceRegistrationsRoutes from './routes/faceRegistrations.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
@@ -34,8 +34,8 @@ app.use((req, res, next) => {
 // Mount API routes - all routes define their full paths relative to /api
 app.use('/api', healthRoutes);
 app.use('/api', imagesRoutes);
-app.use('/api', authRoutes);
 app.use('/api', faceRegistrationsRoutes);
+app.use('/api', demoRoutes);
 
 // Serve static frontend files in production
 if (NODE_ENV === 'production') {
