@@ -14,7 +14,8 @@ export interface CallContractOptions<TContract extends AnyApiContract> {
 }
 
 /**
- * Error thrown when an API call fails.
+ * Error thrown when an API call fails at the HTTP level.
+ * Note: API responses with `ok: false` are valid responses, not errors.
  */
 export class ApiError extends Error {
   constructor(
@@ -35,6 +36,7 @@ export class ApiError extends Error {
  * @param contract - The contract defining the endpoint
  * @param options - Optional params, body, and query
  * @returns The typed response data
+ * @throws {ApiError} When the server returns a non-JSON response or network error
  *
  * @example
  * // GET request
@@ -68,6 +70,18 @@ export async function callContract<TContract extends AnyApiContract>(
   }
 
   const response = await fetch(url, init);
+
+  // Check if response is JSON
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await response.text();
+    throw new ApiError(
+      `Expected JSON response but got ${contentType || 'unknown content type'}`,
+      response.status,
+      text,
+    );
+  }
+
   const data = await response.json();
 
   // Validate response with contract schema

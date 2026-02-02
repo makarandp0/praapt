@@ -32,7 +32,6 @@ export {
 
   // Common primitives
   ImageName,
-  type ImageName as ImageNameType,
 
   // Save image
   SaveImageBodySchema,

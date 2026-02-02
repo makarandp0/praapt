@@ -34,7 +34,7 @@ export function buildUrl<T extends string>(
 
   if (params) {
     for (const [key, value] of Object.entries(params)) {
-      path = path.replace(`:${key}`, encodeURIComponent(value));
+      path = path.replaceAll(`:${key}`, encodeURIComponent(value));
     }
   }
 

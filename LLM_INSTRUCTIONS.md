@@ -129,13 +129,13 @@ Working Rules For The LLM
      ));
      ```
 
-10. Unexpected Errors (Exceptions)
+11. Unexpected Errors (Exceptions)
 
 - For truly unexpected errors (validation, database, etc.), throw normally.
 - Simple errors (ValidationError, NotFoundError, etc.) return `{ error, code }`.
 - Complex typed errors with schemas are rarely needed now that expected failures use discriminated unions.
 
-11. Web Client Response Handling
+12. Web Client Response Handling
 
 - Always check `response.ok` before accessing success-only properties:
   ```typescript
@@ -149,7 +149,7 @@ Working Rules For The LLM
 - Use helper types like `ApiSuccess<T>` and `ApiError<T>` to extract union branches.
 - Use exported types like `ListUser` instead of `ListUsersResponse['users'][number]`.
 
-12. Environment & Secrets
+13. Environment & Secrets
 
 - Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
 
