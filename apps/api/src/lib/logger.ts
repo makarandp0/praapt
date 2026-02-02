@@ -1,7 +1,9 @@
 import pinoLogger from 'pino';
 import type { Logger as PinoLogger, Bindings } from 'pino';
 
-import { NODE_ENV } from '../env.js';
+import { getConfig } from '../config.js';
+
+const config = getConfig();
 
 /**
  * Structured logger for the API.
@@ -10,9 +12,9 @@ import { NODE_ENV } from '../env.js';
  * In production, logs are JSON for structured logging systems.
  */
 export const logger = pinoLogger({
-  level: process.env.LOG_LEVEL || (NODE_ENV === 'production' ? 'info' : 'debug'),
+  level: config.logLevel,
   transport:
-    NODE_ENV !== 'production'
+    config.nodeEnv !== 'production'
       ? {
           target: 'pino-pretty',
           options: {
@@ -23,7 +25,7 @@ export const logger = pinoLogger({
         }
       : undefined,
   base: {
-    env: NODE_ENV,
+    env: config.nodeEnv,
   },
 });
 

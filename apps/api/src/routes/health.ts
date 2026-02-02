@@ -1,8 +1,7 @@
 import { Contracts, FaceHealth } from '@praapt/shared';
 import { Router } from 'express';
 
-import { NODE_ENV } from '../env.js';
-import { IMAGES_DIR } from '../lib/imageUtils.js';
+import { getConfig } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { createRouteBuilder } from '../lib/routeBuilder.js';
 
@@ -15,11 +14,11 @@ const router = Router();
 const routes = createRouteBuilder(router);
 
 routes.fromContract(Contracts.getHealth, async () => {
-  const faceUrl = process.env.FACE_SERVICE_URL || 'http://localhost:8001';
+  const config = getConfig();
   let face: FaceHealth = { ok: false, modelsLoaded: false, model: null, commit: 'unknown' };
 
   try {
-    const r = await fetch(`${faceUrl}/health`, { method: 'GET' });
+    const r = await fetch(`${config.faceServiceUrl}/health`, { method: 'GET' });
     const j: unknown = await r.json();
     if (isRecord(j)) {
       face = {
@@ -37,14 +36,14 @@ routes.fromContract(Contracts.getHealth, async () => {
   return {
     ok: true as const,
     service: 'api',
-    env: NODE_ENV,
-    commit: process.env.GIT_COMMIT || process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown',
+    env: config.nodeEnv,
+    commit: config.commitSha,
     face,
     config: {
-      faceServiceUrl: faceUrl,
-      port: process.env.PORT || '3000',
-      imagesDir: IMAGES_DIR,
-      corsOrigin: process.env.CORS_ORIGIN || '*',
+      faceServiceUrl: config.faceServiceUrl,
+      port: String(config.port),
+      imagesDir: config.imagesDir,
+      corsOrigin: config.corsOrigin,
     },
   };
 });

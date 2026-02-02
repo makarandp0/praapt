@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import { z } from 'zod';
 
-const FACE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:8001';
+import { getConfig } from './config.js';
 
 async function fileToBase64(p: string): Promise<string> {
   const buf = await fs.promises.readFile(p);
@@ -53,8 +53,9 @@ export async function compareFiles(
   bPath: string,
   threshold = 0.5,
 ): Promise<CompareFilesResult> {
+  const { faceServiceUrl } = getConfig();
   const [a, b] = await Promise.all([fileToBase64(aPath), fileToBase64(bPath)]);
-  const res = await fetch(`${FACE_URL}/compare`, {
+  const res = await fetch(`${faceServiceUrl}/compare`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ a_b64: a, b_b64: b, threshold }),
@@ -68,7 +69,8 @@ export async function compareFiles(
 }
 
 export async function loadModel(model: 'buffalo_l' | 'buffalo_s'): Promise<void> {
-  const res = await fetch(`${FACE_URL}/load-model`, {
+  const { faceServiceUrl } = getConfig();
+  const res = await fetch(`${faceServiceUrl}/load-model`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model }),
@@ -96,7 +98,8 @@ export async function embedFile(imagePath: string): Promise<EmbedResult> {
  * @returns 512-dimensional face embedding vector
  */
 export async function embedBase64(imageBase64: string): Promise<EmbedResult> {
-  const res = await fetch(`${FACE_URL}/embed`, {
+  const { faceServiceUrl } = getConfig();
+  const res = await fetch(`${faceServiceUrl}/embed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ image_b64: imageBase64 }),

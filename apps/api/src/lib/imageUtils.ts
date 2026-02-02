@@ -1,10 +1,9 @@
 import fs from 'fs';
-import path from 'path';
 
-// Configure images directory (env IMAGES_DIR or default to ./images under CWD)
-export const IMAGES_DIR = process.env.IMAGES_DIR
-  ? path.resolve(process.env.IMAGES_DIR)
-  : path.join(process.cwd(), 'images');
+import { getConfig } from '../config.js';
+
+// Configure images directory from config
+export const IMAGES_DIR = getConfig().imagesDir;
 
 // Ensure directory exists
 fs.mkdirSync(IMAGES_DIR, { recursive: true });

@@ -8,6 +8,7 @@ Repository Map (high signal first)
 2. package.json (root): Workspace scripts, TurboRepo config, and tooling entry points.
 3. apps/api (Express API)
    - src/index.ts: API server entry.
+   - src/config.ts: Centralized typed configuration via `getConfig()`.
    - src/routes/\*.ts: Route handlers (auth, images, health).
    - src/db.ts: Database connection via Drizzle/PG.
    - src/schema.ts: Drizzle schema definitions.
@@ -152,6 +153,7 @@ Working Rules For The LLM
 13. Environment & Secrets
 
 - Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
+- **Use `getConfig()` from `apps/api/src/config.ts`** for all environment variable access in the API. Never use `process.env` directly in route handlers or services.
 
 Task-Focused Entry Points (quick checklist)
 
@@ -173,6 +175,7 @@ When you make a mistake or discover something unexpected about this codebase, **
 - **Circular dependency in shared package**: Schemas are in `schemas.ts`, contracts are in `contracts/api.ts`. Contracts import from `schemas.ts` (not `index.ts`) to avoid circular imports. If you add new schemas, put them in `schemas.ts`. TypeScript compiles circular imports successfully, but Node.js fails at runtime with "Cannot access X before initialization".
 - **Contract paths are relative to Express mount points**: If `app.use('/api/auth', authRoutes)` mounts auth routes, and a contract has `path: '/auth/login'`, the full path becomes `/api/auth/auth/login` (doubled). The contract path should be `/login` to get `/api/auth/login`. Check how routes are mounted in `apps/api/src/index.ts` before defining contract paths.
 - **AnyApiContract type**: When writing generic functions that accept any contract, use `AnyApiContract` from `@praapt/shared`—don't try to define your own with `z.ZodTypeAny` constraints (causes import issues in packages without direct zod dependency).
+- **drizzle.config.ts cannot import config.ts**: drizzle-kit uses CommonJS require, so it cannot import ESM modules. Keep `process.env.DATABASE_URL` access directly in `drizzle.config.ts` with `import 'dotenv/config'`.
 
 ## Database Migrations (node-pg-migrate)
 
