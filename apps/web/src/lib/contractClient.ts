@@ -84,14 +84,19 @@ export async function callContract<TContract extends AnyApiContract>(
 
   const data = await response.json();
 
-  // Validate response with contract schema
+  // Validate response with contract schema - throw on failure for type safety
   const parseResult = contract.response.safeParse(data);
   if (!parseResult.success) {
-    console.warn('Response validation failed:', parseResult.error.issues, data);
+    console.error('Response validation failed:', parseResult.error.issues, data);
+    throw new ApiError(
+      `Invalid API response: ${parseResult.error.issues.map((i) => i.message).join(', ')}`,
+      response.status,
+      data,
+    );
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- data parsed from JSON matches contract response type
-  return data as InferResponse<TContract>;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- validated by safeParse above
+  return parseResult.data as InferResponse<TContract>;
 }
 
 /**

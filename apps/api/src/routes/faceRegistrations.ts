@@ -8,7 +8,7 @@ import { Router } from 'express';
 import { db, faceRegistrations } from '../db.js';
 import { embedBase64 } from '../faceClient.js';
 import { ConflictError, ValidationError } from '../lib/errors.js';
-import { IMAGES_DIR, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
+import { IMAGES_DIR, parseImageToBuffer, sanitizeName, stripDataUrlPrefix } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
 import { createRouteBuilder } from '../lib/routeBuilder.js';
 
@@ -43,11 +43,11 @@ routes.fromContract(Contracts.signup, async (req, res) => {
     throw new ValidationError(`Error: Failed to extract face - ${msg}`);
   }
 
-  // Save profile image to disk
+  // Save profile image to disk with correct extension based on mime type
+  const { buffer: imageBuffer, ext } = parseImageToBuffer(faceImage);
   const safeName = sanitizeName(name);
-  const profileFileName = `profile-${safeName}-${Date.now()}.jpg`;
+  const profileFileName = `profile-${safeName}-${Date.now()}.${ext}`;
   const profilePath = path.join(IMAGES_DIR, profileFileName);
-  const imageBuffer = Buffer.from(stripDataUrlPrefix(faceImage), 'base64');
   fs.writeFileSync(profilePath, imageBuffer);
 
   // Insert face registration into database

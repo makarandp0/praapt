@@ -23,17 +23,17 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
           FROM users
           WHERE deleted_at IS NULL
           ON CONFLICT (email) DO UPDATE SET
-            face_embedding = EXCLUDED.face_embedding,
-            profile_image_path = EXCLUDED.profile_image_path,
-            face_registered_at = EXCLUDED.face_registered_at;
+            face_embedding = COALESCE(face_registrations.face_embedding, EXCLUDED.face_embedding),
+            profile_image_path = COALESCE(face_registrations.profile_image_path, EXCLUDED.profile_image_path),
+            face_registered_at = COALESCE(face_registrations.face_registered_at, EXCLUDED.face_registered_at);
         ELSE
           INSERT INTO face_registrations (email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at)
           SELECT email, name, face_embedding, profile_image_path, face_registered_at, created_at, updated_at
           FROM users
           ON CONFLICT (email) DO UPDATE SET
-            face_embedding = EXCLUDED.face_embedding,
-            profile_image_path = EXCLUDED.profile_image_path,
-            face_registered_at = EXCLUDED.face_registered_at;
+            face_embedding = COALESCE(face_registrations.face_embedding, EXCLUDED.face_embedding),
+            profile_image_path = COALESCE(face_registrations.profile_image_path, EXCLUDED.profile_image_path),
+            face_registered_at = COALESCE(face_registrations.face_registered_at, EXCLUDED.face_registered_at);
         END IF;
       END IF;
     END $$;
