@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { parseUserRole } from '@praapt/shared';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -25,6 +25,7 @@ const API_BASE =
 /** Navigation bar with auth-aware links */
 function NavBar() {
   const { isAuthenticated, user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +33,16 @@ function NavBar() {
   const isDeveloper = userRole === 'developer';
   const isAdmin = userRole === 'admin';
   const canManageRoles = isDeveloper || isAdmin;
+  // Users with active roles (not 'unknown') can access most features
+  const hasActiveRole = userRole && userRole !== 'unknown';
+
+  // Sign out and navigate to login without preserving previous location
+  // This prevents the next user from being redirected to the previous user's page
+  const handleSignOut = useCallback(async () => {
+    // Navigate to login first (without 'from' state) so the next user starts fresh
+    navigate('/login', { replace: true });
+    await signOut();
+  }, [navigate, signOut]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -50,9 +61,6 @@ function NavBar() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Show hamburger menu for users who can manage roles (developers and admins)
-  const showMenu = canManageRoles;
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -62,9 +70,8 @@ function NavBar() {
           </Link>
         </div>
 
-        {/* Menu button and dropdown - only for developers */}
-        {showMenu && (
-          <div className="relative" ref={menuRef}>
+        {/* Hamburger menu - available to all users with role-appropriate items */}
+        <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 rounded-md hover:bg-gray-100 transition-colors"
@@ -91,20 +98,27 @@ function NavBar() {
 
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                {isAuthenticated ? (
+                {/* User info header (authenticated only) */}
+                {isAuthenticated && user && (
+                  <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                    {user.name || user.email}
+                  </div>
+                )}
+
+                {/* Dashboard (authenticated only) */}
+                {isAuthenticated && (
+                  <Link
+                    to="/"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+
+                {/* Features requiring active role (not 'unknown') */}
+                {hasActiveRole && (
                   <>
-                    {user && (
-                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-                        {user.name || user.email}
-                      </div>
-                    )}
-                    <Link
-                      to="/"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Dashboard
-                    </Link>
                     <Link
                       to="/user"
                       onClick={closeMenu}
@@ -119,6 +133,12 @@ function NavBar() {
                     >
                       Library
                     </Link>
+                  </>
+                )}
+
+                {/* Admin/Developer only features */}
+                {canManageRoles && (
+                  <>
                     <Link
                       to="/users"
                       onClick={closeMenu}
@@ -126,85 +146,71 @@ function NavBar() {
                     >
                       Registrations
                     </Link>
-                    {canManageRoles && (
-                      <Link
-                        to="/role-management"
-                        onClick={closeMenu}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Role Management
-                      </Link>
-                    )}
                     <Link
-                      to="/version"
+                      to="/role-management"
                       onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Version
+                      Role Management
                     </Link>
-                    <Link
-                      to="/config"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
-                    >
-                      Config
-                    </Link>
-                    <button
-                      onClick={() => {
-                        signOut();
-                        closeMenu();
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                    >
-                      Sign Out
-                    </button>
                   </>
+                )}
+
+                {/* Public features - available to everyone */}
+                <Link
+                  to="/facedemo"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Face Demo
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Register Face
+                </Link>
+
+                {/* Utility links */}
+                <Link
+                  to="/version"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                >
+                  Version
+                </Link>
+                <Link
+                  to="/config"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                >
+                  Config
+                </Link>
+
+                {/* Auth actions */}
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      closeMenu();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Sign Out
+                  </button>
                 ) : (
-                  <>
-                    <Link
-                      to="/facedemo"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Face Demo
-                    </Link>
-                    <Link
-                      to="/signup"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Register Face
-                    </Link>
-                    <Link
-                      to="/version"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 border-t border-gray-100"
-                    >
-                      Version
-                    </Link>
-                    <Link
-                      to="/config"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
-                    >
-                      Config
-                    </Link>
-                  </>
+                  <Link
+                    to="/login"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-blue-600 hover:bg-gray-100"
+                  >
+                    Sign In
+                  </Link>
                 )}
               </div>
             )}
           </div>
-        )}
-
-        {/* Sign out button for non-developers who are authenticated */}
-        {isAuthenticated && !showMenu && (
-          <button
-            onClick={() => signOut()}
-            className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
-          >
-            Sign Out
-          </button>
-        )}
       </div>
       <StatusPanel apiBase={API_BASE} />
     </div>
