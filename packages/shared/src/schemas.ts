@@ -272,6 +272,15 @@ export type ListFaceRegistrationsResponse = z.infer<typeof ListFaceRegistrations
 export const UserRoleSchema = z.enum(['developer', 'admin', 'volunteer', 'vendor', 'unknown']);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
+/**
+ * Safely parse a role value and return a valid UserRole or null.
+ * Use this instead of type assertions to ensure runtime safety.
+ */
+export function parseUserRole(role: unknown): UserRole | null {
+  const result = UserRoleSchema.safeParse(role);
+  return result.success ? result.data : null;
+}
+
 /** User object returned from auth endpoints */
 export const UserSchema = z.object({
   id: z.string().uuid(),

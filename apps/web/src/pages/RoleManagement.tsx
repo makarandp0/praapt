@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Contracts, type User, type UserRole, type ContractAuth, UserRoleSchema } from '@praapt/shared';
+import { Contracts, type User, type UserRole, type ContractAuth, UserRoleSchema, parseUserRole } from '@praapt/shared';
 
 import { RoleBadge } from '../components/RoleDashboard';
 import { useAuth } from '../contexts/AuthContext';
@@ -193,8 +193,7 @@ export function RoleManagement({ apiBase }: RoleManagementProps) {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((u) => {
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from API is validated by UserRoleSchema
-              const userRole = u.role as UserRole | null;
+              const userRole = parseUserRole(u.role);
               const isCurrentUser = u.id === currentUser?.id;
 
               return (

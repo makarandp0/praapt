@@ -1,4 +1,4 @@
-import { Contracts, type UserRole } from '@praapt/shared';
+import { Contracts, type UserRole, parseUserRole } from '@praapt/shared';
 import { eq } from 'drizzle-orm';
 import { Router } from 'express';
 
@@ -32,8 +32,7 @@ router.get(
           name: user.name,
           provider: user.provider,
           photoUrl: user.photoUrl,
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from DB is validated by Zod schema
-          role: user.role as UserRole | null,
+          role: parseUserRole(user.role),
           createdAt: user.createdAt?.toISOString() ?? null,
           updatedAt: user.updatedAt?.toISOString() ?? null,
         },
@@ -56,8 +55,7 @@ routes.fromContract(Contracts.listUsers, async () => {
     name: u.name,
     provider: u.provider,
     photoUrl: u.photoUrl,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from DB is validated by Zod schema
-    role: u.role as UserRole | null,
+    role: parseUserRole(u.role),
     createdAt: u.createdAt?.toISOString() ?? null,
     updatedAt: u.updatedAt?.toISOString() ?? null,
   }));
@@ -83,8 +81,7 @@ routes.fromContract(Contracts.updateUserRole, async (req) => {
   const { id } = req.params as { id: string };
   const { role: newRole } = req.body;
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from DB is validated by contract auth
-  const currentUserRole = req.user!.role as UserRole;
+  const currentUserRole = parseUserRole(req.user!.role);
 
   // Admins have restrictions (developers can do anything)
   if (currentUserRole === 'admin') {
@@ -100,8 +97,8 @@ routes.fromContract(Contracts.updateUserRole, async (req) => {
       .where(eq(users.id, id))
       .limit(1);
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from DB is validated
-    if (targetUser && ADMIN_RESTRICTED_ROLES.includes(targetUser.role as UserRole)) {
+    const targetRole = parseUserRole(targetUser?.role);
+    if (targetRole && ADMIN_RESTRICTED_ROLES.includes(targetRole)) {
       throw new ForbiddenError('Admins cannot modify developer roles');
     }
   }
@@ -126,8 +123,7 @@ routes.fromContract(Contracts.updateUserRole, async (req) => {
       name: updatedUser.name,
       provider: updatedUser.provider,
       photoUrl: updatedUser.photoUrl,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from DB is validated by Zod schema
-      role: updatedUser.role as UserRole | null,
+      role: parseUserRole(updatedUser.role),
       createdAt: updatedUser.createdAt?.toISOString() ?? null,
       updatedAt: updatedUser.updatedAt?.toISOString() ?? null,
     },

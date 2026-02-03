@@ -99,6 +99,7 @@ export {
   // User (Firebase Auth)
   UserRoleSchema,
   type UserRole,
+  parseUserRole,
   UserSchema,
   type User,
   GetMeResponseSchema,

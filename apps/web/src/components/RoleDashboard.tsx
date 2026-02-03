@@ -1,4 +1,4 @@
-import type { UserRole } from '@praapt/shared';
+import { parseUserRole, type UserRole } from '@praapt/shared';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -25,8 +25,7 @@ export function RoleDashboard({ children }: RoleDashboardProps) {
     return null;
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from API is validated by UserRoleSchema
-  const role = user.role as UserRole | null;
+  const role = parseUserRole(user.role);
 
   // Unknown role: show contact administrator message
   if (!role || role === 'unknown') {

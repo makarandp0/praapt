@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import type { UserRole } from '@praapt/shared';
+import { parseUserRole } from '@praapt/shared';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RoleDashboard } from './components/RoleDashboard';
@@ -28,8 +28,7 @@ function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- role from API is validated by UserRoleSchema
-  const userRole = user?.role as UserRole | null;
+  const userRole = parseUserRole(user?.role);
   const isDeveloper = userRole === 'developer';
   const isAdmin = userRole === 'admin';
   const canManageRoles = isDeveloper || isAdmin;
