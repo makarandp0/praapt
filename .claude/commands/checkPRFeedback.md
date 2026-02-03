@@ -89,17 +89,35 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 git push
 ```
 
-## 7. Respond to PR
+## 7. Resolve Addressed Comments
 
-Post a comment on the PR summarizing what was done:
+For each inline comment that was addressed with a code change, reply to that specific comment indicating it's been fixed. This helps reviewers track which comments have been resolved.
+
+```bash
+# Reply to a specific comment (resolves the thread)
+gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies \
+  -f body="Fixed in commit $(git rev-parse --short HEAD). [describe the fix briefly]"
+```
+
+To find comment IDs and reply to them:
+
+```bash
+# Get comment details including IDs
+gh api repos/{owner}/{repo}/pulls/{number}/comments \
+  --jq '.[] | {id: .id, path: .path, line: (.line // .original_line), body: .body}'
+```
+
+## 8. Respond to PR
+
+Post a summary comment on the PR:
 
 ```bash
 gh pr comment --body "$(cat <<'EOF'
 ## PR Feedback Addressed
 
 ### Changes Made
-- [ ] **Issue 1**: [Brief description of what was fixed]
-- [ ] **Issue 2**: [Brief description of what was fixed]
+- **Issue 1**: [Brief description of what was fixed] - replied to comment
+- **Issue 2**: [Brief description of what was fixed] - replied to comment
 
 ### Not Addressed (with reasoning)
 - **Issue X**: [Reason - e.g., "This is intentional because...", "Out of scope for this PR", "Would introduce unnecessary complexity"]
