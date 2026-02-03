@@ -51,8 +51,8 @@ function NavBar() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Only show hamburger menu for developers
-  const showMenu = isDeveloper;
+  // Show hamburger menu for users who can manage roles (developers and admins)
+  const showMenu = canManageRoles;
 
   return (
     <div className="flex flex-col gap-2">

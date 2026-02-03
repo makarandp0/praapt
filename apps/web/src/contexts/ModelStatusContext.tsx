@@ -78,8 +78,11 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
       setStatus((prev) => ({ ...prev, isLoadingModel: true }));
       try {
         const token = await getIdToken();
+        if (!token) {
+          throw new Error('Developer authentication is required to load a model');
+        }
         await callContract(apiBase, Contracts.loadModel, {
-          token: token ?? undefined,
+          token,
           body: { model },
         });
         // Wait for the model to be ready before refreshing status

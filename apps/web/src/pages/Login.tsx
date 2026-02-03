@@ -1,13 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 
 type AuthMode = 'signin' | 'signup';
 
+/** Type for location state passed from protected routes */
+interface LocationState {
+  from?: { pathname: string };
+}
+
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     signInWithEmail,
     signUpWithEmail,
@@ -18,12 +24,17 @@ export function Login() {
     error,
   } = useAuth();
 
+  // Get the redirect destination from location state (set by ProtectedRoute/RoleProtectedRoute)
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- location.state is typed as unknown by react-router
+  const state = location.state as LocationState | null;
+  const from = state?.from?.pathname || '/';
+
   // Redirect if already authenticated
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate('/');
+      navigate(from, { replace: true });
     }
-  }, [loading, isAuthenticated, navigate]);
+  }, [loading, isAuthenticated, navigate, from]);
 
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
@@ -66,8 +77,8 @@ export function Login() {
         } else {
           await signUpWithEmail(email, password);
         }
-        // On success, navigate to dashboard (role-based content shown there)
-        navigate('/');
+        // On success, navigate to the page they were trying to access (or dashboard)
+        navigate(from, { replace: true });
       } catch (err) {
         // Error is handled by the auth hook, but we can show a local message too
         const message = err instanceof Error ? err.message : 'Authentication failed';
@@ -87,7 +98,7 @@ export function Login() {
         setIsSubmitting(false);
       }
     },
-    [email, password, confirmPassword, mode, signInWithEmail, signUpWithEmail, navigate],
+    [email, password, confirmPassword, mode, signInWithEmail, signUpWithEmail, navigate, from],
   );
 
   const handleGoogleSignIn = useCallback(async () => {
@@ -96,7 +107,7 @@ export function Login() {
 
     try {
       await signInWithGoogle();
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Google sign in failed';
       if (message.includes('auth/popup-closed-by-user')) {
@@ -107,7 +118,7 @@ export function Login() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [signInWithGoogle, navigate]);
+  }, [signInWithGoogle, navigate, from]);
 
   const toggleMode = useCallback(() => {
     setMode((prev) => (prev === 'signin' ? 'signup' : 'signin'));

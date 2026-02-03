@@ -103,7 +103,7 @@ export function RoleBadge({ role }: { role: UserRole }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleStyles[role] || roleStyles.unknown}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleStyles[role]}`}
     >
       {role}
     </span>

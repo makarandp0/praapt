@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Contracts, type User, type UserRole, type ContractAuth } from '@praapt/shared';
+import { Contracts, type User, type UserRole, type ContractAuth, UserRoleSchema } from '@praapt/shared';
 
 import { RoleBadge } from '../components/RoleDashboard';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,8 +31,10 @@ const ENDPOINT_INFO: EndpointInfo[] = [
   // Images
   { method: 'POST', path: '/images', description: 'Save/upload image', auth: Contracts.saveImage.auth },
   { method: 'GET', path: '/images', description: 'List saved images', auth: Contracts.listImages.auth },
-  { method: 'GET', path: '/images/:name', description: 'Get image by name', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
-  { method: 'GET', path: '/images/file/:filename', description: 'Get image by filename', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
+  // Note: These file-serving endpoints return binary data, not JSON, so they don't have contracts.
+  // Auth is hardcoded here to match the requireActiveRole() middleware in apps/api/src/routes/images.ts.
+  { method: 'GET', path: '/images/:name', description: 'Get image by name (file)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
+  { method: 'GET', path: '/images/file/:filename', description: 'Get image by filename (file)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
   { method: 'POST', path: '/images/compare', description: 'Compare two face images', auth: Contracts.compareImages.auth },
 
   // User
@@ -74,7 +76,8 @@ interface RoleManagementProps {
   apiBase: string;
 }
 
-const ALL_ROLES: UserRole[] = ['developer', 'admin', 'volunteer', 'vendor', 'unknown'];
+/** All available roles - derived from UserRoleSchema to ensure consistency */
+const ALL_ROLES: readonly UserRole[] = UserRoleSchema.options;
 
 export function RoleManagement({ apiBase }: RoleManagementProps) {
   const { user: currentUser, getIdToken } = useAuth();

@@ -45,7 +45,11 @@ export function Library({ apiBase }: Props) {
   const refresh = useCallback(async () => {
     try {
       const token = await getIdToken();
-      const response = await callContract(apiBase, Contracts.listImages, { token: token ?? undefined });
+      if (!token) {
+        setStatus('Not authenticated');
+        return;
+      }
+      const response = await callContract(apiBase, Contracts.listImages, { token });
       if (!response.ok) {
         throw new Error(response.error);
       }
@@ -127,9 +131,13 @@ export function Library({ apiBase }: Props) {
     setStatus('Saving image...');
     try {
       const token = await getIdToken();
+      if (!token) {
+        setStatus('Not authenticated');
+        return;
+      }
       const slotName = `slot-${String(addingToSlot + 1).padStart(2, '0')}`;
       await callContract(apiBase, Contracts.saveImage, {
-        token: token ?? undefined,
+        token,
         body: { name: slotName, image: dataUrl },
       });
       await refresh();
@@ -168,9 +176,13 @@ export function Library({ apiBase }: Props) {
       // Save immediately (backend will overwrite if file exists)
       try {
         const token = await getIdToken();
+        if (!token) {
+          setStatus('Not authenticated');
+          return;
+        }
         const slotName = `slot-${String(slotToUpdate + 1).padStart(2, '0')}`;
         await callContract(apiBase, Contracts.saveImage, {
-          token: token ?? undefined,
+          token,
           body: { name: slotName, image: dataUrl },
         });
         await refresh();
@@ -227,8 +239,13 @@ export function Library({ apiBase }: Props) {
     setCompareError(null);
     try {
       const token = await getIdToken();
+      if (!token) {
+        setCompareError('Not authenticated');
+        setComparing(false);
+        return;
+      }
       const res = await callContract(apiBase, Contracts.compareImages, {
-        token: token ?? undefined,
+        token,
         body: { a: img1, b: img2 },
       });
       if (!res.ok) {
