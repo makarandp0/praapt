@@ -37,17 +37,34 @@ gh pr view --json reviews --jq '.reviews[] | "\(.author.login): \(.state) - \(.b
 gh api repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | "[\(.path):\(.line // .original_line)] \(.body | split("\n")[0])"'
 ```
 
-## 3. Categorize Feedback
+## 3. Analyze and Triage Feedback
 
-Group the feedback into categories:
+Analyze each piece of feedback and decide whether to address it:
 
-- **High Priority**: Security issues, bugs, broken functionality
-- **Medium Priority**: Code quality, missing error handling, inconsistencies
-- **Low Priority / Stylistic**: Naming, comments, minor refactors
-- **Suggestions**: Optional improvements, "nice to have"
-- **Questions**: Clarifications needed (may not require code changes)
+**Address automatically** (no user confirmation needed):
+- Security issues, bugs, broken functionality
+- Missing error handling, null checks, edge cases
+- Type safety improvements (removing unsafe casts, adding validation)
+- Legitimate code quality concerns
+- Inconsistencies with project patterns
+- Dead code removal
+- Reasonable refactors that improve clarity
 
-Present a summary to the user asking which issues to address. If the user already specified which issues, proceed with those.
+**Push back on** (consult user before skipping):
+- Changes that would introduce unnecessary complexity
+- Suggestions based on misunderstanding of the code
+- Changes that conflict with project conventions
+- Out of scope changes (belongs in a separate PR)
+- Purely stylistic preferences with no clear benefit
+- Performance optimizations without demonstrated need
+
+If you plan to NOT address certain feedback, present those items to the user with your reasoning and ask for confirmation before proceeding. For example:
+
+"I plan to skip the following feedback:
+- **Issue X**: [Your reasoning why this shouldn't be addressed]
+- **Issue Y**: [Your reasoning]
+
+Should I proceed, or would you like me to address any of these?"
 
 ## 4. Address Feedback
 
@@ -57,13 +74,6 @@ For each issue being addressed:
 2. Understand the context and the reviewer's concern
 3. Make the appropriate fix
 4. Keep changes minimal and focused
-
-**When to push back** (don't make changes):
-- The suggestion would introduce unnecessary complexity
-- The current approach is intentional and well-reasoned
-- The feedback is based on a misunderstanding of the code
-- The change would conflict with project conventions
-- The change is out of scope for this PR
 
 ## 5. Run Checks
 
@@ -133,8 +143,11 @@ EOF
 
 ## Guidelines
 
+- **Act autonomously on reasonable feedback**: Don't ask permission to fix legitimate issues - just fix them
+- **Consult before skipping**: Only ask the user when you plan to NOT address feedback
 - **Be thorough but judicious**: Address legitimate concerns, but don't blindly accept every suggestion
 - **Explain your reasoning**: When not addressing feedback, provide clear justification
 - **Keep changes focused**: Only change what's necessary to address the feedback
 - **Maintain code quality**: Don't introduce new issues while fixing others
 - **Communicate clearly**: The PR comment should make it easy for reviewers to verify changes
+- **Push back professionally**: When declining feedback, be respectful but firm with clear technical reasoning
