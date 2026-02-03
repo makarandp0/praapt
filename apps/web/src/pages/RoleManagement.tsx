@@ -32,9 +32,8 @@ const ENDPOINT_INFO: EndpointInfo[] = [
   { method: 'POST', path: '/images', description: 'Save/upload image', auth: Contracts.saveImage.auth },
   { method: 'GET', path: '/images', description: 'List saved images', auth: Contracts.listImages.auth },
   // Note: These file-serving endpoints return binary data, not JSON, so they don't have contracts.
-  // Auth is hardcoded here to match the requireActiveRole() middleware in apps/api/src/routes/images.ts.
-  { method: 'GET', path: '/images/:name', description: 'Get image by name (file)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
-  { method: 'GET', path: '/images/file/:filename', description: 'Get image by filename (file)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
+  { method: 'GET', path: '/images/:name', description: 'Get image by name (library)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
+  { method: 'GET', path: '/images/file/:filename', description: 'Get image by filename (profiles)', auth: 'public' },
   { method: 'POST', path: '/images/compare', description: 'Compare two face images', auth: Contracts.compareImages.auth },
 
   // User
