@@ -183,6 +183,7 @@ When you make a mistake or discover something unexpected about this codebase, **
 - **drizzle.config.ts cannot import config.ts**: drizzle-kit uses CommonJS require, so it cannot import ESM modules. Keep `process.env.DATABASE_URL` access directly in `drizzle.config.ts` with `import 'dotenv/config'`.
 - **Frontend shows all options, backend enforces restrictions**: For role-based features (like role management), the frontend should display all options and let the backend enforce restrictions. Don't duplicate permission logic in the frontend—keep it in the backend route handlers. This keeps the code DRY and ensures the backend is the single source of truth for authorization.
 - **callContract requires token for protected endpoints**: When calling protected API endpoints from the frontend, pass the token: `callContract(apiBase, Contract, { body, token: await getIdToken() })`. Public endpoints can omit the token. The `useAuth()` hook provides `getIdToken()` for getting the current user's Firebase ID token.
+- **Legacy users migration guard**: The `1900000000001_migrate-users-data` migration must only run if legacy `users` columns like `face_embedding` exist. Fresh DBs create a Firebase `users` table without those columns, so guard the migration or it will fail.
 
 ## Database Migrations (node-pg-migrate)
 
