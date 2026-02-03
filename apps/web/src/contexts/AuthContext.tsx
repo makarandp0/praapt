@@ -59,6 +59,8 @@ export function AuthProvider({ children, apiBase }: AuthProviderProps) {
     async function fetchUser() {
       if (!firebaseUser) {
         setUser(null);
+        setFetchingUser(false);
+        setUserError(null);
         return;
       }
 

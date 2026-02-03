@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import { isFirebaseConfigured } from '../config.js';
 import { db, users, type User } from '../db.js';
@@ -62,45 +62,31 @@ export async function requireAuth(
       return;
     }
 
-    // Upsert user in database
-    const existingUsers = await db
-      .select()
-      .from(users)
-      .where(eq(users.firebaseUid, uid))
-      .limit(1);
-
-    let user: User;
-
-    if (existingUsers.length > 0) {
-      // Update existing user with latest info from Firebase
-      const [updated] = await db
-        .update(users)
-        .set({
+    // Upsert user in database using atomic operation to avoid race conditions
+    const [user] = await db
+      .insert(users)
+      .values({
+        firebaseUid: uid,
+        email,
+        name: name ?? null,
+        provider: provider ?? null,
+        photoUrl: picture ?? null,
+        role: 'unknown',
+      })
+      .onConflictDoUpdate({
+        target: users.firebaseUid,
+        set: {
           email,
-          name: name ?? existingUsers[0].name,
-          provider: provider ?? existingUsers[0].provider,
-          photoUrl: picture ?? existingUsers[0].photoUrl,
+          // Use COALESCE to preserve existing values when new values are null
+          name: sql`COALESCE(${name ?? null}, ${users.name})`,
+          provider: sql`COALESCE(${provider ?? null}, ${users.provider})`,
+          photoUrl: sql`COALESCE(${picture ?? null}, ${users.photoUrl})`,
           updatedAt: new Date(),
-        })
-        .where(eq(users.firebaseUid, uid))
-        .returning();
-      user = updated;
-    } else {
-      // Create new user
-      const [created] = await db
-        .insert(users)
-        .values({
-          firebaseUid: uid,
-          email,
-          name: name ?? null,
-          provider: provider ?? null,
-          photoUrl: picture ?? null,
-          role: 'unknown',
-        })
-        .returning();
-      user = created;
-      logger.info({ userId: user.id, email }, 'New user created');
-    }
+        },
+      })
+      .returning();
+
+    logger.debug({ userId: user.id, email }, 'User upserted');
 
     // Attach user to request
     req.user = user;
@@ -115,14 +101,32 @@ export async function requireAuth(
       const errWithCode = error as Record<string, unknown>;
       errorCode = typeof errWithCode.code === 'string' ? errWithCode.code : undefined;
     }
-    logger.warn({ error, errorCode, errorMessage }, 'Token verification failed');
 
-    // Return more specific error message in development
+    // Distinguish Firebase auth errors from internal server errors
+    const isAuthError =
+      (typeof errorCode === 'string' && errorCode.startsWith('auth/')) ||
+      (error instanceof Error && error.name === 'FirebaseAuthError');
+
     const isDev = process.env.NODE_ENV !== 'production';
-    res.status(401).json({
-      ok: false,
-      error: isDev ? `Token verification failed: ${errorCode ?? errorMessage}` : 'Invalid or expired token'
-    });
+
+    if (isAuthError) {
+      logger.warn({ error, errorCode, errorMessage }, 'Token verification failed');
+      res.status(401).json({
+        ok: false,
+        error: isDev
+          ? `Token verification failed: ${errorCode ?? errorMessage}`
+          : 'Invalid or expired token',
+      });
+    } else {
+      // Non-authentication failures (e.g. database/persistence issues)
+      logger.error({ error, errorCode, errorMessage }, 'Auth middleware internal error');
+      res.status(500).json({
+        ok: false,
+        error: isDev
+          ? `Authentication service error: ${errorMessage}`
+          : 'Internal server error',
+      });
+    }
   }
 }
 

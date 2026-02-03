@@ -1,10 +1,8 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Drop existing users table if it exists
-  pgm.sql(`DROP TABLE IF EXISTS users CASCADE;`);
-
-  // Create new users table with Firebase authentication fields
+  // Create users table with Firebase authentication fields
+  // Note: If upgrading from old users table, drop it manually first
   pgm.sql(`
     CREATE TABLE users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

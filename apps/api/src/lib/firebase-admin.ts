@@ -5,6 +5,12 @@ import { getConfig, isFirebaseConfigured } from '../config.js';
 import { logger } from './logger.js';
 
 let firebaseApp: App | null = null;
+let cachedClientConfig: {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  appId: string;
+} | null = null;
 
 interface ServiceAccount {
   project_id: string;
@@ -46,6 +52,14 @@ export function initializeFirebase(): void {
       }),
     });
 
+    // Cache client config during initialization
+    cachedClientConfig = {
+      apiKey: config.firebaseClientApiKey!,
+      authDomain: config.firebaseAuthDomain ?? `${serviceAccount.project_id}.firebaseapp.com`,
+      projectId: serviceAccount.project_id,
+      appId: config.firebaseClientAppId!,
+    };
+
     logger.info({ projectId: serviceAccount.project_id }, 'Firebase Admin initialized');
   } catch (error) {
     logger.error({ error }, 'Failed to initialize Firebase Admin');
@@ -66,7 +80,7 @@ export function getFirebaseAuth(): Auth {
 
 /**
  * Get Firebase client configuration for frontend initialization.
- * Returns null if Firebase is not configured.
+ * Returns cached config set during initialization, or null if not configured.
  */
 export function getFirebaseClientConfig(): {
   apiKey: string;
@@ -74,24 +88,5 @@ export function getFirebaseClientConfig(): {
   projectId: string;
   appId: string;
 } | null {
-  const config = getConfig();
-
-  if (!isFirebaseConfigured()) {
-    return null;
-  }
-
-  // Decode service account to get project ID
-  const serviceAccountJson = Buffer.from(
-    config.firebaseServiceAccountBase64!,
-    'base64',
-  ).toString('utf-8');
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- JSON.parse returns unknown, validated by isFirebaseConfigured
-  const serviceAccount = JSON.parse(serviceAccountJson) as ServiceAccount;
-
-  return {
-    apiKey: config.firebaseClientApiKey!,
-    authDomain: config.firebaseAuthDomain ?? `${serviceAccount.project_id}.firebaseapp.com`,
-    projectId: serviceAccount.project_id,
-    appId: config.firebaseClientAppId!,
-  };
+  return cachedClientConfig;
 }
