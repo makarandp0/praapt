@@ -1,7 +1,9 @@
+import { Contracts } from '@praapt/shared';
 import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
-import { createApiClient } from '../lib/apiClient';
+import { callContract } from '../lib/contractClient';
+import { useAuth } from './AuthContext';
 
 /** Delay in ms to wait after loading a model before refreshing status */
 const MODEL_READY_DELAY_MS = 500;
@@ -34,7 +36,7 @@ interface ModelStatusProviderProps {
 }
 
 export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderProps) {
-  const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
+  const { getIdToken } = useAuth();
 
   const [status, setStatus] = useState<ModelStatus>({
     faceServiceOk: false,
@@ -47,7 +49,8 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
   const refreshStatus = useCallback(async () => {
     setStatus((prev) => ({ ...prev, isChecking: true }));
     try {
-      const health = await apiClient.getHealth();
+      // getHealth is public, no token needed
+      const health = await callContract(apiBase, Contracts.getHealth);
       if (!health.ok) {
         throw new Error(health.error);
       }
@@ -68,13 +71,20 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
         isChecking: false,
       }));
     }
-  }, [apiClient]);
+  }, [apiBase]);
 
   const loadModel = useCallback(
     async (model: 'buffalo_l' | 'buffalo_s') => {
       setStatus((prev) => ({ ...prev, isLoadingModel: true }));
       try {
-        await apiClient.loadModel(model);
+        const token = await getIdToken();
+        if (!token) {
+          throw new Error('Developer authentication is required to load a model');
+        }
+        await callContract(apiBase, Contracts.loadModel, {
+          token,
+          body: { model },
+        });
         // Wait for the model to be ready before refreshing status
         await new Promise((resolve) => setTimeout(resolve, MODEL_READY_DELAY_MS));
         await refreshStatus();
@@ -85,7 +95,7 @@ export function ModelStatusProvider({ children, apiBase }: ModelStatusProviderPr
         setStatus((prev) => ({ ...prev, isLoadingModel: false }));
       }
     },
-    [apiClient, refreshStatus],
+    [apiBase, getIdToken, refreshStatus],
   );
 
   // Initial status check

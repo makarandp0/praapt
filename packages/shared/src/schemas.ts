@@ -272,6 +272,15 @@ export type ListFaceRegistrationsResponse = z.infer<typeof ListFaceRegistrations
 export const UserRoleSchema = z.enum(['developer', 'admin', 'volunteer', 'vendor', 'unknown']);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
+/**
+ * Safely parse a role value and return a valid UserRole or null.
+ * Use this instead of type assertions to ensure runtime safety.
+ */
+export function parseUserRole(role: unknown): UserRole | null {
+  const result = UserRoleSchema.safeParse(role);
+  return result.success ? result.data : null;
+}
+
 /** User object returned from auth endpoints */
 export const UserSchema = z.object({
   id: z.string().uuid(),
@@ -289,3 +298,31 @@ export type User = z.infer<typeof UserSchema>;
 /** GET /me response */
 export const GetMeResponseSchema = createApiResponse(z.object({ user: UserSchema }));
 export type GetMeResponse = z.infer<typeof GetMeResponseSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Management schemas
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /users response - list all users */
+export const ListUsersResponseSchema = createApiResponse(
+  z.object({
+    users: z.array(UserSchema),
+    count: z.number(),
+  }),
+);
+export type ListUsersResponse = z.infer<typeof ListUsersResponseSchema>;
+
+/** Convenience type for a single user from the list */
+export type ListUser = User;
+
+/** PATCH /users/:id/role request body */
+export const UpdateUserRoleBodySchema = z.object({
+  role: UserRoleSchema,
+});
+export type UpdateUserRoleBody = z.infer<typeof UpdateUserRoleBodySchema>;
+
+/** PATCH /users/:id/role response */
+export const UpdateUserRoleResponseSchema = createApiResponse(
+  z.object({ user: UserSchema }),
+);
+export type UpdateUserRoleResponse = z.infer<typeof UpdateUserRoleResponseSchema>;

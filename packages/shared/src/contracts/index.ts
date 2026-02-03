@@ -1,6 +1,7 @@
 export {
   type HttpMethod,
   type PathParamsObject,
+  type ContractAuth,
   type ApiContract,
   type AnyApiContract,
   defineContract,
@@ -9,6 +10,8 @@ export {
   type InferResponse,
   type InferParams,
   type InferPath,
+  type InferAuth,
+  canCallContract,
 } from './types.js';
 
 export * as Contracts from './api.js';
