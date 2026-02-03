@@ -11,6 +11,8 @@ export interface CallContractOptions<TContract extends AnyApiContract> {
   body?: InferBody<TContract>;
   /** Query parameters to append to the URL */
   query?: Record<string, string | number | boolean | undefined>;
+  /** Bearer token for Authorization header */
+  token?: string;
 }
 
 /**
@@ -59,13 +61,20 @@ export async function callContract<TContract extends AnyApiContract>(
 ): Promise<InferResponse<TContract>> {
   const url = baseUrl + buildUrl(contract.path, options?.params, options?.query);
 
+  const headers: Record<string, string> = {};
+
+  // Add Authorization header if token is provided
+  if (options?.token) {
+    headers['Authorization'] = `Bearer ${options.token}`;
+  }
+
   const init: RequestInit = {
     method: contract.method,
-    headers: {},
+    headers,
   };
 
   if (options?.body !== undefined) {
-    init.headers = { 'Content-Type': 'application/json' };
+    headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(options.body);
   }
 

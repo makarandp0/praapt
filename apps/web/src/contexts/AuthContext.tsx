@@ -1,84 +1,139 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
+import { Contracts, type User } from '@praapt/shared';
 
-/** User data returned from auth endpoints */
-export interface AuthUser {
-  id: number;
-  email: string;
-  name: string | null;
-  profileImagePath: string | null;
-}
-
-/** Single match entry for top matches list */
-export interface MatchEntry {
-  email: string;
-  name: string | null;
-  distance: number;
-  profileImagePath: string | null;
-}
-
-/** Match info from face recognition login */
-export interface MatchInfo {
-  distance: number;
-  threshold: number;
-  loginImage: string; // base64 data URL of the image used for login
-  topMatches: MatchEntry[];
-}
+import { useFirebaseAuth } from '../hooks/useFirebaseAuth';
+import { callContract } from '../lib/contractClient';
 
 interface AuthContextType {
-  user: AuthUser | null;
-  matchInfo: MatchInfo | null;
+  /** Current authenticated user from database (null if not authenticated) */
+  user: User | null;
+  /** Whether auth state is still loading */
+  loading: boolean;
+  /** Whether Firebase auth is configured and available */
+  authEnabled: boolean;
+  /** Whether user is authenticated */
   isAuthenticated: boolean;
-  login: (user: AuthUser, match?: MatchInfo) => void;
-  logout: () => void;
+  /** Error message if something went wrong */
+  error: string | null;
+  /** Sign in with email and password */
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  /** Sign up with email and password */
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  /** Sign in with Google popup */
+  signInWithGoogle: () => Promise<void>;
+  /** Sign out */
+  signOut: () => Promise<void>;
+  /** Get the current ID token (refreshes if needed) */
+  getIdToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
+  apiBase: string;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    // Restore user from sessionStorage on mount
-    const stored = sessionStorage.getItem('auth_user');
-    return stored ? JSON.parse(stored) : null;
-  });
+export function AuthProvider({ children, apiBase }: AuthProviderProps) {
+  const firebaseAuth = useFirebaseAuth(apiBase);
+  const {
+    firebaseUser,
+    loading: firebaseLoading,
+    authEnabled,
+    error: firebaseError,
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithGoogle,
+    signOut: firebaseSignOut,
+    getIdToken,
+  } = firebaseAuth;
 
-  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(() => {
-    // Restore match info from sessionStorage on mount
-    const stored = sessionStorage.getItem('auth_match');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [fetchingUser, setFetchingUser] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
 
-  const login = useCallback((userData: AuthUser, match?: MatchInfo) => {
-    setUser(userData);
-    sessionStorage.setItem('auth_user', JSON.stringify(userData));
-    if (match) {
-      setMatchInfo(match);
-      // Store match info without the potentially large loginImage to avoid storage quota errors
-       
-      const { loginImage: _loginImage, ...rest } = match;
-      sessionStorage.setItem('auth_match', JSON.stringify({ ...rest, loginImage: '' }));
+  // Fetch user from /api/me when Firebase user changes
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchUser() {
+      if (!firebaseUser) {
+        setUser(null);
+        setFetchingUser(false);
+        setUserError(null);
+        return;
+      }
+
+      setFetchingUser(true);
+      setUserError(null);
+
+      try {
+        const token = await getIdToken();
+        if (!token || cancelled) {
+          setFetchingUser(false);
+          return;
+        }
+
+        const response = await callContract(apiBase, Contracts.getMe, { token });
+
+        if (cancelled) return;
+
+        if (response.ok) {
+          setUser(response.user);
+        } else {
+          setUserError(response.error);
+          setUser(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to fetch user:', err);
+        setUserError('Failed to load user data');
+        setUser(null);
+      } finally {
+        if (!cancelled) {
+          setFetchingUser(false);
+        }
+      }
     }
-  }, []);
 
-  const logout = useCallback(() => {
+    fetchUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase, firebaseUser, getIdToken]);
+
+  const signOut = useCallback(async () => {
+    await firebaseSignOut();
     setUser(null);
-    setMatchInfo(null);
-    sessionStorage.removeItem('auth_user');
-    sessionStorage.removeItem('auth_match');
-  }, []);
+  }, [firebaseSignOut]);
 
   const value = useMemo(
     () => ({
       user,
-      matchInfo,
+      loading: firebaseLoading || fetchingUser,
+      authEnabled,
       isAuthenticated: !!user,
-      login,
-      logout,
+      error: firebaseError || userError,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
+      signOut,
+      getIdToken,
     }),
-    [user, matchInfo, login, logout],
+    [
+      user,
+      firebaseLoading,
+      fetchingUser,
+      authEnabled,
+      firebaseError,
+      userError,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
+      signOut,
+      getIdToken,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -115,12 +115,29 @@ export const FaceHealthSchema = z.object({
 });
 export type FaceHealth = z.infer<typeof FaceHealthSchema>;
 
+// Firebase client config (for frontend initialization)
+export const FirebaseClientConfigSchema = z.object({
+  apiKey: z.string(),
+  authDomain: z.string(),
+  projectId: z.string(),
+  appId: z.string(),
+});
+export type FirebaseClientConfig = z.infer<typeof FirebaseClientConfigSchema>;
+
+// Auth config in health response
+export const AuthConfigSchema = z.object({
+  enabled: z.boolean(),
+  firebase: FirebaseClientConfigSchema.optional(),
+});
+export type AuthConfig = z.infer<typeof AuthConfigSchema>;
+
 export const HealthResponseSchema = createApiResponse(
   z.object({
     service: z.string(),
     env: z.string(),
     commit: z.string().optional(),
     face: FaceHealthSchema,
+    auth: AuthConfigSchema.optional(),
     config: z
       .object({
         faceServiceUrl: z.string(),
@@ -246,3 +263,29 @@ export const ListFaceRegistrationsResponseSchema = createApiResponse(
   }),
 );
 export type ListFaceRegistrationsResponse = z.infer<typeof ListFaceRegistrationsResponseSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User schemas (Firebase Auth)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** User role enum values */
+export const UserRoleSchema = z.enum(['developer', 'admin', 'volunteer', 'vendor', 'unknown']);
+export type UserRole = z.infer<typeof UserRoleSchema>;
+
+/** User object returned from auth endpoints */
+export const UserSchema = z.object({
+  id: z.string().uuid(),
+  firebaseUid: z.string(),
+  email: z.string().email(),
+  name: z.string().nullable(),
+  provider: z.string().nullable(),
+  photoUrl: z.string().nullable(),
+  role: UserRoleSchema.nullable(),
+  createdAt: z.string().nullable(), // ISO timestamp
+  updatedAt: z.string().nullable(), // ISO timestamp
+});
+export type User = z.infer<typeof UserSchema>;
+
+/** GET /me response */
+export const GetMeResponseSchema = createApiResponse(z.object({ user: UserSchema }));
+export type GetMeResponse = z.infer<typeof GetMeResponseSchema>;

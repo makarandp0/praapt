@@ -3,6 +3,7 @@ import {
   CompareImagesResponseSchema,
   FaceMatchBodySchema,
   FaceMatchResponseSchema,
+  GetMeResponseSchema,
   HealthResponseSchema,
   ListFaceRegistrationsResponseSchema,
   ListImagesResponseSchema,
@@ -86,4 +87,14 @@ export const listFaceRegistrations = defineContract({
   method: 'GET',
   path: '/face-registrations',
   response: ListFaceRegistrationsResponseSchema,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Contracts (Firebase Auth)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getMe = defineContract({
+  method: 'GET',
+  path: '/me',
+  response: GetMeResponseSchema,
 });

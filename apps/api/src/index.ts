@@ -4,13 +4,18 @@ import express, { json, static as expressStatic } from 'express';
 
 import { getConfig } from './config.js';
 import { errorHandler } from './lib/errorHandler.js';
+import { initializeFirebase } from './lib/firebase-admin.js';
 import { logger } from './lib/logger.js';
 import demoRoutes from './routes/demo.js';
 import faceRegistrationsRoutes from './routes/faceRegistrations.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
+import userRoutes from './routes/user.js';
 
 const config = getConfig();
+
+// Initialize Firebase Admin SDK (safe to call even if not configured)
+initializeFirebase();
 
 const app = express();
 
@@ -34,6 +39,7 @@ app.use('/api', healthRoutes);
 app.use('/api', imagesRoutes);
 app.use('/api', faceRegistrationsRoutes);
 app.use('/api', demoRoutes);
+app.use('/api', userRoutes);
 
 // Serve static frontend files in production
 if (config.nodeEnv === 'production') {
