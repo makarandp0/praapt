@@ -55,9 +55,10 @@ routes.fromContract(Contracts.listImages, async () => {
 /**
  * GET /images/file/:filename
  * Serve an image by exact filename (used for profile images)
- * Requires authenticated user with an active role
+ * Public endpoint - profile images are created during public signup
+ * Note: Filenames are pseudo-random (include timestamp) providing security through obscurity
  */
-router.get('/images/file/:filename', requireAuth, requireActiveRole(), (req, res, next) => {
+router.get('/images/file/:filename', (req, res, next) => {
   try {
     // Security: extract just the filename and reject any path containing directory separators
     const filename = path.basename(req.params.filename);
