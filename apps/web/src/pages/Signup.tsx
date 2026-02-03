@@ -1,4 +1,4 @@
-import { SignupBody } from '@praapt/shared';
+import { SignupBody, type FaceRegistration } from '@praapt/shared';
 import { useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,7 +6,6 @@ import { CameraPreview } from '../components/CameraPreview';
 import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
 import { Status, StatusMessage } from '../components/StatusMessage';
 import { Button } from '../components/ui/button';
-import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
 import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
@@ -18,7 +17,8 @@ interface SignupProps {
 
 export function Signup({ apiBase }: SignupProps) {
   const navigate = useNavigate();
-  const { login, logout, user } = useAuth();
+  // Track the registered user locally (not in auth context)
+  const [registeredUser, setRegisteredUser] = useState<FaceRegistration | null>(null);
   const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
   const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
 
@@ -119,8 +119,8 @@ export function Signup({ apiBase }: SignupProps) {
           return;
         }
 
-        // Login the user and show success state
-        login(data.user);
+        // Store registered user and show success state
+        setRegisteredUser(data.user);
         setStatus({ message: 'Face registered successfully!', type: 'success' });
         setSignupSuccess(true);
         setIsSubmitting(false);
@@ -132,7 +132,7 @@ export function Signup({ apiBase }: SignupProps) {
         setIsSubmitting(false);
       }
     },
-    [name, email, capturedImage, apiClient, login],
+    [name, email, capturedImage, apiClient],
   );
 
   /** Reset to retake photo */
@@ -196,9 +196,8 @@ export function Signup({ apiBase }: SignupProps) {
 
   // Handler to try face match demo
   const handleTryFaceDemo = useCallback(() => {
-    logout();
     navigate('/facedemo');
-  }, [logout, navigate]);
+  }, [navigate]);
 
   // If signup was successful, show success screen
   if (signupSuccess && capturedImage) {
@@ -227,7 +226,7 @@ export function Signup({ apiBase }: SignupProps) {
           {/* Success Message */}
           <h2 className="text-2xl font-bold text-gray-900">Face Registered!</h2>
           <p className="text-gray-600">
-            Welcome, <span className="font-semibold text-gray-900">{user?.name || name}</span>! Your
+            Welcome, <span className="font-semibold text-gray-900">{registeredUser?.name || name}</span>! Your
             face has been registered successfully.
           </p>
         </div>

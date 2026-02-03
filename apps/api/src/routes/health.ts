@@ -2,6 +2,7 @@ import { Contracts, FaceHealth } from '@praapt/shared';
 import { Router } from 'express';
 
 import { getConfig } from '../config.js';
+import { getFirebaseClientConfig } from '../lib/firebase-admin.js';
 import { logger } from '../lib/logger.js';
 import { createRouteBuilder } from '../lib/routeBuilder.js';
 
@@ -33,12 +34,18 @@ routes.fromContract(Contracts.getHealth, async () => {
     // face already initialized with defaults
   }
 
+  const firebaseConfig = getFirebaseClientConfig();
+
   return {
     ok: true as const,
     service: 'api',
     env: config.nodeEnv,
     commit: config.commitSha,
     face,
+    auth: {
+      enabled: !!firebaseConfig,
+      firebase: firebaseConfig ?? undefined,
+    },
     config: {
       faceServiceUrl: config.faceServiceUrl,
       port: String(config.port),

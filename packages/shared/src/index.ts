@@ -52,6 +52,10 @@ export {
   // Health check
   FaceHealthSchema,
   type FaceHealth,
+  FirebaseClientConfigSchema,
+  type FirebaseClientConfig,
+  AuthConfigSchema,
+  type AuthConfig,
   HealthResponseSchema,
   type HealthResponse,
   type HealthSuccess,
@@ -88,4 +92,12 @@ export {
   type ListFaceRegistration,
   ListFaceRegistrationsResponseSchema,
   type ListFaceRegistrationsResponse,
+
+  // User (Firebase Auth)
+  UserRoleSchema,
+  type UserRole,
+  UserSchema,
+  type User,
+  GetMeResponseSchema,
+  type GetMeResponse,
 } from './schemas.js';

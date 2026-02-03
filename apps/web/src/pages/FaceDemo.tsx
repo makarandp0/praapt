@@ -6,10 +6,30 @@ import { CameraPreview } from '../components/CameraPreview';
 import { ServiceStatusBanner } from '../components/ServiceStatusBanner';
 import { Status, StatusMessage } from '../components/StatusMessage';
 import { Button } from '../components/ui/button';
-import { useAuth } from '../contexts/AuthContext';
 import { useModelStatus } from '../contexts/ModelStatusContext';
 import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
+
+/** Match info passed via route state to the User page */
+export interface FaceMatchState {
+  user: {
+    id: number;
+    email: string;
+    name: string | null;
+    profileImagePath: string | null;
+  };
+  matchInfo: {
+    distance: number;
+    threshold: number;
+    loginImage: string;
+    topMatches: Array<{
+      email: string;
+      name: string | null;
+      distance: number;
+      profileImagePath: string | null;
+    }>;
+  };
+}
 
 interface FaceMatchDemoProps {
   apiBase: string;
@@ -17,7 +37,6 @@ interface FaceMatchDemoProps {
 
 export function FaceDemo({ apiBase }: FaceMatchDemoProps) {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const { modelsLoaded, isChecking: isCheckingModel, model, refreshStatus } = useModelStatus();
 
   // Check if the login functionality is available
@@ -118,16 +137,22 @@ export function FaceDemo({ apiBase }: FaceMatchDemoProps) {
       // Match found - clear failed matches and show result
       setFailedMatches([]);
       closeCamera();
-      login(data.matchedRegistration, {
-        ...data.match,
-        loginImage: dataUrl,
-        topMatches: data.topMatches,
-      });
+
+      // Navigate with match state
+      const matchState: FaceMatchState = {
+        user: data.matchedRegistration,
+        matchInfo: {
+          ...data.match,
+          loginImage: dataUrl,
+          topMatches: data.topMatches,
+        },
+      };
+
       setStatus({
         message: `Match found: ${data.matchedRegistration.name || data.matchedRegistration.email}!`,
         type: 'success',
       });
-      setTimeout(() => navigate('/user', { replace: true }), 500);
+      setTimeout(() => navigate('/user', { replace: true, state: matchState }), 500);
     } catch (err) {
       setStatus({
         message: `Network error: ${err instanceof Error ? err.message : 'unknown'}`,
@@ -137,7 +162,7 @@ export function FaceDemo({ apiBase }: FaceMatchDemoProps) {
       refreshStatus();
       setIsSubmitting(false);
     }
-  }, [apiBase, login, navigate, closeCamera, refreshStatus, captureFrame]);
+  }, [apiBase, navigate, closeCamera, refreshStatus, captureFrame]);
 
   // Auto-login effect with exponential backoff
   useEffect(() => {

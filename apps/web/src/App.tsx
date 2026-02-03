@@ -8,6 +8,8 @@ import { ModelStatusProvider } from './contexts/ModelStatusContext';
 import { Config } from './pages/Config';
 import { FaceDemo } from './pages/FaceDemo';
 import { Library } from './pages/Library';
+import { Login } from './pages/Login';
+import { Onboarding } from './pages/Onboarding';
 import { Signup } from './pages/Signup';
 import { User } from './pages/User';
 import { Users } from './pages/Users';
@@ -19,7 +21,7 @@ const API_BASE =
 
 /** Navigation bar with auth-aware links */
 function NavBar() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -119,12 +121,12 @@ function NavBar() {
                   </Link>
                   <button
                     onClick={() => {
-                      logout();
+                      signOut();
                       closeMenu();
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
-                    Clear Session
+                    Sign Out
                   </button>
                 </>
               ) : (
@@ -175,6 +177,15 @@ function AppRoutes() {
       <NavBar />
       <div className="pt-4">
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/facedemo" element={<FaceDemo apiBase={API_BASE} />} />
           <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
@@ -203,9 +214,7 @@ function AppRoutes() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect old /login route to /facedemo */}
-          <Route path="/login" element={<Navigate to="/facedemo" replace />} />
-          <Route path="/" element={<Navigate to="/facedemo" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
     </div>
@@ -215,7 +224,7 @@ function AppRoutes() {
 export function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <AuthProvider apiBase={API_BASE}>
         <ModelStatusProvider apiBase={API_BASE}>
           <AppRoutes />
         </ModelStatusProvider>

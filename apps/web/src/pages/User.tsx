@@ -1,13 +1,44 @@
+import { useLocation, Navigate } from 'react-router-dom';
+
 import { useAuth } from '../contexts/AuthContext';
+import type { FaceMatchState } from './FaceDemo';
 
 interface UserProps {
   apiBase: string;
 }
 
-export function User({ apiBase }: UserProps) {
-  const { user, matchInfo } = useAuth();
+interface MatchEntry {
+  email: string;
+  name: string | null;
+  distance: number;
+  profileImagePath: string | null;
+}
 
-  if (!user) {
+export function User({ apiBase }: UserProps) {
+  const { user: authUser } = useAuth();
+  const location = useLocation();
+
+  // Get face match state from navigation (for face demo flow)
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- location.state type is unknown, validated by optional chaining below
+  const faceMatchState = location.state as FaceMatchState | null;
+
+  // Use face match user if available, otherwise fall back to auth user
+  const displayUser = faceMatchState?.user ?? (authUser ? {
+    id: 0,
+    email: authUser.email,
+    name: authUser.name,
+    profileImagePath: authUser.photoUrl,
+  } : null);
+
+  const matchInfo = faceMatchState?.matchInfo;
+
+  // If no user at all, redirect to login
+  if (!displayUser && !authUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If we have auth user but no face match info, show basic profile
+  if (!displayUser) {
     return (
       <div className="max-w-md mx-auto text-center">
         <p className="text-gray-600">No user information available.</p>
@@ -16,9 +47,9 @@ export function User({ apiBase }: UserProps) {
   }
 
   // Split matches by threshold
-  const belowThreshold =
+  const belowThreshold: MatchEntry[] =
     matchInfo?.topMatches?.filter((m) => m.distance <= (matchInfo?.threshold ?? 0)) ?? [];
-  const aboveThreshold =
+  const aboveThreshold: MatchEntry[] =
     matchInfo?.topMatches?.filter((m) => m.distance > (matchInfo?.threshold ?? 0)) ?? [];
 
   return (
@@ -26,17 +57,19 @@ export function User({ apiBase }: UserProps) {
       {/* Header section */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Welcome, {user.name || user.email}!</h2>
+          <h2 className="text-2xl font-semibold">Welcome, {displayUser.name || displayUser.email}!</h2>
           {matchInfo && (
             <p className="text-sm text-green-600 mt-1">
               ✓ Matched with distance {matchInfo.distance.toFixed(4)} (threshold:{' '}
               {matchInfo.threshold.toFixed(4)})
             </p>
           )}
-          <p className="text-sm text-muted-foreground mt-1">
-            {matchInfo?.topMatches?.length ?? 0} candidates compared • {belowThreshold.length} below
-            threshold
-          </p>
+          {matchInfo && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {matchInfo.topMatches?.length ?? 0} candidates compared • {belowThreshold.length} below
+              threshold
+            </p>
+          )}
         </div>
 
         {/* Login image */}
@@ -63,7 +96,7 @@ export function User({ apiBase }: UserProps) {
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {belowThreshold.map((match) => {
-                  const isMatchedUser = match.email === user.email;
+                  const isMatchedUser = match.email === displayUser.email;
                   const imageUrl = match.profileImagePath
                     ? `${apiBase}/images/file/${encodeURIComponent(match.profileImagePath)}`
                     : null;
