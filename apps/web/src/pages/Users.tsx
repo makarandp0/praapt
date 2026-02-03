@@ -1,36 +1,45 @@
-import { ListFaceRegistration } from '@praapt/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { Contracts, type ListFaceRegistration } from '@praapt/shared';
+import { useCallback, useEffect, useState } from 'react';
 
-import { createApiClient } from '../lib/apiClient';
+import { useAuth } from '../contexts/AuthContext';
+import { callContract } from '../lib/contractClient';
 
 type Props = { apiBase: string };
 
 export function Users({ apiBase }: Props) {
-  const api = useMemo(() => createApiClient(apiBase), [apiBase]);
+  const { getIdToken } = useAuth();
 
   const [registrations, setRegistrations] = useState<ListFaceRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchRegistrations() {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await api.listFaceRegistrations();
-        if (!response.ok) {
-          throw new Error(response.error);
-        }
-        setRegistrations(response.registrations);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load registrations');
-      } finally {
-        setLoading(false);
-      }
-    }
+  const fetchRegistrations = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    void fetchRegistrations();
-  }, [api]);
+      const token = await getIdToken();
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await callContract(apiBase, Contracts.listFaceRegistrations, { token });
+      if (!response.ok) {
+        setError(response.error);
+        return;
+      }
+      setRegistrations(response.registrations);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load registrations');
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, getIdToken]);
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, [fetchRegistrations]);
 
   if (loading) {
     return (
@@ -71,7 +80,7 @@ export function Users({ apiBase }: Props) {
                 <div className="flex-shrink-0">
                   {reg.profileImagePath ? (
                     <img
-                      src={api.getProfileImageUrl(reg.profileImagePath)}
+                      src={`${apiBase}/images/file/${encodeURIComponent(reg.profileImagePath)}`}
                       alt={reg.name || reg.email}
                       className="w-16 h-16 rounded-full object-cover border border-gray-200"
                     />

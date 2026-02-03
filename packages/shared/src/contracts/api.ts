@@ -7,12 +7,15 @@ import {
   HealthResponseSchema,
   ListFaceRegistrationsResponseSchema,
   ListImagesResponseSchema,
+  ListUsersResponseSchema,
   LoadModelBodySchema,
   LoadModelResponseSchema,
   SaveImageBodySchema,
   SaveImageResponseSchema,
   SignupBodySchema,
   SignupResponseSchema,
+  UpdateUserRoleBodySchema,
+  UpdateUserRoleResponseSchema,
 } from '../schemas.js';
 import { defineContract } from './types.js';
 
@@ -24,6 +27,7 @@ export const getHealth = defineContract({
   method: 'GET',
   path: '/health',
   response: HealthResponseSchema,
+  auth: 'public',
 });
 
 export const loadModel = defineContract({
@@ -31,6 +35,7 @@ export const loadModel = defineContract({
   path: '/load-model',
   body: LoadModelBodySchema,
   response: LoadModelResponseSchema,
+  auth: ['developer'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,6 +47,14 @@ export const signup = defineContract({
   path: '/face-registrations',
   body: SignupBodySchema,
   response: SignupResponseSchema,
+  auth: 'public',
+});
+
+export const listFaceRegistrations = defineContract({
+  method: 'GET',
+  path: '/face-registrations',
+  response: ListFaceRegistrationsResponseSchema,
+  auth: ['developer', 'admin'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +66,7 @@ export const faceMatch = defineContract({
   path: '/demo/face-match',
   body: FaceMatchBodySchema,
   response: FaceMatchResponseSchema,
+  auth: ['developer', 'admin', 'volunteer', 'vendor'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,12 +78,14 @@ export const saveImage = defineContract({
   path: '/images',
   body: SaveImageBodySchema,
   response: SaveImageResponseSchema,
+  auth: ['developer', 'admin', 'volunteer', 'vendor'],
 });
 
 export const listImages = defineContract({
   method: 'GET',
   path: '/images',
   response: ListImagesResponseSchema,
+  auth: ['developer', 'admin', 'volunteer', 'vendor'],
 });
 
 export const compareImages = defineContract({
@@ -77,16 +93,7 @@ export const compareImages = defineContract({
   path: '/images/compare',
   body: CompareImagesBodySchema,
   response: CompareImagesResponseSchema,
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Face Registrations Contracts
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const listFaceRegistrations = defineContract({
-  method: 'GET',
-  path: '/face-registrations',
-  response: ListFaceRegistrationsResponseSchema,
+  auth: ['developer', 'admin', 'volunteer', 'vendor'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,4 +104,20 @@ export const getMe = defineContract({
   method: 'GET',
   path: '/me',
   response: GetMeResponseSchema,
+  auth: 'authenticated',
+});
+
+export const listUsers = defineContract({
+  method: 'GET',
+  path: '/users',
+  response: ListUsersResponseSchema,
+  auth: ['developer', 'admin'],
+});
+
+export const updateUserRole = defineContract({
+  method: 'PATCH',
+  path: '/users/:id/role',
+  body: UpdateUserRoleBodySchema,
+  response: UpdateUserRoleResponseSchema,
+  auth: ['developer', 'admin'],
 });

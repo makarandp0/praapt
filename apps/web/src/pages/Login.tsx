@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '../components/ui/button';
@@ -8,8 +8,22 @@ type AuthMode = 'signin' | 'signup';
 
 export function Login() {
   const navigate = useNavigate();
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, loading, authEnabled, error } =
-    useAuth();
+  const {
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithGoogle,
+    loading,
+    authEnabled,
+    isAuthenticated,
+    error,
+  } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate('/');
+    }
+  }, [loading, isAuthenticated, navigate]);
 
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
@@ -52,8 +66,8 @@ export function Login() {
         } else {
           await signUpWithEmail(email, password);
         }
-        // On success, the auth context will update and redirect
-        navigate('/onboarding');
+        // On success, navigate to dashboard (role-based content shown there)
+        navigate('/');
       } catch (err) {
         // Error is handled by the auth hook, but we can show a local message too
         const message = err instanceof Error ? err.message : 'Authentication failed';
@@ -82,7 +96,7 @@ export function Login() {
 
     try {
       await signInWithGoogle();
-      navigate('/onboarding');
+      navigate('/');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Google sign in failed';
       if (message.includes('auth/popup-closed-by-user')) {
@@ -101,8 +115,8 @@ export function Login() {
     setConfirmPassword('');
   }, []);
 
-  // Show loading state while checking auth configuration
-  if (loading && !authEnabled) {
+  // Show loading state while checking auth
+  if (loading) {
     return (
       <div className="max-w-md mx-auto space-y-6">
         <div className="text-center py-8">

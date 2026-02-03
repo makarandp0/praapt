@@ -106,8 +106,13 @@ Working Rules For The LLM
 9. Contract-Based API Routes (Preferred)
    - Define contracts in `packages/shared/src/contracts/api.ts` using `defineContract()`.
    - Backend: Use `createRouteBuilder(router).fromContract(Contracts.xyz, handler)`.
-   - Frontend: Use `callContract(baseUrl, Contracts.xyz, { body })` from `contractClient.ts`.
-   - Contracts are the single source of truth for method, path, and schemas.
+   - Frontend: Use `callContract(baseUrl, Contracts.xyz, { body, token })` from `contractClient.ts`.
+   - Contracts are the single source of truth for method, path, schemas, and authorization.
+   - **Contract Authorization**: Contracts include an `auth` field of type `ContractAuth`:
+     - `'public'`: No authentication required
+     - `'authenticated'`: Any logged-in user
+     - `UserRole[]`: Specific roles (e.g., `['developer', 'admin']`)
+   - **routeBuilder auto-applies auth**: No need to manually add `requireAuth` or `requireRole` middleware—`fromContract` reads `contract.auth` and applies appropriate middleware automatically.
    - **Example (backend)**:
      ```typescript
      const routes = createRouteBuilder(router);
@@ -176,6 +181,8 @@ When you make a mistake or discover something unexpected about this codebase, **
 - **Contract paths are relative to Express mount points**: If `app.use('/api/auth', authRoutes)` mounts auth routes, and a contract has `path: '/auth/login'`, the full path becomes `/api/auth/auth/login` (doubled). The contract path should be `/login` to get `/api/auth/login`. Check how routes are mounted in `apps/api/src/index.ts` before defining contract paths.
 - **AnyApiContract type**: When writing generic functions that accept any contract, use `AnyApiContract` from `@praapt/shared`—don't try to define your own with `z.ZodTypeAny` constraints (causes import issues in packages without direct zod dependency).
 - **drizzle.config.ts cannot import config.ts**: drizzle-kit uses CommonJS require, so it cannot import ESM modules. Keep `process.env.DATABASE_URL` access directly in `drizzle.config.ts` with `import 'dotenv/config'`.
+- **Frontend shows all options, backend enforces restrictions**: For role-based features (like role management), the frontend should display all options and let the backend enforce restrictions. Don't duplicate permission logic in the frontend—keep it in the backend route handlers. This keeps the code DRY and ensures the backend is the single source of truth for authorization.
+- **callContract requires token for protected endpoints**: When calling protected API endpoints from the frontend, pass the token: `callContract(apiBase, Contract, { body, token: await getIdToken() })`. Public endpoints can omit the token. The `useAuth()` hook provides `getIdToken()` for getting the current user's Firebase ID token.
 
 ## Database Migrations (node-pg-migrate)
 

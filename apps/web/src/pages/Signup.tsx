@@ -1,5 +1,5 @@
-import { SignupBody, type FaceRegistration } from '@praapt/shared';
-import { useRef, useState, useCallback, useMemo } from 'react';
+import { Contracts, type SignupBody, type FaceRegistration } from '@praapt/shared';
+import { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CameraPreview } from '../components/CameraPreview';
@@ -9,7 +9,7 @@ import { Button } from '../components/ui/button';
 import { useModelStatus } from '../contexts/ModelStatusContext';
 import { useCamera } from '../hooks/useCamera';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
-import { createApiClient } from '../lib/apiClient';
+import { callContract } from '../lib/contractClient';
 
 interface SignupProps {
   apiBase: string;
@@ -20,7 +20,6 @@ export function Signup({ apiBase }: SignupProps) {
   // Track the registered user locally (not in auth context)
   const [registeredUser, setRegisteredUser] = useState<FaceRegistration | null>(null);
   const { modelsLoaded, isChecking: isCheckingModel, model } = useModelStatus();
-  const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
 
   // Check if the signup functionality is available
   const isModelReady = modelsLoaded && model !== null;
@@ -111,7 +110,8 @@ export function Signup({ apiBase }: SignupProps) {
           faceImage: capturedImage,
         };
 
-        const data = await apiClient.signup(body);
+        // signup is public, no token needed
+        const data = await callContract(apiBase, Contracts.signup, { body });
 
         if (!data.ok) {
           setStatus({ message: `Registration failed: ${data.error || 'Unknown error'}`, type: 'error' });
@@ -132,7 +132,7 @@ export function Signup({ apiBase }: SignupProps) {
         setIsSubmitting(false);
       }
     },
-    [name, email, capturedImage, apiClient],
+    [name, email, capturedImage, apiBase],
   );
 
   /** Reset to retake photo */

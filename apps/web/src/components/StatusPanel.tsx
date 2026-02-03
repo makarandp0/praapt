@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Contracts } from '@praapt/shared';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useModelStatus } from '../contexts/ModelStatusContext';
-import { createApiClient } from '../lib/apiClient';
+import { callContract } from '../lib/contractClient';
 
 interface StatusPanelProps {
   apiBase: string;
@@ -10,8 +11,6 @@ interface StatusPanelProps {
 type StatusType = 'OK' | 'Not OK' | 'Unavailable' | 'Checking...';
 
 export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
-  const apiClient = useMemo(() => createApiClient(apiBase), [apiBase]);
-
   // Use shared model status context
   const {
     faceServiceOk,
@@ -39,13 +38,14 @@ export function StatusPanel({ apiBase }: StatusPanelProps): JSX.Element {
     try {
       // Refresh the shared context (which makes the API call)
       await refreshStatus();
-      const d = await apiClient.getHealth();
+      // getHealth is public, no token needed
+      const d = await callContract(apiBase, Contracts.getHealth);
       setHealth(d.ok ? 'OK' : 'Not OK');
     } catch (err) {
       console.error('Health check failed:', err);
       setHealth('Unavailable');
     }
-  }, [apiClient, refreshStatus]);
+  }, [apiBase, refreshStatus]);
 
   useEffect(() => {
     fetchHealth();

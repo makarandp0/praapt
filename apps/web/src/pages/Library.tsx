@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Contracts } from '@praapt/shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '../components/ui/button';
-import { createApiClient } from '../lib/apiClient';
+import { useAuth } from '../contexts/AuthContext';
+import { callContract } from '../lib/contractClient';
 
 type Props = { apiBase: string };
 
 const MAX_IMAGES = 8;
 
 export function Library({ apiBase }: Props) {
-  const api = useMemo(() => {
-    return createApiClient(apiBase);
-  }, [apiBase]);
+  const { getIdToken } = useAuth();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -44,7 +44,8 @@ export function Library({ apiBase }: Props) {
 
   const refresh = useCallback(async () => {
     try {
-      const response = await api.listImages();
+      const token = await getIdToken();
+      const response = await callContract(apiBase, Contracts.listImages, { token: token ?? undefined });
       if (!response.ok) {
         throw new Error(response.error);
       }
@@ -63,7 +64,7 @@ export function Library({ apiBase }: Props) {
     } catch (err: unknown) {
       setStatus(err instanceof Error ? err.message : 'Failed to load images');
     }
-  }, [api]);
+  }, [apiBase, getIdToken]);
 
   useEffect(() => {
     void refresh();
@@ -125,8 +126,12 @@ export function Library({ apiBase }: Props) {
     // Save immediately (backend will overwrite if file exists)
     setStatus('Saving image...');
     try {
+      const token = await getIdToken();
       const slotName = `slot-${String(addingToSlot + 1).padStart(2, '0')}`;
-      await api.saveImage({ name: slotName, image: dataUrl });
+      await callContract(apiBase, Contracts.saveImage, {
+        token: token ?? undefined,
+        body: { name: slotName, image: dataUrl },
+      });
       await refresh();
       setSlotTimestamps((prev) => ({ ...prev, [addingToSlot]: `${Date.now()}-${Math.random()}` }));
       closeCamera();
@@ -162,8 +167,12 @@ export function Library({ apiBase }: Props) {
 
       // Save immediately (backend will overwrite if file exists)
       try {
+        const token = await getIdToken();
         const slotName = `slot-${String(slotToUpdate + 1).padStart(2, '0')}`;
-        await api.saveImage({ name: slotName, image: dataUrl });
+        await callContract(apiBase, Contracts.saveImage, {
+          token: token ?? undefined,
+          body: { name: slotName, image: dataUrl },
+        });
         await refresh();
         const newTimestamp = `${Date.now()}-${Math.random()}`;
         setSlotTimestamps((prev) => {
@@ -217,7 +226,11 @@ export function Library({ apiBase }: Props) {
     setCompareResult(null);
     setCompareError(null);
     try {
-      const res = await api.compareImages({ a: img1, b: img2 });
+      const token = await getIdToken();
+      const res = await callContract(apiBase, Contracts.compareImages, {
+        token: token ?? undefined,
+        body: { a: img1, b: img2 },
+      });
       if (!res.ok) {
         throw new Error(res.error);
       }

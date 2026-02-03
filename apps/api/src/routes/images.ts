@@ -15,6 +15,8 @@ import {
 } from '../lib/imageUtils.js';
 import { logger } from '../lib/logger.js';
 import { createRouteBuilder } from '../lib/routeBuilder.js';
+import { requireAuth } from '../middleware/auth.js';
+import { requireActiveRole } from '../middleware/authorization.js';
 
 const router = Router();
 const routes = createRouteBuilder(router);
@@ -22,6 +24,7 @@ const routes = createRouteBuilder(router);
 /**
  * POST /images
  * Save a new image with a name
+ * Requires authenticated user with an active role
  */
 routes.fromContract(Contracts.saveImage, async (req, res) => {
   const { name, image } = req.body;
@@ -41,6 +44,7 @@ routes.fromContract(Contracts.saveImage, async (req, res) => {
 /**
  * GET /images
  * List all saved images
+ * Requires authenticated user with an active role
  */
 routes.fromContract(Contracts.listImages, async () => {
   const files = listImageFiles();
@@ -51,8 +55,9 @@ routes.fromContract(Contracts.listImages, async () => {
 /**
  * GET /images/file/:filename
  * Serve an image by exact filename (used for profile images)
+ * Requires authenticated user with an active role
  */
-router.get('/images/file/:filename', (req, res, next) => {
+router.get('/images/file/:filename', requireAuth, requireActiveRole(), (req, res, next) => {
   try {
     // Security: extract just the filename and reject any path containing directory separators
     const filename = path.basename(req.params.filename);
@@ -74,8 +79,9 @@ router.get('/images/file/:filename', (req, res, next) => {
 /**
  * GET /images/:name
  * Serve an image by name
+ * Requires authenticated user with an active role
  */
-router.get('/images/:name', (req, res, next) => {
+router.get('/images/:name', requireAuth, requireActiveRole(), (req, res, next) => {
   try {
     const { name } = req.params;
     const files = listImageFiles();
@@ -96,6 +102,7 @@ router.get('/images/:name', (req, res, next) => {
 /**
  * POST /images/compare
  * Compare two images using face recognition
+ * Requires authenticated user with an active role
  */
 routes.fromContract(Contracts.compareImages, async (req) => {
   const { a, b } = req.body;

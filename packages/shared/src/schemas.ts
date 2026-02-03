@@ -289,3 +289,31 @@ export type User = z.infer<typeof UserSchema>;
 /** GET /me response */
 export const GetMeResponseSchema = createApiResponse(z.object({ user: UserSchema }));
 export type GetMeResponse = z.infer<typeof GetMeResponseSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Management schemas
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /users response - list all users */
+export const ListUsersResponseSchema = createApiResponse(
+  z.object({
+    users: z.array(UserSchema),
+    count: z.number(),
+  }),
+);
+export type ListUsersResponse = z.infer<typeof ListUsersResponseSchema>;
+
+/** Convenience type for a single user from the list */
+export type ListUser = User;
+
+/** PATCH /users/:id/role request body */
+export const UpdateUserRoleBodySchema = z.object({
+  role: UserRoleSchema,
+});
+export type UpdateUserRoleBody = z.infer<typeof UpdateUserRoleBodySchema>;
+
+/** PATCH /users/:id/role response */
+export const UpdateUserRoleResponseSchema = createApiResponse(
+  z.object({ user: UserSchema }),
+);
+export type UpdateUserRoleResponse = z.infer<typeof UpdateUserRoleResponseSchema>;

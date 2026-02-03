@@ -5,6 +5,7 @@
 export {
   type HttpMethod,
   type PathParamsObject,
+  type ContractAuth,
   type ApiContract,
   type AnyApiContract,
   defineContract,
@@ -13,6 +14,8 @@ export {
   type InferResponse,
   type InferParams,
   type InferPath,
+  type InferAuth,
+  canCallContract,
   Contracts,
   buildUrl,
   buildQueryString,
@@ -100,4 +103,13 @@ export {
   type User,
   GetMeResponseSchema,
   type GetMeResponse,
+
+  // User Management
+  ListUsersResponseSchema,
+  type ListUsersResponse,
+  type ListUser,
+  UpdateUserRoleBodySchema,
+  type UpdateUserRoleBody,
+  UpdateUserRoleResponseSchema,
+  type UpdateUserRoleResponse,
 } from './schemas.js';

@@ -81,6 +81,7 @@ routes.fromContract(Contracts.signup, async (req, res) => {
 /**
  * GET /face-registrations
  * List all face registrations (without sensitive data like face embeddings)
+ * Auth: developer, admin (auto-applied from contract)
  */
 routes.fromContract(Contracts.listFaceRegistrations, async () => {
   const allRegistrations = await db.select().from(faceRegistrations);

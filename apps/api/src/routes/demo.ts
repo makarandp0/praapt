@@ -18,6 +18,7 @@ const FACE_MATCH_THRESHOLD = 0.4;
  * POST /demo/face-match
  * Demo endpoint: Find the best matching face registration for an input image.
  * This is NOT authentication - just a demo of face matching capabilities.
+ * Auth: developer, admin, volunteer, vendor (auto-applied from contract)
  */
 routes.fromContract(
   Contracts.faceMatch,
