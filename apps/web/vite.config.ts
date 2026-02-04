@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
@@ -25,7 +26,7 @@ function getGitCommit(): string {
 }
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [tailwindcss(), react()],
   server: {
     port: 5173,
   },
