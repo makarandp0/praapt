@@ -42,3 +42,37 @@ export const users = pgTable('users', {
 // Infer types for users table
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+/**
+ * Customer table schema
+ * Stores customer data for kiosk/registration flows.
+ */
+export const customer = pgTable('customer', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  pin: text('pin').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Infer types for customer table
+export type Customer = typeof customer.$inferSelect;
+export type NewCustomer = typeof customer.$inferInsert;
+
+/**
+ * Customer faces table schema
+ * Stores face embeddings for customer face recognition.
+ */
+export const customerFaces = pgTable('customer_faces', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  customerId: uuid('customer_id')
+    .notNull()
+    .references(() => customer.id, { onDelete: 'cascade' }),
+  faceEmbedding: jsonb('face_embedding').$type<number[]>().notNull(),
+  imagePath: text('image_path').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Infer types for customer_faces table
+export type CustomerFace = typeof customerFaces.$inferSelect;
+export type NewCustomerFace = typeof customerFaces.$inferInsert;

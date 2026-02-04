@@ -106,7 +106,7 @@ routes.fromContract(Contracts.updateUserRole, async (req) => {
   // Find and update the user
   const [updatedUser] = await db
     .update(users)
-    .set({ role: newRole, updatedAt: new Date() })
+    .set({ role: newRole })
     .where(eq(users.id, id))
     .returning();
 

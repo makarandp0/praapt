@@ -184,6 +184,9 @@ When you make a mistake or discover something unexpected about this codebase, **
 - **Frontend shows all options, backend enforces restrictions**: For role-based features (like role management), the frontend should display all options and let the backend enforce restrictions. Don't duplicate permission logic in the frontend—keep it in the backend route handlers. This keeps the code DRY and ensures the backend is the single source of truth for authorization.
 - **callContract requires token for protected endpoints**: When calling protected API endpoints from the frontend, pass the token: `callContract(apiBase, Contract, { body, token: await getIdToken() })`. Public endpoints can omit the token. The `useAuth()` hook provides `getIdToken()` for getting the current user's Firebase ID token.
 - **Legacy users migration guard**: The `1900000000001_migrate-users-data` migration must only run if legacy `users` columns like `face_embedding` exist. Fresh DBs create a Firebase `users` table without those columns, so guard the migration or it will fail.
+- **Migration timestamps must be sequential**: New migrations must have timestamps greater than all existing applied migrations. If you create a migration with a timestamp between existing ones (e.g., `1770200000000` when `1900000000000` already ran), node-pg-migrate will fail with "Not run migration X is preceding already run migration Y".
+- **`updated_at` is handled by triggers**: The `set_updated_at()` database trigger auto-updates `updated_at` on row changes. Do NOT manually set `updatedAt: new Date()` in Drizzle `.set()` calls—the trigger handles it.
+- **Running down migrations locally**: The `pnpm migrate:down` script requires ts-node which isn't installed. Use tsx instead: `DATABASE_URL="..." npx tsx node_modules/node-pg-migrate/bin/node-pg-migrate.js down --migrations-dir migrations`
 
 ## Database Migrations (node-pg-migrate)
 
