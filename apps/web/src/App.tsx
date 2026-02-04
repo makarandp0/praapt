@@ -17,6 +17,8 @@ import { Signup } from './pages/Signup';
 import { User } from './pages/User';
 import { Users } from './pages/Users';
 import { Version } from './pages/Version';
+import { RegistrationWizard } from './flows/beneficiary-registration/RegistrationWizard';
+import { KioskFlowPage } from './flows/kiosk/KioskFlowPage';
 
 // API base URL - same server in prod, localhost:3000 in dev
 const API_BASE =
@@ -171,6 +173,20 @@ function NavBar() {
                 >
                   Register Face
                 </Link>
+                <Link
+                  to="/flows/beneficiary-registration"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Registration Flow
+                </Link>
+                <Link
+                  to="/flows/kiosk"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Kiosk Flow
+                </Link>
 
                 {/* Utility links */}
                 <Link
@@ -230,6 +246,8 @@ function AppRoutes() {
           <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
+          <Route path="/flows/beneficiary-registration" element={<RegistrationWizard />} />
+          <Route path="/flows/kiosk" element={<KioskFlowPage />} />
 
           {/* Dashboard - shows role-appropriate content, including for unknown users */}
           <Route
