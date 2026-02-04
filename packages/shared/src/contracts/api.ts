@@ -14,6 +14,8 @@ import {
   SaveImageResponseSchema,
   SignupBodySchema,
   SignupResponseSchema,
+  RegisterCustomerBodySchema,
+  RegisterCustomerResponseSchema,
   UpdateUserRoleBodySchema,
   UpdateUserRoleResponseSchema,
 } from '../schemas.js';
@@ -55,6 +57,18 @@ export const listFaceRegistrations = defineContract({
   path: '/face-registrations',
   response: ListFaceRegistrationsResponseSchema,
   auth: ['developer', 'admin'],
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Customer Registration Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const registerCustomer = defineContract({
+  method: 'POST',
+  path: '/customers',
+  body: RegisterCustomerBodySchema,
+  response: RegisterCustomerResponseSchema,
+  auth: ['volunteer', 'admin', 'developer'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
