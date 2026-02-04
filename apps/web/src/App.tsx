@@ -12,6 +12,7 @@ import { Config } from './pages/Config';
 import { FaceDemo } from './pages/FaceDemo';
 import { Library } from './pages/Library';
 import { Login } from './pages/Login';
+import { RegisterCustomer } from './pages/RegisterCustomer';
 import { RoleManagement } from './pages/RoleManagement';
 import { Signup } from './pages/Signup';
 import { User } from './pages/User';
@@ -174,6 +175,13 @@ function NavBar() {
                   Register Face
                 </Link>
                 <Link
+                  to="/registerCustomer"
+                  onClick={closeMenu}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Register Customer
+                </Link>
+                <Link
                   to="/flows/beneficiary-registration"
                   onClick={closeMenu}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -244,6 +252,7 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/facedemo" element={<FaceDemo apiBase={API_BASE} />} />
           <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
+          <Route path="/registerCustomer" element={<RegisterCustomer />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
           <Route path="/flows/beneficiary-registration" element={<RegistrationWizard />} />
