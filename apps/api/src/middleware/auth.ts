@@ -81,7 +81,6 @@ export async function requireAuth(
           name: sql`COALESCE(${name ?? null}, ${users.name})`,
           provider: sql`COALESCE(${provider ?? null}, ${users.provider})`,
           photoUrl: sql`COALESCE(${picture ?? null}, ${users.photoUrl})`,
-          updatedAt: new Date(),
         },
       })
       .returning();
