@@ -1,6 +1,10 @@
 import AppOptimized from './app/AppOptimized';
 
-export function KioskFlowPage() {
+interface KioskFlowPageProps {
+  apiBase: string;
+}
+
+export function KioskFlowPage({ apiBase }: KioskFlowPageProps) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -8,7 +12,7 @@ export function KioskFlowPage() {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <AppOptimized />
+        <AppOptimized apiBase={apiBase} />
       </div>
     </div>
   );

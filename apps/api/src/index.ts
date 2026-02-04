@@ -10,6 +10,7 @@ import demoRoutes from './routes/demo.js';
 import faceRegistrationsRoutes from './routes/faceRegistrations.js';
 import healthRoutes from './routes/health.js';
 import imagesRoutes from './routes/images.js';
+import kioskRoutes from './routes/kiosk.js';
 import userRoutes from './routes/user.js';
 
 const config = getConfig();
@@ -39,6 +40,7 @@ app.use('/api', healthRoutes);
 app.use('/api', imagesRoutes);
 app.use('/api', faceRegistrationsRoutes);
 app.use('/api', demoRoutes);
+app.use('/api', kioskRoutes);
 app.use('/api', userRoutes);
 
 // Serve static frontend files in production

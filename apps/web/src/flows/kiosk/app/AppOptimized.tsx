@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Contracts } from '@praapt/shared';
 import { type Language } from './utils/translations';
 import { KioskBootOptimized } from './components/KioskBootOptimized';
 import { IdleWelcomeOptimized } from './components/IdleWelcomeOptimized';
@@ -15,6 +16,7 @@ import { FoodSelectionOptimized } from './components/FoodSelectionOptimized';
 import { RedemptionSuccessOptimized } from './components/RedemptionSuccessOptimized';
 import { FlowNavigation } from './components/FlowNavigation';
 import { getTranslation } from './utils/translations';
+import { callContract } from '../../../lib/contractClient';
 
 export type ScreenOptimized = 
   | 'boot'
@@ -31,12 +33,17 @@ export type ScreenOptimized =
   | 'food-selection'
   | 'redemption-success';
 
-export default function AppOptimized() {
+interface AppOptimizedProps {
+  apiBase: string;
+}
+
+export default function AppOptimized({ apiBase }: AppOptimizedProps) {
   const [currentScreen, setCurrentScreen] = useState<ScreenOptimized>('boot');
   const [aadhaarDigits, setAadhaarDigits] = useState('');
+  const [capturedFace, setCapturedFace] = useState<string | null>(null);
   const [selectedFood, setSelectedFood] = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [beneficiaryName] = useState('Ajay');
+  const [beneficiaryName, setBeneficiaryName] = useState('Beneficiary');
   const [mealCount] = useState(4);
   const [language, setLanguage] = useState<Language>('en');
 
@@ -47,6 +54,7 @@ export default function AppOptimized() {
   const resetFlow = () => {
     setCurrentScreen('idle');
     setAadhaarDigits('');
+    setCapturedFace(null);
     setSelectedFood('');
     setRetryCount(0);
   };
@@ -90,6 +98,55 @@ export default function AppOptimized() {
     }
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function runMatch() {
+      if (currentScreen !== 'matching' || !capturedFace || aadhaarDigits.length !== 4) {
+        return;
+      }
+
+      let response;
+      try {
+        response = await callContract(apiBase, Contracts.kioskFaceMatch, {
+          body: { pin: aadhaarDigits, faceImage: capturedFace },
+        });
+      } catch (err) {
+        console.error('Kiosk face match failed:', err);
+        navigateTo('verification-failed');
+        return;
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!response.ok) {
+        if (response.reason === 'no_customers' || response.reason === 'no_faces') {
+          navigateTo('no-record');
+          return;
+        }
+        navigateTo('verification-failed');
+        return;
+      }
+
+      if (response.matches.length === 0) {
+        navigateTo('verification-failed');
+        return;
+      }
+
+      const bestMatch = response.matches[0];
+      setBeneficiaryName(bestMatch.name);
+      navigateTo('verified-toast');
+    }
+
+    runMatch();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [aadhaarDigits, apiBase, capturedFace, currentScreen]);
+
   return (
     <div className="min-h-screen bg-[#5A6472] flex flex-col">
       {/* Main kiosk screen */}
@@ -115,14 +172,8 @@ export default function AppOptimized() {
               digits={aadhaarDigits}
               onDigitsChange={setAadhaarDigits}
               onContinue={() => {
-                // Simulate "No record" for 0000
-                if (aadhaarDigits === '0000') {
-                  navigateTo('no-record');
-                } else {
-                  navigateTo('face-scan');
-                }
+                navigateTo('face-scan');
               }}
-              onNoRecord={() => navigateTo('no-record')}
               onHelp={() => navigateTo('ask-help')}
               language={language}
               onLanguageChange={setLanguage}
@@ -143,7 +194,10 @@ export default function AppOptimized() {
           
           {currentScreen === 'face-scan' && (
             <FaceScanActiveOptimized
-              onCapture={() => navigateTo('matching')}
+              onCapture={(dataUrl) => {
+                setCapturedFace(dataUrl);
+                navigateTo('matching');
+              }}
               onCancel={() => navigateTo('idle')}
               language={language}
               onLanguageChange={setLanguage}
@@ -151,22 +205,12 @@ export default function AppOptimized() {
           )}
           
           {currentScreen === 'matching' && (
-            <MatchingInProgress 
-              onComplete={() => {
-                // Simulate verification success/failure
-                // For demo: 90% success rate
-                if (Math.random() > 0.1) {
-                  navigateTo('verified-toast');
-                } else {
-                  navigateTo('verification-failed');
-                }
-              }} 
-            />
+            <MatchingInProgress onComplete={() => {}} />
           )}
           
           {currentScreen === 'verified-toast' && (
             <VerificationToastOptimized
-              beneficiaryName={beneficiaryName}
+              beneficiaryName={beneficiaryName || 'Beneficiary'}
               onComplete={() => navigateTo('food-selection')}
               language={language}
             />
