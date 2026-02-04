@@ -25,9 +25,9 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
       FOR EACH ROW EXECUTE FUNCTION set_updated_at();
   `);
 
-  // Create customer table
+  // Create customers table
   pgm.sql(`
-    CREATE TABLE customer (
+    CREATE TABLE customers (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name TEXT NOT NULL,
       pin TEXT NOT NULL,
@@ -36,18 +36,18 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     );
   `);
 
-  // Apply trigger to customer table
+  // Apply trigger to customers table
   pgm.sql(`
-    CREATE TRIGGER set_updated_at_customer
-      BEFORE UPDATE ON customer
+    CREATE TRIGGER set_updated_at_customers
+      BEFORE UPDATE ON customers
       FOR EACH ROW EXECUTE FUNCTION set_updated_at();
   `);
 
-  // Create customer_faces table with FK to customer
+  // Create customer_faces table with FK to customers
   pgm.sql(`
     CREATE TABLE customer_faces (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      customer_id UUID NOT NULL REFERENCES customer(id) ON DELETE CASCADE,
+      customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
       face_embedding JSONB NOT NULL,
       image_path TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -55,7 +55,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   `);
 
   // Create index for fast lookups by pin
-  pgm.sql(`CREATE INDEX idx_customer_pin ON customer(pin);`);
+  pgm.sql(`CREATE INDEX idx_customers_pin ON customers(pin);`);
 
   // Create index for fast lookups by customer_id
   pgm.sql(`CREATE INDEX idx_customer_faces_customer_id ON customer_faces(customer_id);`);
@@ -63,9 +63,10 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
   pgm.sql(`DROP TABLE IF EXISTS customer_faces CASCADE;`);
-  pgm.sql(`DROP TABLE IF EXISTS customer CASCADE;`);
+  pgm.sql(`DROP TABLE IF EXISTS customers CASCADE;`);
 
   // Remove triggers from existing tables
+  pgm.sql(`DROP TRIGGER IF EXISTS set_updated_at_customers ON customers;`);
   pgm.sql(`DROP TRIGGER IF EXISTS set_updated_at_users ON users;`);
   pgm.sql(`DROP TRIGGER IF EXISTS set_updated_at_face_registrations ON face_registrations;`);
 

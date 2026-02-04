@@ -186,7 +186,7 @@ When you make a mistake or discover something unexpected about this codebase, **
 - **Legacy users migration guard**: The `1900000000001_migrate-users-data` migration must only run if legacy `users` columns like `face_embedding` exist. Fresh DBs create a Firebase `users` table without those columns, so guard the migration or it will fail.
 - **Migration timestamps must be sequential**: New migrations must have timestamps greater than all existing applied migrations. If you create a migration with a timestamp between existing ones (e.g., `1770200000000` when `1900000000000` already ran), node-pg-migrate will fail with "Not run migration X is preceding already run migration Y".
 - **`updated_at` is handled by triggers**: The `set_updated_at()` database trigger auto-updates `updated_at` on row changes. Do NOT manually set `updatedAt: new Date()` in Drizzle `.set()` calls—the trigger handles it.
-- **Running down migrations locally**: The `pnpm migrate:down` script requires ts-node which isn't installed. Use tsx instead: `DATABASE_URL="..." npx tsx node_modules/node-pg-migrate/bin/node-pg-migrate.js down --migrations-dir migrations`
+- **Running down migrations locally**: The `pnpm migrate:down` script requires ts-node which isn't installed. From `apps/api`, use tsx instead: `DATABASE_URL="..." npx tsx node_modules/node-pg-migrate/bin/node-pg-migrate.js down --migrations-dir migrations`
 
 ## Database Migrations (node-pg-migrate)
 
@@ -211,9 +211,8 @@ pnpm migrate:create my_descriptive_name
 # 3. Run migrations
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/praaptdb" pnpm migrate
 
-# Or use the CLI directly for up/down:
-DATABASE_URL="..." pnpm migrate:up    # Run pending migrations
-DATABASE_URL="..." pnpm migrate:down  # Rollback one migration
+# For down migrations (requires tsx, not pnpm script):
+DATABASE_URL="..." npx tsx node_modules/node-pg-migrate/bin/node-pg-migrate.js down --migrations-dir migrations
 ```
 
 ### Migration File Pattern

@@ -44,10 +44,10 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
 /**
- * Customer table schema
+ * Customers table schema
  * Stores customer data for kiosk/registration flows.
  */
-export const customer = pgTable('customer', {
+export const customers = pgTable('customers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   pin: text('pin').notNull(),
@@ -55,9 +55,9 @@ export const customer = pgTable('customer', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Infer types for customer table
-export type Customer = typeof customer.$inferSelect;
-export type NewCustomer = typeof customer.$inferInsert;
+// Infer types for customers table
+export type Customer = typeof customers.$inferSelect;
+export type NewCustomer = typeof customers.$inferInsert;
 
 /**
  * Customer faces table schema
@@ -67,7 +67,7 @@ export const customerFaces = pgTable('customer_faces', {
   id: uuid('id').primaryKey().defaultRandom(),
   customerId: uuid('customer_id')
     .notNull()
-    .references(() => customer.id, { onDelete: 'cascade' }),
+    .references(() => customers.id, { onDelete: 'cascade' }),
   faceEmbedding: jsonb('face_embedding').$type<number[]>().notNull(),
   imagePath: text('image_path').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
