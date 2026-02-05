@@ -44,7 +44,7 @@ export async function addCustomerFaceCapture(
     embedding = result.vector;
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
-    throw new ValidationError(`Error: Failed to extract face - ${msg}`);
+    throw new ValidationError(`Failed to extract face - ${msg}`);
   }
 
   const [face] = await tx

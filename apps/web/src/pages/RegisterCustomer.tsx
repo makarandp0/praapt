@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Contracts } from '@praapt/shared';
 
@@ -80,6 +80,7 @@ export function RegisterCustomer() {
 
   const { getIdToken } = useAuth();
   const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
+  const cameraOpeningRef = useRef(false);
 
   const normalizedAadhaar = (value: string) => value.replace(/\D/g, '').slice(0, 4);
   const allExtraCaptured = extraCaptures.every(Boolean);
@@ -92,13 +93,15 @@ export function RegisterCustomer() {
     const needsCamera =
       currentStep.id === 'primaryCapture' || currentStep.id === 'extraCaptures';
 
-    if (needsCamera && !cameraOpen) {
+    if (needsCamera && !cameraOpen && !cameraOpeningRef.current) {
+      cameraOpeningRef.current = true;
       openCamera().then((result) => {
         if (!result.success) {
           setCameraError(result.error);
         } else {
           setCameraError(null);
         }
+        cameraOpeningRef.current = false;
       });
     }
 
