@@ -28,8 +28,8 @@ Repository Map (high signal first)
    - src/contracts/api.ts: API contract definitions (method, path, schemas).
    - src/contracts/types.ts: Contract type definitions and inference helpers.
    - **Always use these shared types for API request/response contracts.**
-6. docker-compose.yml: Local Postgres.
-7. scripts/\*.mjs: Repo scripts (e.g., verification).
+6. docker-compose.yml: Shared Docker services (db, face).
+7. scripts/: Dev scripts (`dev.sh`, `_common.sh`) and verification.
 
 Paths To Prioritize
 
@@ -160,13 +160,21 @@ Working Rules For The LLM
 - Do not read or rely on real `.env` files; use `.env.example` for keys/shape.
 - **Use `getConfig()` from `apps/api/src/config.ts`** for all environment variable access in the API. Never use `process.env` directly in route handlers or services.
 
+14. Local Development (`pnpm dev`)
+
+- **Shared services** (Docker): PostgreSQL on port 5433, Face service on port 8001. These are shared across worktrees.
+- **Per-worktree services** (local): API and Web servers get unique ports based on worktree name hash.
+- **Port scheme**: Main/master worktrees use default ports (API: 3000, Web: 5173). Other worktrees get a deterministic offset (0-990 in increments of 10).
+- **Auto-cleanup**: `pnpm dev` kills any existing processes on the worktree's ports before starting.
+- **Helper scripts**: `scripts/_common.sh` provides `get_worktree_name()` and `get_port_offset()` for consistent port assignment.
+
 Task-Focused Entry Points (quick checklist)
 
 - API route/behavior issue: apps/api/src/routes/\*.ts, apps/api/src/index.ts
 - DB schema/seed change: apps/api/src/schema.ts, apps/api/migrations/\*.ts
 - Frontend UI/state change: apps/web/src/App.tsx, apps/web/src/pages/_.tsx, apps/web/src/contexts/_.tsx, apps/web/src/hooks/\*.ts
 - API contracts/types: packages/shared/src/index.ts (Zod schemas)
-- Project setup/scripts: README.md, root/package.json, apps/_/package.json, scripts/_.mjs
+- Project setup/scripts: README.md, root/package.json, apps/_/package.json, scripts/*.sh
 
 If In Doubt
 
