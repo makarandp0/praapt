@@ -1,5 +1,5 @@
 ---
-description: Update LLM_INSTRUCTIONS.md with learnings from current changes or PR
+description: Update AGENTS.md with learnings from current changes or PR
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
 ---
 
-Analyze recent changes in the current branch or PR and update LLM_INSTRUCTIONS.md with any new findings that would help future LLM sessions work more effectively in this codebase.
+Analyze recent changes in the current branch or PR and update AGENTS.md with any new findings that would help future LLM sessions work more effectively in this codebase.
 
 ## 1. Gather Context
 
@@ -43,17 +43,17 @@ Read the relevant changed files to understand the context:
 git diff main...HEAD --name-only 2>/dev/null || git diff HEAD~5 --name-only
 ```
 
-## 3. Read Current LLM_INSTRUCTIONS.md
+## 3. Read Current AGENTS.md
 
 ```
-Read LLM_INSTRUCTIONS.md
+Read AGENTS.md
 ```
 
 Pay special attention to the "Learning From Mistakes" section at the end of the file.
 
-## 4. Update LLM_INSTRUCTIONS.md
+## 4. Update AGENTS.md
 
-Update LLM_INSTRUCTIONS.md following these principles:
+Update AGENTS.md following these principles:
 
 - **Keep it compact**: Remove outdated or redundant information. Consolidate similar points. Every line should earn its place.
 - **Keep it useful**: Focus on actionable guidance that prevents mistakes or speeds up development.
@@ -69,7 +69,7 @@ After updating, verify the file is still well-structured:
 
 ```bash
 # Ensure no syntax issues - check the end of the file
-tail -30 LLM_INSTRUCTIONS.md
+tail -30 AGENTS.md
 ```
 
 ## 6. Summary
@@ -77,5 +77,5 @@ tail -30 LLM_INSTRUCTIONS.md
 Report to the user:
 - What changes were analyzed
 - What learnings were identified
-- What was added/updated in LLM_INSTRUCTIONS.md
+- What was added/updated in AGENTS.md
 - Whether any learnings were skipped and why

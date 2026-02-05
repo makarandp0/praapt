@@ -2,7 +2,7 @@
 
 > Face recognition app with TypeScript monorepo: Express API, React frontend, Python face service.
 
-**For LLMs:** Read `LLM_INSTRUCTIONS.md` for efficient navigation.
+**For LLMs:** Read `AGENTS.md` for efficient navigation.
 
 ## Quick Start
 

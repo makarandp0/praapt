@@ -9,9 +9,9 @@ Start the local development environment for praapt.
 
 ## Steps
 
-1. Read the LLM_INSTRUCTIONS.md file:
+1. Read the AGENTS.md file:
    ```
-   Read LLM_INSTRUCTIONS.md
+   Read AGENTS.md
    ```
 
 2. Check if Docker is running and start the database:
