@@ -30,6 +30,12 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 cd "$(dirname "$0")/.."
+
+# Source common utilities
+if [[ ! -f "scripts/_common.sh" ]]; then
+  echo "Error: scripts/_common.sh not found" >&2
+  exit 1
+fi
 source scripts/_common.sh
 
 # Pre-flight checks
@@ -54,9 +60,15 @@ else
   else
     warn "Starting PostgreSQL..."
     docker compose up db -d
-    until docker compose exec -T db pg_isready -U postgres &> /dev/null; do
+    for i in {1..30}; do
+      if docker compose exec -T db pg_isready -U postgres &> /dev/null; then
+        break
+      fi
       sleep 1
     done
+    if ! docker compose exec -T db pg_isready -U postgres &> /dev/null; then
+      error "PostgreSQL failed to start within 30 seconds"
+    fi
     info "PostgreSQL started"
   fi
 fi
@@ -73,14 +85,20 @@ else
   else
     warn "Building & starting face service..."
     docker compose up face -d --build
-    # Wait for face service to be ready
+    # Wait for face service to be ready (up to 60s for model loading)
+    FACE_READY=false
     for i in {1..60}; do
       if curl -s "http://localhost:8001/health" &> /dev/null; then
+        FACE_READY=true
         break
       fi
       sleep 1
     done
-    info "Face service started"
+    if [[ "$FACE_READY" == "true" ]]; then
+      info "Face service started"
+    else
+      warn "Face service not ready after 60s (may still be loading model)"
+    fi
   fi
 fi
 
@@ -103,7 +121,14 @@ kill_port() {
     for pid in $pids; do
       kill "$pid" 2>/dev/null || true
     done
-    warn "Killed process(es) on port $port"
+    sleep 0.5
+    # Check if port is still in use
+    pids=$(lsof -ti :"$port" 2>/dev/null || true)
+    if [[ -n "$pids" ]]; then
+      warn "Port $port still in use after kill attempt"
+    else
+      warn "Killed process(es) on port $port"
+    fi
   fi
 }
 
@@ -111,8 +136,20 @@ kill_port() {
 kill_port "$API_PORT"
 kill_port "$WEB_PORT"
 
-# Get local network IP for mobile testing
-LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "")
+# Get local network IP for mobile testing (try common macOS interfaces, then Linux)
+get_local_ip() {
+  # macOS: try common interfaces
+  for iface in en0 en1 en2 en3; do
+    local ip=$(ipconfig getifaddr "$iface" 2>/dev/null || true)
+    if [[ -n "$ip" ]]; then
+      echo "$ip"
+      return
+    fi
+  done
+  # Linux fallback
+  hostname -I 2>/dev/null | awk '{print $1}' || true
+}
+LOCAL_IP=$(get_local_ip)
 
 # Display URLs
 echo ""
@@ -131,7 +168,14 @@ echo ""
 # Start API dev server
 API_URL="http://localhost:$API_PORT"
 PORT=$API_PORT pnpm --filter @praapt/api run dev &
-PIDS+=($!)
+API_PID=$!
+PIDS+=($API_PID)
+
+# Brief check that API process started
+sleep 1
+if ! kill -0 "$API_PID" 2>/dev/null; then
+  error "API server failed to start"
+fi
 
 # Start Web dev server (foreground - keeps script alive)
 VITE_API_URL="${API_URL}/api" pnpm --filter @praapt/web run dev -- --port "$WEB_PORT"
