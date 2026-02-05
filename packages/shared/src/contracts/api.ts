@@ -5,6 +5,8 @@ import {
   FaceMatchResponseSchema,
   GetMeResponseSchema,
   HealthResponseSchema,
+  KioskFaceMatchBodySchema,
+  KioskFaceMatchResponseSchema,
   ListFaceRegistrationsResponseSchema,
   ListImagesResponseSchema,
   ListUsersResponseSchema,
@@ -67,6 +69,18 @@ export const faceMatch = defineContract({
   body: FaceMatchBodySchema,
   response: FaceMatchResponseSchema,
   auth: ['developer', 'admin', 'volunteer', 'vendor'],
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kiosk Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const kioskFaceMatch = defineContract({
+  method: 'POST',
+  path: '/kiosk/face-match',
+  body: KioskFaceMatchBodySchema,
+  response: KioskFaceMatchResponseSchema,
+  auth: 'public',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

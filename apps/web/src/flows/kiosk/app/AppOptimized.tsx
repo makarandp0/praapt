@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Contracts, type KioskFaceMatchResponse } from '@praapt/shared';
 import { type Language } from './utils/translations';
 import { KioskBootOptimized } from './components/KioskBootOptimized';
 import { IdleWelcomeOptimized } from './components/IdleWelcomeOptimized';
@@ -6,6 +7,7 @@ import { EnterAadhaarOptimized } from './components/EnterAadhaarOptimized';
 import { NoRecordFound } from './components/NoRecordFound';
 import { FaceScanActiveOptimized } from './components/FaceScanActiveOptimized';
 import { MatchingInProgress } from './components/MatchingInProgress';
+import { MultipleMatchSelectOptimized } from './components/MultipleMatchSelectOptimized';
 import { VerificationToastOptimized } from './components/VerificationToastOptimized';
 import { VerificationFailed } from './components/VerificationFailed';
 import { AskForHelp } from './components/AskForHelp';
@@ -15,6 +17,7 @@ import { FoodSelectionOptimized } from './components/FoodSelectionOptimized';
 import { RedemptionSuccessOptimized } from './components/RedemptionSuccessOptimized';
 import { FlowNavigation } from './components/FlowNavigation';
 import { getTranslation } from './utils/translations';
+import { callContract } from '../../../lib/contractClient';
 
 export type ScreenOptimized = 
   | 'boot'
@@ -23,6 +26,7 @@ export type ScreenOptimized =
   | 'no-record'
   | 'face-scan'
   | 'matching'
+  | 'select-match'
   | 'verified-toast'
   | 'verification-failed'
   | 'ask-help'
@@ -31,12 +35,21 @@ export type ScreenOptimized =
   | 'food-selection'
   | 'redemption-success';
 
-export default function AppOptimized() {
+interface AppOptimizedProps {
+  apiBase: string;
+}
+
+export default function AppOptimized({ apiBase }: AppOptimizedProps) {
   const [currentScreen, setCurrentScreen] = useState<ScreenOptimized>('boot');
   const [aadhaarDigits, setAadhaarDigits] = useState('');
+  const [capturedFace, setCapturedFace] = useState<string | null>(null);
+  const [matchResponse, setMatchResponse] = useState<KioskFaceMatchResponse | null>(null);
+  const [matchCandidates, setMatchCandidates] = useState<
+    Array<{ customerId: string; name: string; imagePath: string | null; distance: number }>
+  >([]);
   const [selectedFood, setSelectedFood] = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [beneficiaryName] = useState('Ajay');
+  const [beneficiaryName, setBeneficiaryName] = useState('Beneficiary');
   const [mealCount] = useState(4);
   const [language, setLanguage] = useState<Language>('en');
 
@@ -47,6 +60,9 @@ export default function AppOptimized() {
   const resetFlow = () => {
     setCurrentScreen('idle');
     setAadhaarDigits('');
+    setCapturedFace(null);
+    setMatchResponse(null);
+    setMatchCandidates([]);
     setSelectedFood('');
     setRetryCount(0);
   };
@@ -70,13 +86,14 @@ export default function AppOptimized() {
       { id: 'no-record', label: '4. No Record' },
       { id: 'face-scan', label: '5. Face Scan' },
       { id: 'matching', label: '6. Matching' },
-      { id: 'verified-toast', label: '7. Verified' },
-      { id: 'verification-failed', label: '8. Failed' },
-      { id: 'ask-help', label: '9. Help' },
-      { id: 'vendor-pin', label: '10. Vendor PIN' },
-      { id: 'vendor-assist', label: '11. Assist' },
-      { id: 'food-selection', label: '12. Select' },
-      { id: 'redemption-success', label: '13. Success' },
+      { id: 'select-match', label: '7. Select Match' },
+      { id: 'verified-toast', label: '8. Verified' },
+      { id: 'verification-failed', label: '9. Failed' },
+      { id: 'ask-help', label: '10. Help' },
+      { id: 'vendor-pin', label: '11. Vendor PIN' },
+      { id: 'vendor-assist', label: '12. Assist' },
+      { id: 'food-selection', label: '13. Select' },
+      { id: 'redemption-success', label: '14. Success' },
     ],
     [],
   );
@@ -89,6 +106,69 @@ export default function AppOptimized() {
       navigateTo(screen);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function runMatch() {
+      if (currentScreen !== 'matching' || !capturedFace || aadhaarDigits.length !== 4) {
+        return;
+      }
+
+      let response;
+      try {
+        response = await callContract(apiBase, Contracts.kioskFaceMatch, {
+          body: { pin: aadhaarDigits, faceImage: capturedFace },
+        });
+      } catch (err) {
+        console.error('Kiosk face match failed:', err);
+        navigateTo('verification-failed');
+        return;
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      setMatchResponse(response);
+
+      if (!response.ok) {
+        if (response.candidates) {
+          setMatchCandidates(response.candidates);
+        } else {
+          setMatchCandidates([]);
+        }
+        if (response.reason === 'no_customers' || response.reason === 'no_faces') {
+          navigateTo('no-record');
+          return;
+        }
+        navigateTo('verification-failed');
+        return;
+      }
+
+      if (response.matches.length === 0) {
+        navigateTo('verification-failed');
+        return;
+      }
+
+      setMatchCandidates(response.matches);
+
+      if (response.matches.length === 1) {
+        const bestMatch = response.matches[0];
+        setBeneficiaryName(bestMatch.name);
+        navigateTo('verified-toast');
+        return;
+      }
+
+      navigateTo('select-match');
+    }
+
+    runMatch();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [aadhaarDigits, apiBase, capturedFace, currentScreen]);
 
   return (
     <div className="min-h-screen bg-[#5A6472] flex flex-col">
@@ -115,14 +195,8 @@ export default function AppOptimized() {
               digits={aadhaarDigits}
               onDigitsChange={setAadhaarDigits}
               onContinue={() => {
-                // Simulate "No record" for 0000
-                if (aadhaarDigits === '0000') {
-                  navigateTo('no-record');
-                } else {
-                  navigateTo('face-scan');
-                }
+                navigateTo('face-scan');
               }}
-              onNoRecord={() => navigateTo('no-record')}
               onHelp={() => navigateTo('ask-help')}
               language={language}
               onLanguageChange={setLanguage}
@@ -143,7 +217,10 @@ export default function AppOptimized() {
           
           {currentScreen === 'face-scan' && (
             <FaceScanActiveOptimized
-              onCapture={() => navigateTo('matching')}
+              onCapture={(dataUrl) => {
+                setCapturedFace(dataUrl);
+                navigateTo('matching');
+              }}
               onCancel={() => navigateTo('idle')}
               language={language}
               onLanguageChange={setLanguage}
@@ -151,22 +228,35 @@ export default function AppOptimized() {
           )}
           
           {currentScreen === 'matching' && (
-            <MatchingInProgress 
-              onComplete={() => {
-                // Simulate verification success/failure
-                // For demo: 90% success rate
-                if (Math.random() > 0.1) {
-                  navigateTo('verified-toast');
-                } else {
-                  navigateTo('verification-failed');
-                }
-              }} 
+            <MatchingInProgress onComplete={() => {}} />
+          )}
+
+          {currentScreen === 'select-match' && (
+            <MultipleMatchSelectOptimized
+              matches={matchCandidates}
+              onSelect={(match) => {
+                setBeneficiaryName(match.name);
+                navigateTo('verified-toast');
+              }}
+              onRescan={() => {
+                setCapturedFace(null);
+                setMatchCandidates([]);
+                navigateTo('face-scan');
+              }}
+              onReenterDigits={() => {
+                setCapturedFace(null);
+                setMatchCandidates([]);
+                setAadhaarDigits('');
+                navigateTo('enter-aadhaar');
+              }}
+              language={language}
+              onLanguageChange={setLanguage}
             />
           )}
           
           {currentScreen === 'verified-toast' && (
             <VerificationToastOptimized
-              beneficiaryName={beneficiaryName}
+              beneficiaryName={beneficiaryName || 'Beneficiary'}
               onComplete={() => navigateTo('food-selection')}
               language={language}
             />
@@ -246,6 +336,47 @@ export default function AppOptimized() {
         onNavigate={handleNavigate}
         screens={navigationScreens}
       />
+
+      {/* Debug panel */}
+      <div className="px-8 pb-6">
+        <div className="mx-auto max-w-6xl rounded-lg border border-neutral-200 bg-white/90 p-4 text-sm text-neutral-700">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold text-neutral-900">Kiosk Debug</span>
+            <span>PIN: {aadhaarDigits || '—'}</span>
+            <span>Screen: {currentScreen}</span>
+          </div>
+          {matchResponse ? (
+            <div className="mt-3 space-y-2">
+              <div>
+                <span className="font-semibold">Match response:</span>{' '}
+                {matchResponse.ok ? 'ok' : 'error'}
+                {!matchResponse.ok && matchResponse.reason
+                  ? ` (${matchResponse.reason})`
+                  : ''}
+              </div>
+              {matchCandidates.length > 0 ? (
+                <div className="grid gap-2">
+                  {matchCandidates.map((match) => (
+                    <div
+                      key={match.customerId}
+                      className="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-3 py-2"
+                    >
+                      <div className="font-medium text-neutral-900">{match.name}</div>
+                      <div className="text-neutral-600">
+                        distance {match.distance.toFixed(3)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-neutral-500">No candidates</div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-2 text-neutral-500">No match attempt yet.</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

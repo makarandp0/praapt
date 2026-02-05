@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { CameraPreview } from '../../../../components/CameraPreview';
+import { useCamera } from '../../../../hooks/useCamera';
 import { type Language, getTranslation, getFontFamily } from '../utils/translations';
 import { LanguageToggle } from './LanguageToggle';
 
 interface FaceScanActiveOptimizedProps {
-  onCapture: () => void;
+  onCapture: (dataUrl: string) => void;
   onCancel: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
@@ -18,6 +20,27 @@ export function FaceScanActiveOptimized({
   const t = getTranslation(language);
   const fontFamily = getFontFamily(language);
   const [countdown, setCountdown] = useState(3);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function startCamera() {
+      const result = await openCamera();
+      if (!mounted) return;
+      if (!result.success) {
+        setCameraError(result.error);
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      mounted = false;
+      closeCamera();
+    };
+  }, [closeCamera, openCamera]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -26,11 +49,17 @@ export function FaceScanActiveOptimized({
     } else {
       // Auto-capture after countdown
       const captureTimer = setTimeout(() => {
-        onCapture();
+        const dataUrl = captureFrame();
+        if (dataUrl) {
+          onCapture(dataUrl);
+        } else {
+          setCameraError('Unable to capture photo. Please try again.');
+          setCountdown(3);
+        }
       }, 500);
       return () => clearTimeout(captureTimer);
     }
-  }, [countdown, onCapture]);
+  }, [captureFrame, countdown, onCapture]);
 
   return (
     <div className="h-full flex flex-col items-center justify-center gap-8 px-16 py-12 bg-[#F6F1E8] relative" style={{ fontFamily }}>
@@ -44,11 +73,25 @@ export function FaceScanActiveOptimized({
         {t.lookAtCamera}
       </h2>
 
-      {/* Camera frame simulation */}
+      {/* Camera frame */}
       <div className="relative w-[480px] h-[480px] bg-[#E7E0D6] rounded-2xl overflow-hidden flex items-center justify-center">
+        {cameraOpen && streamRef.current ? (
+          <div className="w-full h-full">
+            <CameraPreview
+              ref={cameraRef}
+              stream={streamRef.current}
+              isActive={false}
+            />
+          </div>
+        ) : (
+          <div className="w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60"></div>
+        )}
+
         {/* Oval guide */}
-        <div className="w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60"></div>
-        
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60"></div>
+        </div>
+
         {/* Countdown overlay */}
         {countdown > 0 && (
           <div className="absolute inset-0 bg-[#1D232E] bg-opacity-40 flex items-center justify-center">
@@ -63,6 +106,12 @@ export function FaceScanActiveOptimized({
       <p className="text-[22px] leading-[30px] text-[#5A6472] text-center max-w-lg">
         {t.stayStill}
       </p>
+
+      {cameraError && (
+        <p className="text-[16px] leading-[22px] text-red-700 text-center max-w-lg">
+          {cameraError}
+        </p>
+      )}
 
       {/* Cancel option */}
       <button

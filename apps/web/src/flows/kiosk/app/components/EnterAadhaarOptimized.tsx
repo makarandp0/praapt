@@ -5,7 +5,6 @@ interface EnterAadhaarOptimizedProps {
   digits: string;
   onDigitsChange: (digits: string) => void;
   onContinue: () => void;
-  onNoRecord: () => void;
   onHelp: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
@@ -15,7 +14,6 @@ export function EnterAadhaarOptimized({
   digits, 
   onDigitsChange, 
   onContinue, 
-  onNoRecord, 
   onHelp,
   language,
   onLanguageChange
@@ -39,12 +37,7 @@ export function EnterAadhaarOptimized({
 
   const handleContinue = () => {
     if (digits.length === 4) {
-      // Simulate validation - for demo purposes
-      if (digits === '0000') {
-        onNoRecord();
-      } else {
-        onContinue();
-      }
+      onContinue();
     }
   };
 

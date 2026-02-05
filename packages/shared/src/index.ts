@@ -90,6 +90,12 @@ export {
   type FaceMatchSuccess,
   type FaceMatchError,
 
+  // Kiosk: Face Match schemas
+  KioskFaceMatchBodySchema,
+  type KioskFaceMatchBody,
+  KioskFaceMatchResponseSchema,
+  type KioskFaceMatchResponse,
+
   // Face Registrations
   ListFaceRegistrationSchema,
   type ListFaceRegistration,

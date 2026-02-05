@@ -243,6 +243,44 @@ export type FaceMatchSuccess = ApiSuccess<FaceMatchResponse>;
 /** Helper type for face match error */
 export type FaceMatchError = ApiError<FaceMatchResponse>;
 
+/** POST /kiosk/face-match request body */
+export const KioskFaceMatchBodySchema = z.object({
+  pin: z.string().min(1, 'pin required'),
+  faceImage: z.string().min(1, 'face image required (base64)'),
+});
+export type KioskFaceMatchBody = z.infer<typeof KioskFaceMatchBodySchema>;
+
+/** Kiosk customer match entry */
+const KioskCustomerMatchSchema = z.object({
+  customerId: z.string().uuid(),
+  name: z.string(),
+  imagePath: z.string().nullable(),
+  distance: z.number(),
+});
+
+/** Kiosk face match success data */
+const KioskFaceMatchSuccessSchema = z.object({
+  ok: z.literal(true),
+  threshold: z.number(),
+  matches: z.array(KioskCustomerMatchSchema),
+});
+
+/** Kiosk face match error data */
+const KioskFaceMatchErrorSchema = z.object({
+  ok: z.literal(false),
+  error: z.string(),
+  reason: z.enum(['no_customers', 'no_faces', 'no_match']).optional(),
+  threshold: z.number().optional(),
+  candidates: z.array(KioskCustomerMatchSchema).optional(),
+});
+
+/** POST /kiosk/face-match response - discriminated union */
+export const KioskFaceMatchResponseSchema = z.discriminatedUnion('ok', [
+  KioskFaceMatchSuccessSchema,
+  KioskFaceMatchErrorSchema,
+]);
+export type KioskFaceMatchResponse = z.infer<typeof KioskFaceMatchResponseSchema>;
+
 /** Face registration schema for list endpoint */
 export const ListFaceRegistrationSchema = z.object({
   id: z.number(),

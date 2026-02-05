@@ -256,7 +256,7 @@ function AppRoutes() {
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
           <Route path="/flows/beneficiary-registration" element={<RegistrationWizard />} />
-          <Route path="/flows/kiosk" element={<KioskFlowPage />} />
+          <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
 
           {/* Dashboard - shows role-appropriate content, including for unknown users */}
           <Route
