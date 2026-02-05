@@ -196,6 +196,28 @@ export type SignupBody = z.infer<typeof SignupBodySchema>;
 export const SignupResponseSchema = createApiResponse(z.object({ user: FaceRegistrationSchema }));
 export type SignupResponse = z.infer<typeof SignupResponseSchema>;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Customer Registration (Kiosk)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** POST /customers request body */
+export const RegisterCustomerBodySchema = z.object({
+  name: z.string().min(1, 'name required'),
+  pin: z.string().regex(/^\d{4}$/, 'pin must be 4 digits'),
+  captures: z.array(z.string().min(1, 'capture required')).default([]),
+});
+export type RegisterCustomerBody = z.infer<typeof RegisterCustomerBodySchema>;
+
+/** POST /customers response */
+export const RegisterCustomerResponseSchema = createApiResponse(
+  z.object({
+    customerId: z.string().uuid(),
+    faceCount: z.number(),
+    imagePaths: z.array(z.string()),
+  }),
+);
+export type RegisterCustomerResponse = z.infer<typeof RegisterCustomerResponseSchema>;
+
 /** POST /demo/face-match request body */
 export const FaceMatchBodySchema = z.object({
   faceImage: z.string().min(1, 'face image required (base64)'),

@@ -8,6 +8,7 @@ import { RoleProtectedRoute, AccessDenied } from './components/RoleProtectedRout
 import { StatusPanel } from './components/StatusPanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ModelStatusProvider } from './contexts/ModelStatusContext';
+import { API_BASE } from './lib/apiBase';
 import { Config } from './pages/Config';
 import { FaceDemo } from './pages/FaceDemo';
 import { Library } from './pages/Library';
@@ -20,10 +21,6 @@ import { Users } from './pages/Users';
 import { Version } from './pages/Version';
 import { RegistrationWizard } from './flows/beneficiary-registration/RegistrationWizard';
 import { KioskFlowPage } from './flows/kiosk/KioskFlowPage';
-
-// API base URL - same server in prod, localhost:3000 in dev
-const API_BASE =
-  import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3000/api');
 
 /** Navigation bar with auth-aware links */
 function NavBar() {

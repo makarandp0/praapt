@@ -81,6 +81,10 @@ export {
   type SignupBody,
   SignupResponseSchema,
   type SignupResponse,
+  RegisterCustomerBodySchema,
+  type RegisterCustomerBody,
+  RegisterCustomerResponseSchema,
+  type RegisterCustomerResponse,
 
   // Demo: Face Match schemas
   FaceMatchBodySchema,
