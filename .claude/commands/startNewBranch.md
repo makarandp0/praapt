@@ -9,9 +9,9 @@ Create a new feature branch based on the latest origin/main and switch to it.
 
 ## Steps
 
-1. Read the LLM_INSTRUCTIONS.md file to understand project conventions:
+1. Read the AGENTS.md file to understand project conventions:
    ```
-   Read LLM_INSTRUCTIONS.md
+   Read AGENTS.md
    ```
 
 2. Fetch the latest main from origin:

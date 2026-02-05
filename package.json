@@ -10,8 +10,7 @@
     "node": "22.18.0"
   },
   "scripts": {
-    "dev": "node scripts/dev-all.mjs",
-    "dev:all": "node scripts/dev-all.mjs",
+    "dev": "./scripts/dev.sh",
     "dev:api": "pnpm --filter @praapt/api dev",
     "dev:web": "pnpm --filter @praapt/web dev",
     "build": "turbo run build",

@@ -25,7 +25,7 @@ If checks fail, stop and help fix the issues before proceeding.
 
 ## 2. Update LLM Instructions
 
-Run the /updateAgentsFile workflow to capture any learnings from this work into LLM_INSTRUCTIONS.md. If updates are made, commit them before proceeding.
+Run the /updateAgentsFile workflow to capture any learnings from this work into AGENTS.md. If updates are made, commit them before proceeding.
 
 ## 3. Gather Context
 
