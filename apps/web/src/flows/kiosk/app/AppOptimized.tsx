@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Contracts, type KioskFaceMatchResponse } from '@praapt/shared';
+import { useEffect, useState } from 'react';
+import { Contracts } from '@praapt/shared';
 import { type Language } from './utils/translations';
 import { KioskBootOptimized } from './components/KioskBootOptimized';
 import { IdleWelcomeOptimized } from './components/IdleWelcomeOptimized';
@@ -15,7 +15,6 @@ import { VendorPIN } from './components/VendorPIN';
 import { VendorAssist } from './components/VendorAssist';
 import { FoodSelectionOptimized } from './components/FoodSelectionOptimized';
 import { RedemptionSuccessOptimized } from './components/RedemptionSuccessOptimized';
-import { FlowNavigation } from './components/FlowNavigation';
 import { getTranslation } from './utils/translations';
 import { callContract } from '../../../lib/contractClient';
 
@@ -43,7 +42,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
   const [currentScreen, setCurrentScreen] = useState<ScreenOptimized>('boot');
   const [aadhaarDigits, setAadhaarDigits] = useState('');
   const [capturedFace, setCapturedFace] = useState<string | null>(null);
-  const [matchResponse, setMatchResponse] = useState<KioskFaceMatchResponse | null>(null);
   const [matchCandidates, setMatchCandidates] = useState<
     Array<{ customerId: string; name: string; imagePath: string | null; distance: number }>
   >([]);
@@ -61,7 +59,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     setCurrentScreen('idle');
     setAadhaarDigits('');
     setCapturedFace(null);
-    setMatchResponse(null);
     setMatchCandidates([]);
     setSelectedFood('');
     setRetryCount(0);
@@ -78,34 +75,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     return meals[id] || id;
   };
 
-  const navigationScreens = useMemo(
-    () => [
-      { id: 'boot', label: '1. Boot' },
-      { id: 'idle', label: '2. Welcome' },
-      { id: 'enter-aadhaar', label: '3. Aadhaar' },
-      { id: 'no-record', label: '4. No Record' },
-      { id: 'face-scan', label: '5. Face Scan' },
-      { id: 'matching', label: '6. Matching' },
-      { id: 'select-match', label: '7. Select Match' },
-      { id: 'verified-toast', label: '8. Verified' },
-      { id: 'verification-failed', label: '9. Failed' },
-      { id: 'ask-help', label: '10. Help' },
-      { id: 'vendor-pin', label: '11. Vendor PIN' },
-      { id: 'vendor-assist', label: '12. Assist' },
-      { id: 'food-selection', label: '13. Select' },
-      { id: 'redemption-success', label: '14. Success' },
-    ],
-    [],
-  );
-
-  const isOptimizedScreen = (screen: string): screen is ScreenOptimized =>
-    navigationScreens.some((item) => item.id === screen);
-
-  const handleNavigate = (screen: string) => {
-    if (isOptimizedScreen(screen)) {
-      navigateTo(screen);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -129,8 +98,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
       if (!isMounted) {
         return;
       }
-
-      setMatchResponse(response);
 
       if (!response.ok) {
         if (response.candidates) {
@@ -175,11 +142,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
       {/* Main kiosk screen */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-6xl aspect-[4/3] bg-[#F6F1E8] shadow-2xl relative overflow-hidden">
-          {/* Dev indicator - remove in production */}
-          <div className="absolute top-4 left-4 px-3 py-1.5 bg-[#1D232E] text-[#F6F1E8] text-sm rounded z-50 opacity-50">
-            {currentScreen}
-          </div>
-
           {currentScreen === 'boot' && <KioskBootOptimized onComplete={() => navigateTo('idle')} />}
           
           {currentScreen === 'idle' && (
@@ -330,53 +292,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
         </div>
       </div>
 
-      {/* Developer navigation */}
-      <FlowNavigation 
-        currentScreen={currentScreen} 
-        onNavigate={handleNavigate}
-        screens={navigationScreens}
-      />
-
-      {/* Debug panel */}
-      <div className="px-8 pb-6">
-        <div className="mx-auto max-w-6xl rounded-lg border border-neutral-200 bg-white/90 p-4 text-sm text-neutral-700">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-semibold text-neutral-900">Kiosk Debug</span>
-            <span>PIN: {aadhaarDigits || '—'}</span>
-            <span>Screen: {currentScreen}</span>
-          </div>
-          {matchResponse ? (
-            <div className="mt-3 space-y-2">
-              <div>
-                <span className="font-semibold">Match response:</span>{' '}
-                {matchResponse.ok ? 'ok' : 'error'}
-                {!matchResponse.ok && matchResponse.reason
-                  ? ` (${matchResponse.reason})`
-                  : ''}
-              </div>
-              {matchCandidates.length > 0 ? (
-                <div className="grid gap-2">
-                  {matchCandidates.map((match) => (
-                    <div
-                      key={match.customerId}
-                      className="flex items-center justify-between rounded border border-neutral-200 bg-neutral-50 px-3 py-2"
-                    >
-                      <div className="font-medium text-neutral-900">{match.name}</div>
-                      <div className="text-neutral-600">
-                        distance {match.distance.toFixed(3)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-neutral-500">No candidates</div>
-              )}
-            </div>
-          ) : (
-            <div className="mt-2 text-neutral-500">No match attempt yet.</div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
