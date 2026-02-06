@@ -7,10 +7,7 @@ import { errorHandler } from './lib/errorHandler.js';
 import { initializeFirebase } from './lib/firebase-admin.js';
 import { logger } from './lib/logger.js';
 import customersRoutes from './routes/customers.js';
-import demoRoutes from './routes/demo.js';
-import faceRegistrationsRoutes from './routes/faceRegistrations.js';
 import healthRoutes from './routes/health.js';
-import imagesRoutes from './routes/images.js';
 import kioskRoutes from './routes/kiosk.js';
 import userRoutes from './routes/user.js';
 
@@ -38,10 +35,7 @@ app.use((req, res, next) => {
 
 // Mount API routes - all routes define their full paths relative to /api
 app.use('/api', healthRoutes);
-app.use('/api', imagesRoutes);
 app.use('/api', customersRoutes);
-app.use('/api', faceRegistrationsRoutes);
-app.use('/api', demoRoutes);
 app.use('/api', kioskRoutes);
 app.use('/api', userRoutes);
 

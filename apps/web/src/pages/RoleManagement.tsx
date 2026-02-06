@@ -21,21 +21,6 @@ const ENDPOINT_INFO: EndpointInfo[] = [
   { method: 'GET', path: '/health', description: 'Health check', auth: Contracts.getHealth.auth },
   { method: 'POST', path: '/load-model', description: 'Load face recognition model', auth: Contracts.loadModel.auth },
 
-  // Face Registration
-  { method: 'POST', path: '/face-registrations', description: 'Register new face (signup)', auth: Contracts.signup.auth },
-  { method: 'GET', path: '/face-registrations', description: 'List all face registrations', auth: Contracts.listFaceRegistrations.auth },
-
-  // Demo
-  { method: 'POST', path: '/demo/face-match', description: 'Face matching demo', auth: Contracts.faceMatch.auth },
-
-  // Images
-  { method: 'POST', path: '/images', description: 'Save/upload image', auth: Contracts.saveImage.auth },
-  { method: 'GET', path: '/images', description: 'List saved images', auth: Contracts.listImages.auth },
-  // Note: These file-serving endpoints return binary data, not JSON, so they don't have contracts.
-  { method: 'GET', path: '/images/:name', description: 'Get image by name (library)', auth: ['developer', 'admin', 'volunteer', 'vendor'] },
-  { method: 'GET', path: '/images/file/:filename', description: 'Get image by filename (profiles)', auth: 'public' },
-  { method: 'POST', path: '/images/compare', description: 'Compare two face images', auth: Contracts.compareImages.auth },
-
   // User
   { method: 'GET', path: '/me', description: 'Get current user profile', auth: Contracts.getMe.auth },
   { method: 'GET', path: '/users', description: 'List all users', auth: Contracts.listUsers.auth },
