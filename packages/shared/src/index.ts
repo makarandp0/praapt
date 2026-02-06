@@ -33,25 +33,6 @@ export {
   type ApiSuccess,
   type ApiError,
 
-  // Common primitives
-  ImageName,
-
-  // Save image
-  SaveImageBodySchema,
-  type SaveImageBody,
-  SaveImageResponseSchema,
-  type SaveImageResponse,
-
-  // List images
-  ListImagesResponseSchema,
-  type ListImagesResponse,
-
-  // Compare images
-  CompareImagesBodySchema,
-  type CompareImagesBody,
-  CompareImagesResponseSchema,
-  type CompareImagesResponse,
-
   // Health check
   FaceHealthSchema,
   type FaceHealth,
@@ -74,37 +55,17 @@ export {
   ErrorResponseSchema,
   type ErrorResponse,
 
-  // Face Registration schemas
-  FaceRegistrationSchema,
-  type FaceRegistration,
-  SignupBodySchema,
-  type SignupBody,
-  SignupResponseSchema,
-  type SignupResponse,
+  // Customer registration schemas
   RegisterCustomerBodySchema,
   type RegisterCustomerBody,
   RegisterCustomerResponseSchema,
   type RegisterCustomerResponse,
-
-  // Demo: Face Match schemas
-  FaceMatchBodySchema,
-  type FaceMatchBody,
-  FaceMatchResponseSchema,
-  type FaceMatchResponse,
-  type FaceMatchSuccess,
-  type FaceMatchError,
 
   // Kiosk: Face Match schemas
   KioskFaceMatchBodySchema,
   type KioskFaceMatchBody,
   KioskFaceMatchResponseSchema,
   type KioskFaceMatchResponse,
-
-  // Face Registrations
-  ListFaceRegistrationSchema,
-  type ListFaceRegistration,
-  ListFaceRegistrationsResponseSchema,
-  type ListFaceRegistrationsResponse,
 
   // User (Firebase Auth)
   UserRoleSchema,

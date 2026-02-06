@@ -10,16 +10,10 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ModelStatusProvider } from './contexts/ModelStatusContext';
 import { API_BASE } from './lib/apiBase';
 import { Config } from './pages/Config';
-import { FaceDemo } from './pages/FaceDemo';
-import { Library } from './pages/Library';
 import { Login } from './pages/Login';
 import { RegisterCustomer } from './pages/RegisterCustomer';
 import { RoleManagement } from './pages/RoleManagement';
-import { Signup } from './pages/Signup';
-import { User } from './pages/User';
-import { Users } from './pages/Users';
 import { Version } from './pages/Version';
-import { RegistrationWizard } from './flows/beneficiary-registration/RegistrationWizard';
 import { KioskFlowPage } from './flows/kiosk/KioskFlowPage';
 
 /** Navigation bar with auth-aware links */
@@ -33,8 +27,6 @@ function NavBar() {
   const isDeveloper = userRole === 'developer';
   const isAdmin = userRole === 'admin';
   const canManageRoles = isDeveloper || isAdmin;
-  // Users with active roles (not 'unknown') can access most features
-  const hasActiveRole = userRole && userRole !== 'unknown';
 
   // Sign out and navigate to login without preserving previous location
   // This prevents the next user from being redirected to the previous user's page
@@ -116,36 +108,9 @@ function NavBar() {
                   </Link>
                 )}
 
-                {/* Features requiring active role (not 'unknown') */}
-                {hasActiveRole && (
-                  <>
-                    <Link
-                      to="/user"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Match Result
-                    </Link>
-                    <Link
-                      to="/library"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Library
-                    </Link>
-                  </>
-                )}
-
                 {/* Admin/Developer only features */}
                 {canManageRoles && (
                   <>
-                    <Link
-                      to="/users"
-                      onClick={closeMenu}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Registrations
-                    </Link>
                     <Link
                       to="/role-management"
                       onClick={closeMenu}
@@ -158,32 +123,11 @@ function NavBar() {
 
                 {/* Public features - available to everyone */}
                 <Link
-                  to="/facedemo"
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Face Demo
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Register Face
-                </Link>
-                <Link
                   to="/registerCustomer"
                   onClick={closeMenu}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Register Customer
-                </Link>
-                <Link
-                  to="/flows/beneficiary-registration"
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Registration Flow
                 </Link>
                 <Link
                   to="/flows/kiosk"
@@ -247,12 +191,9 @@ function AppRoutes() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/facedemo" element={<FaceDemo apiBase={API_BASE} />} />
-          <Route path="/signup" element={<Signup apiBase={API_BASE} />} />
           <Route path="/registerCustomer" element={<RegisterCustomer />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
-          <Route path="/flows/beneficiary-registration" element={<RegistrationWizard />} />
           <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
 
           {/* Dashboard - shows role-appropriate content, including for unknown users */}
@@ -266,41 +207,7 @@ function AppRoutes() {
           />
 
           {/* Routes requiring active role (not 'unknown') */}
-          <Route
-            path="/user"
-            element={
-              <RoleProtectedRoute
-                allowedRoles={['developer', 'admin', 'volunteer', 'vendor']}
-                fallback={<AccessDenied />}
-              >
-                <User apiBase={API_BASE} />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/library"
-            element={
-              <RoleProtectedRoute
-                allowedRoles={['developer', 'admin', 'volunteer', 'vendor']}
-                fallback={<AccessDenied />}
-              >
-                <Library apiBase={API_BASE} />
-              </RoleProtectedRoute>
-            }
-          />
-
           {/* Routes requiring admin/developer role */}
-          <Route
-            path="/users"
-            element={
-              <RoleProtectedRoute
-                allowedRoles={['developer', 'admin']}
-                fallback={<AccessDenied />}
-              >
-                <Users apiBase={API_BASE} />
-              </RoleProtectedRoute>
-            }
-          />
           <Route
             path="/role-management"
             element={

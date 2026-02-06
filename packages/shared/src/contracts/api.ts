@@ -1,21 +1,11 @@
 import {
-  CompareImagesBodySchema,
-  CompareImagesResponseSchema,
-  FaceMatchBodySchema,
-  FaceMatchResponseSchema,
   GetMeResponseSchema,
   HealthResponseSchema,
   KioskFaceMatchBodySchema,
   KioskFaceMatchResponseSchema,
-  ListFaceRegistrationsResponseSchema,
-  ListImagesResponseSchema,
   ListUsersResponseSchema,
   LoadModelBodySchema,
   LoadModelResponseSchema,
-  SaveImageBodySchema,
-  SaveImageResponseSchema,
-  SignupBodySchema,
-  SignupResponseSchema,
   RegisterCustomerBodySchema,
   RegisterCustomerResponseSchema,
   UpdateUserRoleBodySchema,
@@ -43,25 +33,6 @@ export const loadModel = defineContract({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Face Registration Contracts
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const signup = defineContract({
-  method: 'POST',
-  path: '/face-registrations',
-  body: SignupBodySchema,
-  response: SignupResponseSchema,
-  auth: 'public',
-});
-
-export const listFaceRegistrations = defineContract({
-  method: 'GET',
-  path: '/face-registrations',
-  response: ListFaceRegistrationsResponseSchema,
-  auth: ['developer', 'admin'],
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Customer Registration Contracts
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -74,18 +45,6 @@ export const registerCustomer = defineContract({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Demo Contracts
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const faceMatch = defineContract({
-  method: 'POST',
-  path: '/demo/face-match',
-  body: FaceMatchBodySchema,
-  response: FaceMatchResponseSchema,
-  auth: ['developer', 'admin', 'volunteer', 'vendor'],
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Kiosk Contracts
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -95,33 +54,6 @@ export const kioskFaceMatch = defineContract({
   body: KioskFaceMatchBodySchema,
   response: KioskFaceMatchResponseSchema,
   auth: 'public',
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Images Contracts
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const saveImage = defineContract({
-  method: 'POST',
-  path: '/images',
-  body: SaveImageBodySchema,
-  response: SaveImageResponseSchema,
-  auth: ['developer', 'admin', 'volunteer', 'vendor'],
-});
-
-export const listImages = defineContract({
-  method: 'GET',
-  path: '/images',
-  response: ListImagesResponseSchema,
-  auth: ['developer', 'admin', 'volunteer', 'vendor'],
-});
-
-export const compareImages = defineContract({
-  method: 'POST',
-  path: '/images/compare',
-  body: CompareImagesBodySchema,
-  response: CompareImagesResponseSchema,
-  auth: ['developer', 'admin', 'volunteer', 'vendor'],
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
