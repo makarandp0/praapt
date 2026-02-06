@@ -78,8 +78,21 @@ export function Customers({ apiBase }: Props) {
       body.pin = editPin;
     }
 
-    if (!body.name && !body.pin) {
+    const hasNameChange = 'name' in body;
+    const hasPinChange = 'pin' in body;
+
+    if (!hasNameChange && !hasPinChange) {
       cancelEdit();
+      return;
+    }
+
+    if (hasNameChange && trimmedName === '') {
+      setError('Name cannot be empty');
+      return;
+    }
+
+    if (hasPinChange && !/^\d{4}$/.test(editPin)) {
+      setError('PIN must be 4 digits');
       return;
     }
 

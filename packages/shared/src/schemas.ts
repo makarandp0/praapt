@@ -126,10 +126,12 @@ export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 // Customer Registration (Kiosk)
 // ─────────────────────────────────────────────────────────────────────────────
 
+const PinSchema = z.string().regex(/^\d{4}$/, 'pin must be 4 digits');
+
 /** POST /customers request body */
 export const RegisterCustomerBodySchema = z.object({
   name: z.string().min(1, 'name required'),
-  pin: z.string().regex(/^\d{4}$/, 'pin must be 4 digits'),
+  pin: PinSchema,
   captures: z.array(z.string().min(1, 'capture required')).default([]),
 });
 export type RegisterCustomerBody = z.infer<typeof RegisterCustomerBodySchema>;
@@ -148,7 +150,7 @@ export type RegisterCustomerResponse = z.infer<typeof RegisterCustomerResponseSc
 export const CustomerSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  pin: z.string(),
+  pin: PinSchema,
   faceCount: z.number(),
   createdAt: z.string().nullable(),
   updatedAt: z.string().nullable(),
@@ -168,7 +170,7 @@ export type ListCustomersResponse = z.infer<typeof ListCustomersResponseSchema>;
 export const UpdateCustomerBodySchema = z
   .object({
     name: z.string().min(1, 'name required').optional(),
-    pin: z.string().regex(/^\d{4}$/, 'pin must be 4 digits').optional(),
+    pin: PinSchema.optional(),
   })
   .refine((data) => data.name || data.pin, {
     message: 'name or pin required',

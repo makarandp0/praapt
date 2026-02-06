@@ -173,14 +173,19 @@ routes.fromContract(Contracts.deleteCustomer, async (req) => {
     return faceRows;
   });
 
-  faces.forEach(({ imagePath }) => {
-    const filePath = path.join(IMAGES_DIR, imagePath);
-    try {
-      fs.unlinkSync(filePath);
-    } catch {
-      // best-effort cleanup
-    }
-  });
+  await Promise.all(
+    faces.map(async ({ imagePath }) => {
+      const filePath = path.join(IMAGES_DIR, imagePath);
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (error) {
+        logger.warn(
+          { err: error, customerId: id, filePath },
+          'Failed to delete customer face image file',
+        );
+      }
+    }),
+  );
 
   logger.info({ customerId: id }, 'Customer deleted');
 
