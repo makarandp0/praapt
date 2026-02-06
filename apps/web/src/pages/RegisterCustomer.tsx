@@ -73,6 +73,23 @@ export function RegisterCustomer() {
 
   const normalizedAadhaar = (value: string) => value.replace(/\D/g, '').slice(0, 4);
   const totalCaptured = faceSlots.filter(Boolean).length;
+  const slotColumns = 2;
+  const slotRows = Math.max(1, Math.ceil(faceSlots.length / slotColumns));
+  const orderedSlots = useMemo(
+    () => {
+      const ordered: { slot: string | null; index: number }[] = [];
+      for (let row = 0; row < slotRows; row += 1) {
+        for (let col = 0; col < slotColumns; col += 1) {
+          const index = row + col * slotRows;
+          if (index < faceSlots.length) {
+            ordered.push({ slot: faceSlots[index], index });
+          }
+        }
+      }
+      return ordered;
+    },
+    [faceSlots, slotColumns, slotRows],
+  );
 
   const goNext = () => setStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
   const goBack = () => setStepIndex((prev) => Math.max(prev - 1, 0));
@@ -269,7 +286,6 @@ export function RegisterCustomer() {
                         <FaceCaptureFrame
                           cameraRef={cameraRef}
                           stream={streamRef.current}
-                          cameraOpen={cameraOpen}
                           isActive
                           frameClassName="relative w-full aspect-[4/3] bg-neutral-200 rounded-2xl overflow-hidden flex items-center justify-center"
                           overlayClassName="w-[260px] h-[340px] border-2 border-neutral-700 border-dashed rounded-full opacity-70"
@@ -281,16 +297,17 @@ export function RegisterCustomer() {
                         <div
                           className="grid w-full flex-1 gap-2"
                           style={{
-                            gridAutoFlow: 'column',
-                            gridAutoColumns: 'minmax(0, 1fr)',
-                            gridTemplateRows: 'repeat(3, minmax(0, 1fr))',
+                            gridTemplateColumns: `repeat(${slotColumns}, minmax(0, 1fr))`,
+                            gridTemplateRows: `repeat(${slotRows}, minmax(0, 1fr))`,
                           }}
                         >
-                          {faceSlots.map((captured, index) => (
+                          {orderedSlots.map(({ slot: captured, index }) => (
                             <div key={index} className="relative h-full">
                               <button
                                 type="button"
-                                className="group relative h-full w-full overflow-hidden rounded-md border border-neutral-300 bg-white text-left"
+                                className={`relative h-full w-full overflow-hidden rounded-md border border-neutral-300 bg-white text-left ${
+                                  captured ? '' : 'group'
+                                }`}
                                 onClick={() => {
                                   if (!captured) {
                                     handleCaptureAtIndex(index);
@@ -316,7 +333,9 @@ export function RegisterCustomer() {
                                     <span>Tap to capture</span>
                                   </div>
                                 )}
-                                <div className="absolute inset-0 border-2 border-transparent transition-colors group-hover:border-neutral-400" />
+                                {!captured && (
+                                  <div className="absolute inset-0 border-2 border-transparent transition-colors group-hover:border-neutral-400" />
+                                )}
                               </button>
                               {captured && (
                                 <button

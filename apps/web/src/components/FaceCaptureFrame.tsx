@@ -3,7 +3,6 @@ import { CameraPreview, CameraPreviewRef } from './CameraPreview';
 interface FaceCaptureFrameProps {
   cameraRef: React.RefObject<CameraPreviewRef>;
   stream: MediaStream | null;
-  cameraOpen: boolean;
   isActive?: boolean;
   frameClassName?: string;
   overlayClassName?: string;
@@ -19,7 +18,6 @@ const DEFAULT_PLACEHOLDER_CLASS = DEFAULT_OVAL_CLASS;
 export function FaceCaptureFrame({
   cameraRef,
   stream,
-  cameraOpen,
   isActive = false,
   frameClassName = DEFAULT_FRAME_CLASS,
   overlayClassName = DEFAULT_OVAL_CLASS,

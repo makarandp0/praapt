@@ -21,7 +21,7 @@ export function FaceScanActiveOptimized({
   const fontFamily = getFontFamily(language);
   const [countdown, setCountdown] = useState(3);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
+  const { cameraRef, streamRef, openCamera, closeCamera, captureFrame } = useCamera();
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +78,6 @@ export function FaceScanActiveOptimized({
         <FaceCaptureFrame
           cameraRef={cameraRef}
           stream={streamRef.current}
-          cameraOpen={cameraOpen}
           isActive={false}
         />
 
