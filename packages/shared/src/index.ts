@@ -60,6 +60,16 @@ export {
   type RegisterCustomerBody,
   RegisterCustomerResponseSchema,
   type RegisterCustomerResponse,
+  CustomerSchema,
+  type Customer,
+  ListCustomersResponseSchema,
+  type ListCustomersResponse,
+  UpdateCustomerBodySchema,
+  type UpdateCustomerBody,
+  UpdateCustomerResponseSchema,
+  type UpdateCustomerResponse,
+  DeleteCustomerResponseSchema,
+  type DeleteCustomerResponse,
 
   // Kiosk: Face Match schemas
   KioskFaceMatchBodySchema,

@@ -10,6 +10,10 @@ import {
   LoadModelResponseSchema,
   RegisterCustomerBodySchema,
   RegisterCustomerResponseSchema,
+  ListCustomersResponseSchema,
+  UpdateCustomerBodySchema,
+  UpdateCustomerResponseSchema,
+  DeleteCustomerResponseSchema,
   UpdateUserRoleBodySchema,
   UpdateUserRoleResponseSchema,
 } from '../schemas.js';
@@ -43,6 +47,28 @@ export const registerCustomer = defineContract({
   path: '/customers',
   body: RegisterCustomerBodySchema,
   response: RegisterCustomerResponseSchema,
+  auth: ['volunteer', 'admin', 'developer'],
+});
+
+export const listCustomers = defineContract({
+  method: 'GET',
+  path: '/customers',
+  response: ListCustomersResponseSchema,
+  auth: ['volunteer', 'admin', 'developer'],
+});
+
+export const updateCustomer = defineContract({
+  method: 'PATCH',
+  path: '/customers/:id',
+  body: UpdateCustomerBodySchema,
+  response: UpdateCustomerResponseSchema,
+  auth: ['volunteer', 'admin', 'developer'],
+});
+
+export const deleteCustomer = defineContract({
+  method: 'DELETE',
+  path: '/customers/:id',
+  response: DeleteCustomerResponseSchema,
   auth: ['volunteer', 'admin', 'developer'],
 });
 
