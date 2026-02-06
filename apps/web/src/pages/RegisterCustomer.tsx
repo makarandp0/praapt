@@ -75,6 +75,7 @@ export function RegisterCustomer() {
   const totalCaptured = faceSlots.filter(Boolean).length;
   const slotColumns = 2;
   const slotRows = Math.max(1, Math.ceil(faceSlots.length / slotColumns));
+  const singleSlot = faceSlots.length === 1;
   const orderedSlots = useMemo(
     () => {
       const ordered: { slot: string | null; index: number }[] = [];
@@ -298,16 +299,22 @@ export function RegisterCustomer() {
                           className="grid w-full flex-1 gap-2"
                           style={{
                             gridTemplateColumns: `repeat(${slotColumns}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${slotRows}, minmax(0, 1fr))`,
+                            gridTemplateRows: singleSlot
+                              ? 'auto'
+                              : `repeat(${slotRows}, minmax(0, 1fr))`,
+                            alignContent: singleSlot ? 'start' : 'stretch',
                           }}
                         >
                           {orderedSlots.map(({ slot: captured, index }) => (
-                            <div key={index} className="relative h-full">
+                            <div
+                              key={index}
+                              className={`relative ${singleSlot ? 'aspect-[4/3]' : 'h-full'}`}
+                            >
                               <button
                                 type="button"
-                                className={`relative h-full w-full overflow-hidden rounded-md border border-neutral-300 bg-white text-left ${
+                                className={`relative w-full overflow-hidden rounded-md border border-neutral-300 bg-white text-left ${
                                   captured ? '' : 'group'
-                                }`}
+                                } ${singleSlot ? 'h-auto aspect-[4/3]' : 'h-full'}`}
                                 onClick={() => {
                                   if (!captured) {
                                     handleCaptureAtIndex(index);
