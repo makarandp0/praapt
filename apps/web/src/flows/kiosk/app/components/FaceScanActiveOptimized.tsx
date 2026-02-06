@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CameraPreview } from '../../../../components/CameraPreview';
+import { FaceCaptureFrame } from '../../../../components/FaceCaptureFrame';
 import { useCamera } from '../../../../hooks/useCamera';
 import { type Language, getTranslation, getFontFamily } from '../utils/translations';
 import { LanguageToggle } from './LanguageToggle';
@@ -21,7 +21,7 @@ export function FaceScanActiveOptimized({
   const fontFamily = getFontFamily(language);
   const [countdown, setCountdown] = useState(3);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
+  const { cameraRef, streamRef, openCamera, closeCamera, captureFrame } = useCamera();
 
   useEffect(() => {
     let mounted = true;
@@ -74,23 +74,12 @@ export function FaceScanActiveOptimized({
       </h2>
 
       {/* Camera frame */}
-      <div className="relative w-[480px] h-[480px] bg-[#E7E0D6] rounded-2xl overflow-hidden flex items-center justify-center">
-        {cameraOpen && streamRef.current ? (
-          <div className="w-full h-full">
-            <CameraPreview
-              ref={cameraRef}
-              stream={streamRef.current}
-              isActive={false}
-            />
-          </div>
-        ) : (
-          <div className="w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60"></div>
-        )}
-
-        {/* Oval guide */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60"></div>
-        </div>
+      <div className="relative">
+        <FaceCaptureFrame
+          cameraRef={cameraRef}
+          stream={streamRef.current}
+          isActive={false}
+        />
 
         {/* Countdown overlay */}
         {countdown > 0 && (
