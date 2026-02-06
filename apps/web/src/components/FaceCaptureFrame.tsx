@@ -26,7 +26,7 @@ export function FaceCaptureFrame({
 }: FaceCaptureFrameProps) {
   return (
     <div className={frameClassName}>
-      {cameraOpen && stream ? (
+      {stream ? (
         <div className="w-full h-full">
           <CameraPreview ref={cameraRef} stream={stream} isActive={isActive} />
         </div>
