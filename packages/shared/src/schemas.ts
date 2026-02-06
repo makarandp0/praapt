@@ -144,6 +144,53 @@ export const RegisterCustomerResponseSchema = createApiResponse(
 );
 export type RegisterCustomerResponse = z.infer<typeof RegisterCustomerResponseSchema>;
 
+/** Customer entry returned for admin listing */
+export const CustomerSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  pin: z.string(),
+  faceCount: z.number(),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+});
+export type Customer = z.infer<typeof CustomerSchema>;
+
+/** GET /customers response */
+export const ListCustomersResponseSchema = createApiResponse(
+  z.object({
+    customers: z.array(CustomerSchema),
+    count: z.number(),
+  }),
+);
+export type ListCustomersResponse = z.infer<typeof ListCustomersResponseSchema>;
+
+/** PATCH /customers/:id request body */
+export const UpdateCustomerBodySchema = z
+  .object({
+    name: z.string().min(1, 'name required').optional(),
+    pin: z.string().regex(/^\d{4}$/, 'pin must be 4 digits').optional(),
+  })
+  .refine((data) => data.name || data.pin, {
+    message: 'name or pin required',
+  });
+export type UpdateCustomerBody = z.infer<typeof UpdateCustomerBodySchema>;
+
+/** PATCH /customers/:id response */
+export const UpdateCustomerResponseSchema = createApiResponse(
+  z.object({
+    customer: CustomerSchema,
+  }),
+);
+export type UpdateCustomerResponse = z.infer<typeof UpdateCustomerResponseSchema>;
+
+/** DELETE /customers/:id response */
+export const DeleteCustomerResponseSchema = createApiResponse(
+  z.object({
+    customerId: z.string().uuid(),
+  }),
+);
+export type DeleteCustomerResponse = z.infer<typeof DeleteCustomerResponseSchema>;
+
 /** POST /kiosk/face-match request body */
 export const KioskFaceMatchBodySchema = z.object({
   pin: z.string().min(1, 'pin required'),

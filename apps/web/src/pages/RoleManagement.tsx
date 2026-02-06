@@ -25,6 +25,11 @@ const ENDPOINT_INFO: EndpointInfo[] = [
   { method: 'GET', path: '/me', description: 'Get current user profile', auth: Contracts.getMe.auth },
   { method: 'GET', path: '/users', description: 'List all users', auth: Contracts.listUsers.auth },
   { method: 'PATCH', path: '/users/:id/role', description: 'Update user role', auth: Contracts.updateUserRole.auth },
+
+  // Customers
+  { method: 'GET', path: '/customers', description: 'List customers', auth: Contracts.listCustomers.auth },
+  { method: 'PATCH', path: '/customers/:id', description: 'Update customer', auth: Contracts.updateCustomer.auth },
+  { method: 'DELETE', path: '/customers/:id', description: 'Delete customer', auth: Contracts.deleteCustomer.auth },
 ];
 
 /**

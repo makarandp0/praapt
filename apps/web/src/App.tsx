@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ModelStatusProvider } from './contexts/ModelStatusContext';
 import { API_BASE } from './lib/apiBase';
 import { Config } from './pages/Config';
+import { Customers } from './pages/Customers';
 import { Login } from './pages/Login';
 import { RegisterCustomer } from './pages/RegisterCustomer';
 import { RoleManagement } from './pages/RoleManagement';
@@ -34,7 +35,9 @@ function NavBar() {
   const userRole = parseUserRole(user?.role);
   const isDeveloper = userRole === 'developer';
   const isAdmin = userRole === 'admin';
+  const isVolunteer = userRole === 'volunteer';
   const canManageRoles = isDeveloper || isAdmin;
+  const canManageCustomers = isDeveloper || isAdmin || isVolunteer;
 
   // Sign out and navigate to login without preserving previous location
   // This prevents the next user from being redirected to the previous user's page
@@ -129,6 +132,17 @@ function NavBar() {
                   </>
                 )}
 
+                {/* Customer management */}
+                {canManageCustomers && (
+                  <Link
+                    to="/customers"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Customers
+                  </Link>
+                )}
+
                 {/* Public features - available to everyone */}
                 <Link
                   to="/registerCustomer"
@@ -199,10 +213,10 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
-      <Route path="/registerCustomer" element={<RegisterCustomer />} />
-      <Route path="/version" element={<Version apiBase={API_BASE} />} />
-      <Route path="/config" element={<Config apiBase={API_BASE} />} />
-      <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
+          <Route path="/registerCustomer" element={<RegisterCustomer />} />
+          <Route path="/version" element={<Version apiBase={API_BASE} />} />
+          <Route path="/config" element={<Config apiBase={API_BASE} />} />
+          <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
 
       {/* Dashboard - shows role-appropriate content, including for unknown users */}
       <Route
@@ -215,18 +229,30 @@ function AppRoutes() {
       />
 
       {/* Routes requiring active role (not 'unknown') */}
-      {/* Routes requiring admin/developer role */}
-      <Route
-        path="/role-management"
-        element={
-          <RoleProtectedRoute
-            allowedRoles={['developer', 'admin']}
-            fallback={<AccessDenied />}
-          >
-            <RoleManagement apiBase={API_BASE} />
-          </RoleProtectedRoute>
-        }
-      />
+          {/* Routes requiring admin/developer role */}
+          <Route
+            path="/role-management"
+            element={
+              <RoleProtectedRoute
+                allowedRoles={['developer', 'admin']}
+                fallback={<AccessDenied />}
+              >
+                <RoleManagement apiBase={API_BASE} />
+              </RoleProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customers"
+            element={
+              <RoleProtectedRoute
+                allowedRoles={['developer', 'admin', 'volunteer']}
+                fallback={<AccessDenied />}
+              >
+                <Customers apiBase={API_BASE} />
+              </RoleProtectedRoute>
+            }
+          />
 
       {/* Catch-all redirect to dashboard */}
       <Route path="*" element={<Navigate to="/" replace />} />
