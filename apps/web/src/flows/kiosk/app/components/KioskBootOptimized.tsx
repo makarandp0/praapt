@@ -35,7 +35,9 @@ export function KioskBootOptimized({ onComplete }: KioskBootOptimizedProps) {
     }
     lastLoadAttemptRef.current = now;
 
-    void loadModel('buffalo_l');
+    void loadModel('buffalo_l').catch((err) => {
+      console.error('Failed to load face model:', err);
+    });
   }, [faceServiceOk, isLoadingModel, loadModel, modelsLoaded]);
 
   const statusLabel = useMemo(() => {

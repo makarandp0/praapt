@@ -45,7 +45,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
   const [currentScreen, setCurrentScreen] = useState<ScreenOptimized>('boot');
   const [aadhaarDigits, setAadhaarDigits] = useState('');
   const [capturedFace, setCapturedFace] = useState<string | null>(null);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [matchCandidates, setMatchCandidates] = useState<
     Array<{ customerId: string; name: string; imagePath: string | null; distance: number }>
   >([]);
@@ -63,7 +62,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     setCurrentScreen('idle');
     setAadhaarDigits('');
     setCapturedFace(null);
-    setSelectedCustomerId(null);
     setMatchCandidates([]);
     setSelectedFood('');
     setRetryCount(0);
@@ -96,6 +94,9 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
         });
       } catch (err) {
         console.error('Kiosk pin lookup failed:', err);
+        if (!isMounted) {
+          return;
+        }
         navigateTo('no-record');
         return;
       }
@@ -105,27 +106,11 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
       }
 
       if (!response.ok) {
-        setSelectedCustomerId(null);
         navigateTo('no-record');
         return;
       }
 
-      if (response.customers.length === 0) {
-        setSelectedCustomerId(null);
-        navigateTo('no-record');
-        return;
-      }
-
-      if (response.customers.length === 1) {
-        const onlyCustomer = response.customers[0];
-        setSelectedCustomerId(onlyCustomer.customerId);
-        setBeneficiaryName(onlyCustomer.name);
-        navigateTo('pin-welcome');
-        return;
-      }
-
-      setSelectedCustomerId(null);
-      navigateTo('face-scan');
+      navigateTo('pin-welcome');
     }
 
     runPinLookup();
@@ -179,19 +164,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
 
       setMatchCandidates(response.matches);
 
-      if (selectedCustomerId) {
-        const selectedMatch = response.matches.find(
-          (match) => match.customerId === selectedCustomerId,
-        );
-        if (!selectedMatch) {
-          navigateTo('verification-failed');
-          return;
-        }
-        setBeneficiaryName(selectedMatch.name);
-        navigateTo('verified-toast');
-        return;
-      }
-
       if (response.matches.length === 1) {
         const bestMatch = response.matches[0];
         setBeneficiaryName(bestMatch.name);
@@ -207,7 +179,7 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     return () => {
       isMounted = false;
     };
-  }, [aadhaarDigits, apiBase, capturedFace, currentScreen, selectedCustomerId]);
+  }, [aadhaarDigits, apiBase, capturedFace, currentScreen]);
 
   return (
     <div className="min-h-screen bg-[#5A6472] flex flex-col">
@@ -252,7 +224,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
             <NoRecordFound
               onTryAgain={() => {
                 setAadhaarDigits('');
-                setSelectedCustomerId(null);
                 navigateTo('enter-aadhaar');
               }}
               onAskHelp={() => navigateTo('ask-help')}
@@ -282,7 +253,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
               matches={matchCandidates}
               onSelect={(match) => {
                 setBeneficiaryName(match.name);
-                setSelectedCustomerId(match.customerId);
                 navigateTo('verified-toast');
               }}
               onRescan={() => {
@@ -293,7 +263,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
               onReenterDigits={() => {
                 setCapturedFace(null);
                 setMatchCandidates([]);
-                setSelectedCustomerId(null);
                 setAadhaarDigits('');
                 navigateTo('enter-aadhaar');
               }}
@@ -320,7 +289,6 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
               onReenterDigits={() => {
                 setAadhaarDigits('');
                 setRetryCount(0);
-                setSelectedCustomerId(null);
                 navigateTo('enter-aadhaar');
               }}
               onAskHelp={() => navigateTo('ask-help')}

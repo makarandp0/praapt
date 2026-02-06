@@ -157,25 +157,16 @@ export const KioskPinLookupBodySchema = z.object({
 });
 export type KioskPinLookupBody = z.infer<typeof KioskPinLookupBodySchema>;
 
-/** Kiosk pin lookup customer */
-const KioskPinLookupCustomerSchema = z.object({
-  customerId: z.string().uuid(),
-  name: z.string(),
-  imagePath: z.string().nullable(),
-  faceCount: z.number(),
-});
-
 /** Kiosk pin lookup success data */
 const KioskPinLookupSuccessSchema = z.object({
   ok: z.literal(true),
-  customers: z.array(KioskPinLookupCustomerSchema),
+  eligible: z.literal(true),
 });
 
 /** Kiosk pin lookup error data */
 const KioskPinLookupErrorSchema = z.object({
   ok: z.literal(false),
   error: z.string(),
-  reason: z.enum(['no_customers', 'no_faces']).optional(),
 });
 
 /** POST /kiosk/pin-lookup response - discriminated union */
