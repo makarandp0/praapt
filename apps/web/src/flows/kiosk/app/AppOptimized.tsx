@@ -8,6 +8,7 @@ import { NoRecordFound } from './components/NoRecordFound';
 import { FaceScanActiveOptimized } from './components/FaceScanActiveOptimized';
 import { MatchingInProgress } from './components/MatchingInProgress';
 import { MultipleMatchSelectOptimized } from './components/MultipleMatchSelectOptimized';
+import { PinWelcomeOptimized } from './components/PinWelcomeOptimized';
 import { VerificationToastOptimized } from './components/VerificationToastOptimized';
 import { VerificationFailed } from './components/VerificationFailed';
 import { AskForHelp } from './components/AskForHelp';
@@ -22,6 +23,8 @@ export type ScreenOptimized =
   | 'boot'
   | 'idle'
   | 'enter-aadhaar'
+  | 'pin-lookup'
+  | 'pin-welcome'
   | 'no-record'
   | 'face-scan'
   | 'matching'
@@ -75,6 +78,47 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     return meals[id] || id;
   };
 
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function runPinLookup() {
+      if (currentScreen !== 'pin-lookup' || aadhaarDigits.length !== 4) {
+        return;
+      }
+
+      let response;
+      try {
+        response = await callContract(apiBase, Contracts.kioskPinLookup, {
+          body: { pin: aadhaarDigits },
+        });
+      } catch (err) {
+        console.error('Kiosk pin lookup failed:', err);
+        if (!isMounted) {
+          return;
+        }
+        navigateTo('no-record');
+        return;
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!response.ok) {
+        navigateTo('no-record');
+        return;
+      }
+
+      navigateTo('pin-welcome');
+    }
+
+    runPinLookup();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [aadhaarDigits, apiBase, currentScreen]);
 
   useEffect(() => {
     let isMounted = true;
@@ -157,11 +201,22 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
               digits={aadhaarDigits}
               onDigitsChange={setAadhaarDigits}
               onContinue={() => {
-                navigateTo('face-scan');
+                navigateTo('pin-lookup');
               }}
               onHelp={() => navigateTo('ask-help')}
               language={language}
               onLanguageChange={setLanguage}
+            />
+          )}
+
+          {currentScreen === 'pin-lookup' && (
+            <MatchingInProgress onComplete={() => {}} />
+          )}
+
+          {currentScreen === 'pin-welcome' && (
+            <PinWelcomeOptimized
+              onContinue={() => navigateTo('face-scan')}
+              language={language}
             />
           )}
           

@@ -16,6 +16,45 @@ const routes = createRouteBuilder(router);
 const FACE_MATCH_THRESHOLD = 0.4;
 
 /**
+ * POST /kiosk/pin-lookup
+ * Confirm the PIN is registered and has faces.
+ * Auth: public (kiosk)
+ */
+routes.fromContract(Contracts.kioskPinLookup, async (req) => {
+  const { pin } = req.body;
+
+  const candidateCustomers = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(eq(customers.pin, pin));
+
+  if (candidateCustomers.length === 0) {
+    return {
+      ok: false as const,
+      error: 'PIN not recognized',
+    };
+  }
+
+  const customerIds = candidateCustomers.map((customer) => customer.id);
+  const faces = await db
+    .select({ customerId: customerFaces.customerId })
+    .from(customerFaces)
+    .where(inArray(customerFaces.customerId, customerIds));
+
+  if (faces.length === 0) {
+    return {
+      ok: false as const,
+      error: 'PIN not recognized',
+    };
+  }
+
+  return {
+    ok: true as const,
+    eligible: true as const,
+  };
+});
+
+/**
  * POST /kiosk/face-match
  * Match a face against customers sharing the provided PIN.
  * Auth: public (kiosk)
