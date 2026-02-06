@@ -1,5 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
 import { parseUserRole } from '@praapt/shared';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -184,45 +192,56 @@ function NavBar() {
 
 /** Main app layout with routes */
 function AppRoutes() {
+  const location = useLocation();
+  const isKioskMode = location.pathname.startsWith('/flows/kiosk');
+
+  const routeElements = (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/registerCustomer" element={<RegisterCustomer />} />
+      <Route path="/version" element={<Version apiBase={API_BASE} />} />
+      <Route path="/config" element={<Config apiBase={API_BASE} />} />
+      <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
+
+      {/* Dashboard - shows role-appropriate content, including for unknown users */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <RoleDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Routes requiring active role (not 'unknown') */}
+      {/* Routes requiring admin/developer role */}
+      <Route
+        path="/role-management"
+        element={
+          <RoleProtectedRoute
+            allowedRoles={['developer', 'admin']}
+            fallback={<AccessDenied />}
+          >
+            <RoleManagement apiBase={API_BASE} />
+          </RoleProtectedRoute>
+        }
+      />
+
+      {/* Catch-all redirect to dashboard */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+
+  if (isKioskMode) {
+    return <div className="min-h-screen">{routeElements}</div>;
+  }
+
   return (
     <div className="p-6 space-y-4">
       <NavBar />
       <div className="pt-4">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/registerCustomer" element={<RegisterCustomer />} />
-          <Route path="/version" element={<Version apiBase={API_BASE} />} />
-          <Route path="/config" element={<Config apiBase={API_BASE} />} />
-          <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
-
-          {/* Dashboard - shows role-appropriate content, including for unknown users */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <RoleDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Routes requiring active role (not 'unknown') */}
-          {/* Routes requiring admin/developer role */}
-          <Route
-            path="/role-management"
-            element={
-              <RoleProtectedRoute
-                allowedRoles={['developer', 'admin']}
-                fallback={<AccessDenied />}
-              >
-                <RoleManagement apiBase={API_BASE} />
-              </RoleProtectedRoute>
-            }
-          />
-
-          {/* Catch-all redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        {routeElements}
       </div>
     </div>
   );
