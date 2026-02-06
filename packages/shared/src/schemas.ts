@@ -151,6 +151,40 @@ export const KioskFaceMatchBodySchema = z.object({
 });
 export type KioskFaceMatchBody = z.infer<typeof KioskFaceMatchBodySchema>;
 
+/** POST /kiosk/pin-lookup request body */
+export const KioskPinLookupBodySchema = z.object({
+  pin: z.string().regex(/^\d{4}$/, 'pin must be 4 digits'),
+});
+export type KioskPinLookupBody = z.infer<typeof KioskPinLookupBodySchema>;
+
+/** Kiosk pin lookup customer */
+const KioskPinLookupCustomerSchema = z.object({
+  customerId: z.string().uuid(),
+  name: z.string(),
+  imagePath: z.string().nullable(),
+  faceCount: z.number(),
+});
+
+/** Kiosk pin lookup success data */
+const KioskPinLookupSuccessSchema = z.object({
+  ok: z.literal(true),
+  customers: z.array(KioskPinLookupCustomerSchema),
+});
+
+/** Kiosk pin lookup error data */
+const KioskPinLookupErrorSchema = z.object({
+  ok: z.literal(false),
+  error: z.string(),
+  reason: z.enum(['no_customers', 'no_faces']).optional(),
+});
+
+/** POST /kiosk/pin-lookup response - discriminated union */
+export const KioskPinLookupResponseSchema = z.discriminatedUnion('ok', [
+  KioskPinLookupSuccessSchema,
+  KioskPinLookupErrorSchema,
+]);
+export type KioskPinLookupResponse = z.infer<typeof KioskPinLookupResponseSchema>;
+
 /** Kiosk customer match entry */
 const KioskCustomerMatchSchema = z.object({
   customerId: z.string().uuid(),

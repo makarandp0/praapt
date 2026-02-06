@@ -16,6 +16,93 @@ const routes = createRouteBuilder(router);
 const FACE_MATCH_THRESHOLD = 0.4;
 
 /**
+ * POST /kiosk/pin-lookup
+ * Confirm the PIN is registered and has faces.
+ * Auth: public (kiosk)
+ */
+routes.fromContract(Contracts.kioskPinLookup, async (req) => {
+  const { pin } = req.body;
+
+  const candidateCustomers = await db.select().from(customers).where(eq(customers.pin, pin));
+
+  if (candidateCustomers.length === 0) {
+    return {
+      ok: false as const,
+      error: 'No customers found for pin',
+      reason: 'no_customers' as const,
+    };
+  }
+
+  const customerIds = candidateCustomers.map((customer) => customer.id);
+  const faces = await db
+    .select()
+    .from(customerFaces)
+    .where(inArray(customerFaces.customerId, customerIds));
+
+  if (faces.length === 0) {
+    return {
+      ok: false as const,
+      error: 'No faces found for pin',
+      reason: 'no_faces' as const,
+    };
+  }
+
+  const faceStats = new Map<
+    string,
+    { faceCount: number; latestImagePath: string | null; latestCreatedAt: Date | null }
+  >();
+
+  for (const face of faces) {
+    const existing = faceStats.get(face.customerId);
+    if (!existing) {
+      faceStats.set(face.customerId, {
+        faceCount: 1,
+        latestImagePath: face.imagePath ?? null,
+        latestCreatedAt: face.createdAt ?? null,
+      });
+      continue;
+    }
+
+    const nextCount = existing.faceCount + 1;
+    const isNewer =
+      face.createdAt &&
+      (!existing.latestCreatedAt || face.createdAt > existing.latestCreatedAt);
+
+    faceStats.set(face.customerId, {
+      faceCount: nextCount,
+      latestImagePath: isNewer ? face.imagePath ?? null : existing.latestImagePath,
+      latestCreatedAt: isNewer ? face.createdAt : existing.latestCreatedAt,
+    });
+  }
+
+  const customersWithFaces = candidateCustomers
+    .map((customer) => {
+      const stats = faceStats.get(customer.id);
+      if (!stats) return null;
+      return {
+        customerId: customer.id,
+        name: customer.name,
+        imagePath: stats.latestImagePath,
+        faceCount: stats.faceCount,
+      };
+    })
+    .filter((customer): customer is NonNullable<typeof customer> => customer !== null);
+
+  if (customersWithFaces.length === 0) {
+    return {
+      ok: false as const,
+      error: 'No faces found for pin',
+      reason: 'no_faces' as const,
+    };
+  }
+
+  return {
+    ok: true as const,
+    customers: customersWithFaces,
+  };
+});
+
+/**
  * POST /kiosk/face-match
  * Match a face against customers sharing the provided PIN.
  * Auth: public (kiosk)

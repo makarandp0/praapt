@@ -3,6 +3,8 @@ import {
   HealthResponseSchema,
   KioskFaceMatchBodySchema,
   KioskFaceMatchResponseSchema,
+  KioskPinLookupBodySchema,
+  KioskPinLookupResponseSchema,
   ListUsersResponseSchema,
   LoadModelBodySchema,
   LoadModelResponseSchema,
@@ -29,7 +31,7 @@ export const loadModel = defineContract({
   path: '/load-model',
   body: LoadModelBodySchema,
   response: LoadModelResponseSchema,
-  auth: ['developer'],
+  auth: 'authenticated',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +55,14 @@ export const kioskFaceMatch = defineContract({
   path: '/kiosk/face-match',
   body: KioskFaceMatchBodySchema,
   response: KioskFaceMatchResponseSchema,
+  auth: 'public',
+});
+
+export const kioskPinLookup = defineContract({
+  method: 'POST',
+  path: '/kiosk/pin-lookup',
+  body: KioskPinLookupBodySchema,
+  response: KioskPinLookupResponseSchema,
   auth: 'public',
 });
 
