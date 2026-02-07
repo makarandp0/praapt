@@ -1,4 +1,4 @@
-import { FaceAlignmentConfig, OverlayShapeConfig } from './FaceCaptureFrame';
+import { FaceAlignmentConfig, OverlayShapeConfig } from './faceCaptureTypes';
 
 export const FACE_CAPTURE_FRAME_CLASS =
   'relative w-full aspect-[4/3] bg-[#E7E0D6] rounded-2xl overflow-hidden flex items-center justify-center';

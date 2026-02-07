@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaceCaptureFrame, FaceAlignmentState } from '../../../../components/FaceCaptureFrame';
+import { FaceCaptureFrame } from '../../../../components/FaceCaptureFrame';
 import {
   FACE_CAPTURE_ALIGNMENT_CONFIG,
   FACE_CAPTURE_FRAME_CLASS,
@@ -7,6 +7,7 @@ import {
   FACE_CAPTURE_OVERLAY_SHAPE,
   FACE_CAPTURE_PLACEHOLDER_CLASS,
 } from '../../../../components/faceCaptureDefaults';
+import { FaceAlignmentState } from '../../../../components/faceCaptureTypes';
 import { useCamera } from '../../../../hooks/useCamera';
 import { type Language, getTranslation, getFontFamily } from '../utils/translations';
 import { LanguageToggle } from './LanguageToggle';
@@ -98,7 +99,7 @@ export function FaceScanActiveOptimized({
           stream={streamRef.current}
           isActive
           enableFaceAlignment
-          showDebugUi
+          showDebugUi={import.meta.env?.DEV}
           alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
           overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
           frameClassName={FACE_CAPTURE_FRAME_CLASS}

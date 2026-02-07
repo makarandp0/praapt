@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Contracts } from '@praapt/shared';
 
-import { FaceCaptureFrame, FaceAlignmentState } from '../components/FaceCaptureFrame';
+import { FaceCaptureFrame } from '../components/FaceCaptureFrame';
 import {
   FACE_CAPTURE_ALIGNMENT_CONFIG,
   FACE_CAPTURE_FRAME_CLASS,
@@ -10,6 +10,7 @@ import {
   FACE_CAPTURE_OVERLAY_SHAPE,
   FACE_CAPTURE_PLACEHOLDER_CLASS,
 } from '../components/faceCaptureDefaults';
+import { FaceAlignmentState, getFaceAlignmentLabel } from '../components/faceCaptureTypes';
 import { useAuth } from '../contexts/AuthContext';
 import { useCamera } from '../hooks/useCamera';
 import { API_BASE } from '../lib/apiBase';
@@ -133,9 +134,7 @@ export function RegisterCustomer() {
     };
   }, [closeCamera]);
 
-  const faceStatusText = faceAlignment.aligned
-    ? 'Face ready for capture'
-    : `Adjust: ${faceAlignment.reason.replace(/_/g, ' ')}`;
+  const faceStatusText = getFaceAlignmentLabel(faceAlignment.reason);
 
   const handleCaptureAtIndex = useCallback(
     (index: number) => {
@@ -308,7 +307,7 @@ export function RegisterCustomer() {
                           stream={streamRef.current}
                           isActive
                           enableFaceAlignment
-                          showDebugUi
+                          showDebugUi={import.meta.env?.DEV}
                           alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
                           overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
                           onAlignmentChange={(next) => {

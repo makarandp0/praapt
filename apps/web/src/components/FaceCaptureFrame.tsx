@@ -2,6 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { CameraPreview, CameraPreviewRef } from './CameraPreview';
+import {
+  FaceAlignmentConfig,
+  FaceAlignmentState,
+  OverlayShapeConfig,
+  getFaceAlignmentLabel,
+} from './faceCaptureTypes';
+import { FACE_CAPTURE_ALIGNMENT_CONFIG, FACE_CAPTURE_OVERLAY_SHAPE } from './faceCaptureDefaults';
 import { FaceDetectionResult } from '../hooks/useFaceDetection';
 
 interface FaceCaptureFrameProps {
@@ -21,26 +28,6 @@ interface FaceCaptureFrameProps {
   showDebugUi?: boolean;
 }
 
-export type FaceAlignmentReason =
-  | 'aligned'
-  | 'disabled'
-  | 'loading'
-  | 'no_face'
-  | 'multiple_faces'
-  | 'fallback'
-  | 'no_bbox'
-  | 'low_confidence'
-  | 'no_video'
-  | 'no_overlay'
-  | 'too_close'
-  | 'too_far'
-  | 'off_center';
-
-export interface FaceAlignmentState {
-  aligned: boolean;
-  reason: FaceAlignmentReason;
-}
-
 export interface FaceAlignmentMetrics {
   overlapRatio: number | null;
   faceWidthRatio: number | null;
@@ -51,51 +38,13 @@ export interface FaceAlignmentMetrics {
   detectionMethod: FaceDetectionResult['detectionMethod'];
 }
 
-export interface OverlayShapeConfig {
-  widthPct: number;
-  heightPct: number;
-  offsetXPct?: number;
-  offsetYPct?: number;
-}
-
-export interface FaceAlignmentConfig {
-  overlapThreshold: number;
-  overlapSamples: number;
-  minFaceWidthRatio: number;
-  maxFaceWidthRatio: number;
-  minFaceHeightRatio: number;
-  maxFaceHeightRatio: number;
-  minFaceAreaRatio: number;
-  maxFaceAreaRatio: number;
-  minConfidence: number;
-  requireSingleFace: boolean;
-  allowFallback: boolean;
-}
-
 const DEFAULT_FRAME_CLASS =
   'relative w-[480px] h-[480px] bg-[#E7E0D6] rounded-2xl overflow-hidden flex items-center justify-center';
 const DEFAULT_OVAL_CLASS = 'border-4 border-[#243B6B] border-dashed rounded-full opacity-60';
 const DEFAULT_PLACEHOLDER_CLASS =
   'w-[340px] h-[420px] border-4 border-[#243B6B] border-dashed rounded-full opacity-60';
-const DEFAULT_OVERLAY_SHAPE: OverlayShapeConfig = {
-  widthPct: 70,
-  heightPct: 85,
-  offsetXPct: 0,
-  offsetYPct: -8,
-};
-const DEFAULT_ALIGNMENT_CONFIG: FaceAlignmentConfig = {
-  overlapThreshold: 0.75,
-  overlapSamples: 12,
-  minFaceWidthRatio: 0.35,
-  maxFaceWidthRatio: 1.05,
-  minFaceHeightRatio: 0.35,
-  maxFaceHeightRatio: 1.1,
-  minFaceAreaRatio: 0.4,
-  maxFaceAreaRatio: 1.2,
-  minConfidence: 0.7,
-  requireSingleFace: true,
-  allowFallback: true,
-};
+const DEFAULT_ALIGNMENT_CONFIG: FaceAlignmentConfig = FACE_CAPTURE_ALIGNMENT_CONFIG;
+const DEFAULT_OVERLAY_SHAPE: OverlayShapeConfig = FACE_CAPTURE_OVERLAY_SHAPE;
 const DEFAULT_ALIGNMENT_STATE: FaceAlignmentState = { aligned: false, reason: 'loading' };
 const DEFAULT_ALIGNMENT_METRICS: FaceAlignmentMetrics = {
   overlapRatio: null,
@@ -199,6 +148,24 @@ export function FaceCaptureFrame({
     stream,
   ]);
 
+  useEffect(() => {
+    const video = cameraRef.current?.getVideoElement();
+    if (!video || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+
+    const observer = new ResizeObserver(() => updateOverlayCenter());
+    observer.observe(video);
+    video.addEventListener('loadedmetadata', updateOverlayCenter);
+    video.addEventListener('resize', updateOverlayCenter);
+
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('loadedmetadata', updateOverlayCenter);
+      video.removeEventListener('resize', updateOverlayCenter);
+    };
+  }, [cameraRef, updateOverlayCenter]);
+
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
       const dragState = dragRef.current;
@@ -241,6 +208,13 @@ export function FaceCaptureFrame({
     window.removeEventListener('pointerup', handlePointerUp);
   }, [handlePointerMove]);
 
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [handlePointerMove, handlePointerUp]);
+
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLDivElement>, type: 'move' | 'resize') => {
       if (!debugOpen) {
@@ -276,7 +250,15 @@ export function FaceCaptureFrame({
       window.addEventListener('pointermove', handlePointerMove);
       window.addEventListener('pointerup', handlePointerUp);
     },
-    [baseConfig, baseOverlayShape, debugConfig, debugOpen, debugOverlayShape, handlePointerMove, handlePointerUp],
+    [
+      baseConfig,
+      baseOverlayShape,
+      debugConfig,
+      debugOpen,
+      debugOverlayShape,
+      handlePointerMove,
+      handlePointerUp,
+    ],
   );
 
   const computeAlignment = useCallback(
@@ -329,16 +311,6 @@ export function FaceCaptureFrame({
       const faceHeightRatio = faceHeightNorm / ellipseHeightNorm;
       const faceAreaRatio = ellipseAreaNorm > 0 ? faceAreaNorm / ellipseAreaNorm : 0;
 
-      setAlignmentMetrics((prev) => ({
-        ...prev,
-        faceWidthRatio,
-        faceHeightRatio,
-        faceAreaRatio,
-        faceCount: faceDetection.faceCount,
-        confidence: faceDetection.confidence,
-        detectionMethod: faceDetection.detectionMethod,
-      }));
-
       const ellipseCenterX = overlayCenter?.x ?? 0.5;
       const ellipseCenterY = overlayCenter?.y ?? 0.5;
       const ellipseRadiusX = ellipseWidthNorm / 2;
@@ -368,7 +340,13 @@ export function FaceCaptureFrame({
       const overlapRatio = total > 0 ? inside / total : 0;
       setAlignmentMetrics((prev) => ({
         ...prev,
+        faceWidthRatio,
+        faceHeightRatio,
+        faceAreaRatio,
         overlapRatio,
+        faceCount: faceDetection.faceCount,
+        confidence: faceDetection.confidence,
+        detectionMethod: faceDetection.detectionMethod,
       }));
 
       if (!config.allowFallback && faceDetection.detectionMethod === 'fallback') {
@@ -494,7 +472,7 @@ export function FaceCaptureFrame({
 
       {enableFaceAlignment && (
         <div className="absolute bottom-3 left-3 rounded-md bg-black/60 px-3 py-1.5 text-xs font-medium text-white">
-          {alignmentState.aligned ? 'Ready to capture' : `Adjust: ${alignmentState.reason}`}
+          {getFaceAlignmentLabel(alignmentState.reason)}
         </div>
       )}
 
@@ -595,7 +573,7 @@ export function FaceCaptureFrame({
                   </label>
                 </div>
                 <div className="mt-3 space-y-1 text-[11px]">
-                  <div>Status: {alignmentState.aligned ? 'Ready' : alignmentState.reason}</div>
+                  <div>Status: {getFaceAlignmentLabel(alignmentState.reason)}</div>
                   <div>
                     Overlap:{' '}
                     {alignmentMetrics.overlapRatio === null
