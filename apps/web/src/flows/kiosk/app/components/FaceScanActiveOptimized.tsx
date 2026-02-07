@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
 import { FaceCaptureFrame } from '../../../../components/FaceCaptureFrame';
+import {
+  FACE_CAPTURE_ALIGNMENT_CONFIG,
+  FACE_CAPTURE_FRAME_CLASS,
+  FACE_CAPTURE_OVERLAY_CLASS,
+  FACE_CAPTURE_OVERLAY_SHAPE,
+  FACE_CAPTURE_PLACEHOLDER_CLASS,
+} from '../../../../components/faceCaptureDefaults';
+import { FaceAlignmentState } from '../../../../components/faceCaptureTypes';
 import { useCamera } from '../../../../hooks/useCamera';
 import { type Language, getTranslation, getFontFamily } from '../utils/translations';
 import { LanguageToggle } from './LanguageToggle';
@@ -21,6 +29,10 @@ export function FaceScanActiveOptimized({
   const fontFamily = getFontFamily(language);
   const [countdown, setCountdown] = useState(3);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [faceAlignment, setFaceAlignment] = useState<FaceAlignmentState>({
+    aligned: false,
+    reason: 'loading',
+  });
   const { cameraRef, streamRef, openCamera, closeCamera, captureFrame } = useCamera();
 
   useEffect(() => {
@@ -43,23 +55,30 @@ export function FaceScanActiveOptimized({
   }, [closeCamera, openCamera]);
 
   useEffect(() => {
+    if (!faceAlignment.aligned) {
+      if (countdown !== 3) {
+        setCountdown(3);
+      }
+      return undefined;
+    }
+
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else {
-      // Auto-capture after countdown
-      const captureTimer = setTimeout(() => {
-        const dataUrl = captureFrame();
-        if (dataUrl) {
-          onCapture(dataUrl);
-        } else {
-          setCameraError('Unable to capture photo. Please try again.');
-          setCountdown(3);
-        }
-      }, 500);
-      return () => clearTimeout(captureTimer);
     }
-  }, [captureFrame, countdown, onCapture]);
+
+    const captureTimer = setTimeout(() => {
+      const dataUrl = captureFrame();
+      if (dataUrl) {
+        onCapture(dataUrl);
+      } else {
+        setCameraError('Unable to capture photo. Please try again.');
+        setCountdown(3);
+      }
+    }, 500);
+
+    return () => clearTimeout(captureTimer);
+  }, [captureFrame, countdown, faceAlignment.aligned, onCapture]);
 
   return (
     <div className="h-full flex flex-col items-center justify-center gap-8 px-16 py-12 bg-[#F6F1E8] relative" style={{ fontFamily }}>
@@ -74,17 +93,25 @@ export function FaceScanActiveOptimized({
       </h2>
 
       {/* Camera frame */}
-      <div className="relative">
+      <div className="relative w-[620px] max-w-full">
         <FaceCaptureFrame
           cameraRef={cameraRef}
           stream={streamRef.current}
-          isActive={false}
+          isActive
+          enableFaceAlignment
+          showDebugUi={import.meta.env?.DEV}
+          alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
+          overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
+          frameClassName={FACE_CAPTURE_FRAME_CLASS}
+          overlayClassName={FACE_CAPTURE_OVERLAY_CLASS}
+          placeholderClassName={FACE_CAPTURE_PLACEHOLDER_CLASS}
+          onAlignmentChange={setFaceAlignment}
         />
 
         {/* Countdown overlay */}
-        {countdown > 0 && (
-          <div className="absolute inset-0 bg-[#1D232E] bg-opacity-40 flex items-center justify-center">
-            <span className="text-[120px] font-semibold text-[#F6F1E8] tabular-nums">
+        {countdown > 0 && faceAlignment.aligned && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="rounded-full bg-black/40 px-8 py-2 text-[120px] font-semibold text-[#F6F1E8] tabular-nums shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
               {countdown}
             </span>
           </div>

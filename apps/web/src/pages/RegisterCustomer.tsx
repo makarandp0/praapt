@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Contracts } from '@praapt/shared';
 
 import { FaceCaptureFrame } from '../components/FaceCaptureFrame';
+import {
+  FACE_CAPTURE_ALIGNMENT_CONFIG,
+  FACE_CAPTURE_FRAME_CLASS,
+  FACE_CAPTURE_OVERLAY_CLASS,
+  FACE_CAPTURE_OVERLAY_SHAPE,
+  FACE_CAPTURE_PLACEHOLDER_CLASS,
+} from '../components/faceCaptureDefaults';
+import { FaceAlignmentState, getFaceAlignmentLabel } from '../components/faceCaptureTypes';
 import { useAuth } from '../contexts/AuthContext';
 import { useCamera } from '../hooks/useCamera';
 import { API_BASE } from '../lib/apiBase';
@@ -66,6 +74,10 @@ export function RegisterCustomer() {
   >('idle');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [faceAlignment, setFaceAlignment] = useState<FaceAlignmentState>({
+    aligned: false,
+    reason: 'loading',
+  });
 
   const { getIdToken } = useAuth();
   const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
@@ -122,8 +134,14 @@ export function RegisterCustomer() {
     };
   }, [closeCamera]);
 
+  const faceStatusText = getFaceAlignmentLabel(faceAlignment.reason);
+
   const handleCaptureAtIndex = useCallback(
     (index: number) => {
+      if (!faceAlignment.aligned) {
+        setCameraError('Align your face within the oval before capturing.');
+        return;
+      }
       const frame = captureFrame();
       if (!frame) {
         setCameraError('Unable to capture image. Please make sure the camera is active.');
@@ -138,7 +156,7 @@ export function RegisterCustomer() {
       });
       setCameraError(null);
     },
-    [captureFrame],
+    [captureFrame, faceAlignment.aligned],
   );
 
   const handleRemoveSlot = useCallback((index: number) => {
@@ -288,11 +306,30 @@ export function RegisterCustomer() {
                           cameraRef={cameraRef}
                           stream={streamRef.current}
                           isActive
-                          frameClassName="relative w-full aspect-[4/3] bg-neutral-200 rounded-2xl overflow-hidden flex items-center justify-center"
-                          overlayClassName="w-[260px] h-[340px] border-2 border-neutral-700 border-dashed rounded-full opacity-70"
-                          placeholderClassName="w-[260px] h-[340px] border-2 border-neutral-400 border-dashed rounded-full opacity-60"
+                          enableFaceAlignment
+                          showDebugUi={import.meta.env?.DEV}
+                          alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
+                          overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
+                          onAlignmentChange={(next) => {
+                            setFaceAlignment(next);
+                            if (next.aligned && cameraError) {
+                              setCameraError(null);
+                            }
+                          }}
+                          frameClassName={FACE_CAPTURE_FRAME_CLASS}
+                          overlayClassName={FACE_CAPTURE_OVERLAY_CLASS}
+                          placeholderClassName={FACE_CAPTURE_PLACEHOLDER_CLASS}
                           showOvalGuide
                         />
+                        <div
+                          className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
+                            faceAlignment.aligned
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {faceStatusText}
+                        </div>
                       </div>
                       <div className="flex w-[260px] min-h-[465px] flex-col items-end gap-3">
                         <div
