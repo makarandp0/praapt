@@ -104,67 +104,16 @@ export function FaceCaptureFrame({
   const [debugConfig, setDebugConfig] = useState<FaceAlignmentConfig | null>(null);
   const [debugOverlayShape, setDebugOverlayShape] = useState<OverlayShapeConfig | null>(null);
   const [debugOpen, setDebugOpen] = useState(false);
+  const [debugEditOpen, setDebugEditOpen] = useState(false);
 
   const config = debugConfig ?? baseConfig;
   const activeOverlayShape = debugOverlayShape ?? baseOverlayShape;
   const detectionMinConfidence = minConfidence ?? config.minConfidence;
 
-  const [overlayCenter, setOverlayCenter] = useState<{ x: number; y: number } | null>(null);
-
-  const updateOverlayCenter = useCallback(() => {
-    const overlayEl = overlayRef.current;
-    const video = cameraRef.current?.getVideoElement();
-    if (!overlayEl || !video) {
-      setOverlayCenter(null);
-      return;
-    }
-    const videoRect = video.getBoundingClientRect();
-    const overlayRect = overlayEl.getBoundingClientRect();
-    if (videoRect.width === 0 || videoRect.height === 0) {
-      setOverlayCenter(null);
-      return;
-    }
-    const centerX =
-      (overlayRect.left + overlayRect.width / 2 - videoRect.left) / videoRect.width;
-    const centerY =
-      (overlayRect.top + overlayRect.height / 2 - videoRect.top) / videoRect.height;
-    setOverlayCenter({ x: centerX, y: centerY });
-  }, [cameraRef]);
-
-  useEffect(() => {
-    updateOverlayCenter();
-    window.addEventListener('resize', updateOverlayCenter);
-    return () => window.removeEventListener('resize', updateOverlayCenter);
-  }, [updateOverlayCenter]);
-
-  useEffect(() => {
-    updateOverlayCenter();
-  }, [
-    updateOverlayCenter,
-    activeOverlayShape.widthPct,
-    activeOverlayShape.heightPct,
-    activeOverlayShape.offsetXPct,
-    activeOverlayShape.offsetYPct,
-    stream,
-  ]);
-
-  useEffect(() => {
-    const video = cameraRef.current?.getVideoElement();
-    if (!video || typeof ResizeObserver === 'undefined') {
-      return undefined;
-    }
-
-    const observer = new ResizeObserver(() => updateOverlayCenter());
-    observer.observe(video);
-    video.addEventListener('loadedmetadata', updateOverlayCenter);
-    video.addEventListener('resize', updateOverlayCenter);
-
-    return () => {
-      observer.disconnect();
-      video.removeEventListener('loadedmetadata', updateOverlayCenter);
-      video.removeEventListener('resize', updateOverlayCenter);
-    };
-  }, [cameraRef, updateOverlayCenter]);
+  const ellipseCenterX = 0.5 + (activeOverlayShape.offsetXPct ?? 0) / 100;
+  const ellipseCenterY = 0.5 + (activeOverlayShape.offsetYPct ?? 0) / 100;
+  const ellipseWidthNorm = activeOverlayShape.widthPct / 100;
+  const ellipseHeightNorm = activeOverlayShape.heightPct / 100;
 
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
@@ -217,7 +166,7 @@ export function FaceCaptureFrame({
 
   const startDrag = useCallback(
     (event: React.PointerEvent<HTMLDivElement>, type: 'move' | 'resize') => {
-      if (!debugOpen) {
+      if (!debugOpen || !debugEditOpen) {
         return;
       }
 
@@ -254,6 +203,7 @@ export function FaceCaptureFrame({
       baseConfig,
       baseOverlayShape,
       debugConfig,
+      debugEditOpen,
       debugOpen,
       debugOverlayShape,
       handlePointerMove,
@@ -288,19 +238,10 @@ export function FaceCaptureFrame({
         return { aligned: false, reason: 'no_video' };
       }
 
-      const overlayEl = overlayRef.current;
-      if (!overlayEl) {
+      if (ellipseWidthNorm <= 0 || ellipseHeightNorm <= 0) {
         return { aligned: false, reason: 'no_overlay' };
       }
 
-      const videoRect = video.getBoundingClientRect();
-      const overlayRect = overlayEl.getBoundingClientRect();
-      if (videoRect.width === 0 || videoRect.height === 0 || overlayRect.width === 0) {
-        return { aligned: false, reason: 'no_overlay' };
-      }
-
-      const ellipseWidthNorm = overlayRect.width / videoRect.width;
-      const ellipseHeightNorm = overlayRect.height / videoRect.height;
       const ellipseAreaNorm = Math.PI * (ellipseWidthNorm / 2) * (ellipseHeightNorm / 2);
 
       const faceWidthNorm = faceDetection.boundingBox.width / video.videoWidth;
@@ -311,8 +252,6 @@ export function FaceCaptureFrame({
       const faceHeightRatio = faceHeightNorm / ellipseHeightNorm;
       const faceAreaRatio = ellipseAreaNorm > 0 ? faceAreaNorm / ellipseAreaNorm : 0;
 
-      const ellipseCenterX = overlayCenter?.x ?? 0.5;
-      const ellipseCenterY = overlayCenter?.y ?? 0.5;
       const ellipseRadiusX = ellipseWidthNorm / 2;
       const ellipseRadiusY = ellipseHeightNorm / 2;
 
@@ -379,7 +318,15 @@ export function FaceCaptureFrame({
 
       return { aligned: true, reason: 'aligned' };
     },
-    [cameraRef, config, enableFaceAlignment, overlayCenter],
+    [
+      cameraRef,
+      config,
+      ellipseCenterX,
+      ellipseCenterY,
+      ellipseHeightNorm,
+      ellipseWidthNorm,
+      enableFaceAlignment,
+    ],
   );
 
   const handleFaceDetectionChange = useCallback(
@@ -441,13 +388,13 @@ export function FaceCaptureFrame({
 
       {showOvalGuide && (
         <div
-          className={`absolute inset-0 ${debugOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+          className={`absolute inset-0 ${debugOpen && debugEditOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
           <div
             ref={overlayRef}
             onPointerDown={(event) => startDrag(event, 'move')}
             className={`${overlayClassName} ${overlayStatusClass} absolute ${
-              debugOpen ? 'cursor-move' : ''
+              debugOpen && debugEditOpen ? 'cursor-move' : ''
             }`}
             style={{
               width: `${activeOverlayShape.widthPct}%`,
@@ -457,7 +404,7 @@ export function FaceCaptureFrame({
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {debugOpen && (
+            {debugOpen && debugEditOpen && (
               <div
                 onPointerDown={(event) => {
                   event.stopPropagation();
@@ -501,129 +448,154 @@ export function FaceCaptureFrame({
             createPortal(
               <div className="fixed bottom-4 right-4 z-50 w-[280px] rounded-lg bg-white/95 p-3 text-[11px] text-neutral-800 shadow-lg">
                 <div className="mb-2 font-semibold">Face Capture Debug</div>
-                <div className="text-[10px] text-neutral-500">Drag the oval to move, handle to resize.</div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <label className="flex flex-col gap-1">
-                    <span>Overlap %</span>
-                    <input
-                      type="number"
-                      min={0.4}
-                      max={0.9}
-                      step={0.01}
-                      value={debugConfig.overlapThreshold}
-                      onChange={(event) =>
-                        setDebugConfig({
-                          ...debugConfig,
-                          overlapThreshold: Number(event.target.value),
-                        })
-                      }
-                      className="rounded border border-neutral-300 px-2 py-1"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span>Min Fill %</span>
-                    <input
-                      type="number"
-                      min={0.2}
-                      max={1.2}
-                      step={0.01}
-                      value={debugConfig.minFaceAreaRatio}
-                      onChange={(event) =>
-                        setDebugConfig({
-                          ...debugConfig,
-                          minFaceAreaRatio: Number(event.target.value),
-                        })
-                      }
-                      className="rounded border border-neutral-300 px-2 py-1"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span>Max Fill %</span>
-                    <input
-                      type="number"
-                      min={0.6}
-                      max={1.6}
-                      step={0.01}
-                      value={debugConfig.maxFaceAreaRatio}
-                      onChange={(event) =>
-                        setDebugConfig({
-                          ...debugConfig,
-                          maxFaceAreaRatio: Number(event.target.value),
-                        })
-                      }
-                      className="rounded border border-neutral-300 px-2 py-1"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span>Samples</span>
-                    <input
-                      type="number"
-                      min={6}
-                      max={24}
-                      step={1}
-                      value={debugConfig.overlapSamples}
-                      onChange={(event) =>
-                        setDebugConfig({
-                          ...debugConfig,
-                          overlapSamples: Number(event.target.value),
-                        })
-                      }
-                      className="rounded border border-neutral-300 px-2 py-1"
-                    />
-                  </label>
+                <div className="text-[10px] text-neutral-500">
+                  Runtime readouts (current vs required).
                 </div>
-                <div className="mt-3 space-y-1 text-[11px]">
-                  <div>Status: {getFaceAlignmentLabel(alignmentState.reason)}</div>
-                  <div>
-                    Overlap:{' '}
-                    {alignmentMetrics.overlapRatio === null
-                      ? '--'
-                      : `${Math.round(alignmentMetrics.overlapRatio * 100)}%`}
+                <div className="mt-3 space-y-2 text-[12px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-600">Status</span>
+                    <span className="font-medium">{getFaceAlignmentLabel(alignmentState.reason)}</span>
                   </div>
-                  <div>
-                    Fill:{' '}
-                    {alignmentMetrics.faceAreaRatio === null
-                      ? '--'
-                      : `${Math.round(alignmentMetrics.faceAreaRatio * 100)}%`}
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-600">Overlap</span>
+                    <span className="font-medium">
+                      {alignmentMetrics.overlapRatio === null
+                        ? '--'
+                        : `${Math.round(alignmentMetrics.overlapRatio * 100)}%`}{' '}
+                      / {Math.round(debugConfig.overlapThreshold * 100)}%
+                    </span>
                   </div>
-                  <div>
-                    Oval: {debugOverlayShape.widthPct.toFixed(1)}% w ·{' '}
-                    {debugOverlayShape.heightPct.toFixed(1)}% h
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-600">Fill</span>
+                    <span className="font-medium">
+                      {alignmentMetrics.faceAreaRatio === null
+                        ? '--'
+                        : `${Math.round(alignmentMetrics.faceAreaRatio * 100)}%`}{' '}
+                      / {Math.round(debugConfig.minFaceAreaRatio * 100)}%
+                    </span>
                   </div>
-                  <div>
-                    Offset: {(debugOverlayShape.offsetXPct ?? 0).toFixed(1)}% x ·{' '}
-                    {(debugOverlayShape.offsetYPct ?? 0).toFixed(1)}% y
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-600">Faces</span>
+                    <span className="font-medium">{alignmentMetrics.faceCount}</span>
                   </div>
-                  <div>
-                    Size: {alignmentMetrics.faceWidthRatio?.toFixed(2) ?? '--'}w ·{' '}
-                    {alignmentMetrics.faceHeightRatio?.toFixed(2) ?? '--'}h
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-600">Confidence</span>
+                    <span className="font-medium">
+                      {alignmentMetrics.confidence === null
+                        ? '--'
+                        : `${Math.round(alignmentMetrics.confidence * 100)}%`}
+                    </span>
                   </div>
-                  <div>Faces: {alignmentMetrics.faceCount}</div>
-                  <div>
-                    Confidence:{' '}
-                    {alignmentMetrics.confidence === null
-                      ? '--'
-                      : `${Math.round(alignmentMetrics.confidence * 100)}%`}
-                  </div>
-                  <div>Method: {alignmentMetrics.detectionMethod ?? '--'}</div>
-                </div>
-                <div className="mt-3 rounded border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] text-neutral-700">
-                  overlayShape: {'{'}widthPct: {debugOverlayShape.widthPct.toFixed(1)}, heightPct:{' '}
-                  {debugOverlayShape.heightPct.toFixed(1)}, offsetXPct:{' '}
-                  {(debugOverlayShape.offsetXPct ?? 0).toFixed(1)}, offsetYPct:{' '}
-                  {(debugOverlayShape.offsetYPct ?? 0).toFixed(1)}
-                  {'}'}
                 </div>
                 <button
                   type="button"
                   className="mt-3 w-full rounded border border-neutral-300 px-2 py-1 text-xs font-semibold"
-                  onClick={() => {
-                    setDebugConfig(baseConfig);
-                    setDebugOverlayShape(baseOverlayShape);
-                  }}
+                  onClick={() => setDebugEditOpen((prev) => !prev)}
                 >
-                  Reset Defaults
+                  {debugEditOpen ? 'Hide Edit Controls' : 'Edit Thresholds & Oval'}
                 </button>
+                {debugEditOpen && (
+                  <>
+                    <div className="mt-3 text-[10px] text-neutral-500">
+                      Drag oval to move, handle to resize. Adjust thresholds below.
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <label className="flex flex-col gap-1">
+                        <span>Overlap %</span>
+                        <input
+                          type="number"
+                          min={0.4}
+                          max={0.9}
+                          step={0.01}
+                          value={debugConfig.overlapThreshold}
+                          onChange={(event) =>
+                            setDebugConfig({
+                              ...debugConfig,
+                              overlapThreshold: Number(event.target.value),
+                            })
+                          }
+                          className="rounded border border-neutral-300 px-2 py-1"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span>Min Fill %</span>
+                        <input
+                          type="number"
+                          min={0.2}
+                          max={1.2}
+                          step={0.01}
+                          value={debugConfig.minFaceAreaRatio}
+                          onChange={(event) =>
+                            setDebugConfig({
+                              ...debugConfig,
+                              minFaceAreaRatio: Number(event.target.value),
+                            })
+                          }
+                          className="rounded border border-neutral-300 px-2 py-1"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span>Max Fill %</span>
+                        <input
+                          type="number"
+                          min={0.6}
+                          max={1.6}
+                          step={0.01}
+                          value={debugConfig.maxFaceAreaRatio}
+                          onChange={(event) =>
+                            setDebugConfig({
+                              ...debugConfig,
+                              maxFaceAreaRatio: Number(event.target.value),
+                            })
+                          }
+                          className="rounded border border-neutral-300 px-2 py-1"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span>Samples</span>
+                        <input
+                          type="number"
+                          min={6}
+                          max={24}
+                          step={1}
+                          value={debugConfig.overlapSamples}
+                          onChange={(event) =>
+                            setDebugConfig({
+                              ...debugConfig,
+                              overlapSamples: Number(event.target.value),
+                            })
+                          }
+                          className="rounded border border-neutral-300 px-2 py-1"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-3 space-y-1 text-[11px]">
+                      <div>
+                        Oval: {debugOverlayShape.widthPct.toFixed(1)}% w ·{' '}
+                        {debugOverlayShape.heightPct.toFixed(1)}% h
+                      </div>
+                      <div>
+                        Offset: {(debugOverlayShape.offsetXPct ?? 0).toFixed(1)}% x ·{' '}
+                        {(debugOverlayShape.offsetYPct ?? 0).toFixed(1)}% y
+                      </div>
+                    <div>
+                      Size: {alignmentMetrics.faceWidthRatio?.toFixed(2) ?? '--'}w ·{' '}
+                      {alignmentMetrics.faceHeightRatio?.toFixed(2) ?? '--'}h
+                    </div>
+                    <div>Method: {alignmentMetrics.detectionMethod ?? '--'}</div>
+                  </div>
+                    <button
+                      type="button"
+                      className="mt-3 w-full rounded border border-neutral-300 px-2 py-1 text-xs font-semibold"
+                      onClick={() => {
+                        setDebugConfig(baseConfig);
+                        setDebugOverlayShape(baseOverlayShape);
+                      }}
+                    >
+                      Reset Defaults
+                    </button>
+                  </>
+                )}
               </div>,
               document.body,
             )}
