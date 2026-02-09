@@ -143,21 +143,27 @@ function NavBar() {
                   </Link>
                 )}
 
-                {/* Public features - available to everyone */}
-                <Link
-                  to="/registerCustomer"
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Register Customer
-                </Link>
-                <Link
-                  to="/flows/kiosk"
-                  onClick={closeMenu}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Kiosk Flow
-                </Link>
+                {/* Customer registration */}
+                {canManageCustomers && (
+                  <Link
+                    to="/registerCustomer"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Register Customer
+                  </Link>
+                )}
+
+                {/* Authenticated features */}
+                {isAuthenticated && (
+                  <Link
+                    to="/flows/kiosk"
+                    onClick={closeMenu}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Kiosk Flow
+                  </Link>
+                )}
 
                 {/* Utility links */}
                 <Link
@@ -216,7 +222,14 @@ function AppRoutes() {
           <Route path="/registerCustomer" element={<RegisterCustomer />} />
           <Route path="/version" element={<Version apiBase={API_BASE} />} />
           <Route path="/config" element={<Config apiBase={API_BASE} />} />
-          <Route path="/flows/kiosk" element={<KioskFlowPage apiBase={API_BASE} />} />
+          <Route
+            path="/flows/kiosk"
+            element={
+              <ProtectedRoute>
+                <KioskFlowPage apiBase={API_BASE} />
+              </ProtectedRoute>
+            }
+          />
 
       {/* Dashboard - shows role-appropriate content, including for unknown users */}
       <Route

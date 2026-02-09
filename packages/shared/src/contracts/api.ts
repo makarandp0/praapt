@@ -81,7 +81,7 @@ export const kioskFaceMatch = defineContract({
   path: '/kiosk/face-match',
   body: KioskFaceMatchBodySchema,
   response: KioskFaceMatchResponseSchema,
-  auth: 'public',
+  auth: 'authenticated',
 });
 
 export const kioskPinLookup = defineContract({
@@ -89,7 +89,7 @@ export const kioskPinLookup = defineContract({
   path: '/kiosk/pin-lookup',
   body: KioskPinLookupBodySchema,
   response: KioskPinLookupResponseSchema,
-  auth: 'public',
+  auth: 'authenticated',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
