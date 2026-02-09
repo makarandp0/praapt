@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FaceCaptureFrame } from '../../../../components/FaceCaptureFrame';
 import {
   FACE_CAPTURE_ALIGNMENT_CONFIG,
@@ -8,6 +8,7 @@ import {
   FACE_CAPTURE_PLACEHOLDER_CLASS,
 } from '../../../../components/faceCaptureDefaults';
 import { FaceAlignmentState } from '../../../../components/faceCaptureTypes';
+import { useAuth } from '../../../../contexts/AuthContext';
 import { useCamera } from '../../../../hooks/useCamera';
 import { type Language, getTranslation, getFontFamily } from '../utils/translations';
 import { LanguageToggle } from './LanguageToggle';
@@ -33,12 +34,35 @@ export function FaceScanActiveOptimized({
     aligned: false,
     reason: 'loading',
   });
+  const { user } = useAuth();
+  const canSeeFaceDebug =
+    user?.role === 'admin' || user?.role === 'developer' || user?.role === 'volunteer';
   const { cameraRef, streamRef, openCamera, closeCamera, captureFrame } = useCamera();
+  const [debugCameraOverride, setDebugCameraOverride] = useState<boolean | null>(null);
+  const handleToggleCamera = useCallback(() => {
+    if (streamRef.current) {
+      setDebugCameraOverride(false);
+      closeCamera();
+      return;
+    }
+
+    setDebugCameraOverride(true);
+    openCamera().then((result) => {
+      if (!result.success) {
+        setCameraError(result.error);
+      } else {
+        setCameraError(null);
+      }
+    });
+  }, [closeCamera, openCamera, streamRef]);
 
   useEffect(() => {
     let mounted = true;
 
     async function startCamera() {
+      if (debugCameraOverride === false) {
+        return;
+      }
       const result = await openCamera();
       if (!mounted) return;
       if (!result.success) {
@@ -52,7 +76,7 @@ export function FaceScanActiveOptimized({
       mounted = false;
       closeCamera();
     };
-  }, [closeCamera, openCamera]);
+  }, [closeCamera, openCamera, debugCameraOverride]);
 
   useEffect(() => {
     if (!faceAlignment.aligned) {
@@ -99,7 +123,8 @@ export function FaceScanActiveOptimized({
           stream={streamRef.current}
           isActive
           enableFaceAlignment
-          showDebugUi={import.meta.env?.DEV}
+          showDebugUi={canSeeFaceDebug}
+          onToggleCamera={handleToggleCamera}
           alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
           overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
           frameClassName={FACE_CAPTURE_FRAME_CLASS}

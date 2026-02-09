@@ -19,6 +19,7 @@ interface FaceCaptureFrameProps {
   overlayClassName?: string;
   placeholderClassName?: string;
   showOvalGuide?: boolean;
+  showPlaceholderFace?: boolean;
   enableFaceAlignment?: boolean;
   alignmentConfig?: Partial<FaceAlignmentConfig>;
   overlayShape?: Partial<OverlayShapeConfig>;
@@ -26,6 +27,7 @@ interface FaceCaptureFrameProps {
   detectionInterval?: number;
   minConfidence?: number;
   showDebugUi?: boolean;
+  onToggleCamera?: () => void;
 }
 
 export interface FaceAlignmentMetrics {
@@ -66,8 +68,9 @@ export function FaceCaptureFrame({
   isActive = false,
   frameClassName = DEFAULT_FRAME_CLASS,
   overlayClassName = DEFAULT_OVAL_CLASS,
-  placeholderClassName = DEFAULT_PLACEHOLDER_CLASS,
+  placeholderClassName: _placeholderClassName = DEFAULT_PLACEHOLDER_CLASS,
   showOvalGuide = true,
+  showPlaceholderFace = true,
   enableFaceAlignment = false,
   alignmentConfig,
   overlayShape,
@@ -75,6 +78,7 @@ export function FaceCaptureFrame({
   detectionInterval,
   minConfidence,
   showDebugUi = false,
+  onToggleCamera,
 }: FaceCaptureFrameProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -114,6 +118,8 @@ export function FaceCaptureFrame({
   const ellipseCenterY = 0.5 + (activeOverlayShape.offsetYPct ?? 0) / 100;
   const ellipseWidthNorm = activeOverlayShape.widthPct / 100;
   const ellipseHeightNorm = activeOverlayShape.heightPct / 100;
+  const ovalBottomPct = 50 + ellipseHeightNorm * 50;
+  const placeholderHeadSizePct = 75;
 
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
@@ -383,7 +389,7 @@ export function FaceCaptureFrame({
           />
         </div>
       ) : (
-        <div className={placeholderClassName}></div>
+        <div className="w-full h-full" />
       )}
 
       {showOvalGuide && (
@@ -414,6 +420,33 @@ export function FaceCaptureFrame({
               />
             )}
           </div>
+        </div>
+      )}
+
+      {!stream && showOvalGuide && showPlaceholderFace && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div
+            className="relative"
+            style={{ width: `${ellipseWidthNorm * 100}%`, height: `${ellipseHeightNorm * 100}%` }}
+          >
+            <div
+              className="absolute left-1/2 top-0 -translate-x-1/2 rounded-full border-2 border-neutral-500/45"
+              style={{ height: `${placeholderHeadSizePct}%`, width: `${placeholderHeadSizePct}%` }}
+            />
+            <div className="absolute left-1/2 top-[26%] -translate-x-1/2">
+              <div className="absolute -left-6 h-2 w-2 rounded-full bg-neutral-500/40" />
+              <div className="absolute left-6 h-2 w-2 rounded-full bg-neutral-500/40" />
+            </div>
+            <div className="absolute left-1/2 top-[44%] h-2 w-8 -translate-x-1/2 rounded-full bg-neutral-500/40" />
+            <div
+              className="absolute left-1/2 -translate-x-1/2 rounded-[999px] border-2 border-neutral-500/35"
+              style={{ top: '64%', height: '16%', width: '34%' }}
+            />
+          </div>
+          <div
+            className="absolute left-1/2 -translate-x-1/2 rounded-[999px] border-2 border-neutral-500/35"
+            style={{ top: `${ovalBottomPct - 6}%`, height: '24%', width: '52%' }}
+          />
         </div>
       )}
 
@@ -494,6 +527,15 @@ export function FaceCaptureFrame({
                 >
                   {debugEditOpen ? 'Hide Edit Controls' : 'Edit Thresholds & Oval'}
                 </button>
+                {onToggleCamera && (
+                  <button
+                    type="button"
+                    className="mt-2 w-full rounded border border-neutral-300 px-2 py-1 text-xs font-semibold"
+                    onClick={onToggleCamera}
+                  >
+                    {stream ? 'Stop Camera' : 'Start Camera'}
+                  </button>
+                )}
                 {debugEditOpen && (
                   <>
                     <div className="mt-3 text-[10px] text-neutral-500">

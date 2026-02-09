@@ -79,9 +79,12 @@ export function RegisterCustomer() {
     reason: 'loading',
   });
 
-  const { getIdToken } = useAuth();
+  const { getIdToken, user } = useAuth();
   const { cameraRef, streamRef, cameraOpen, openCamera, closeCamera, captureFrame } = useCamera();
   const cameraOpeningRef = useRef(false);
+  const canSeeFaceDebug =
+    user?.role === 'admin' || user?.role === 'developer' || user?.role === 'volunteer';
+  const [debugCameraOverride, setDebugCameraOverride] = useState<boolean | null>(null);
 
   const normalizedAadhaar = (value: string) => value.replace(/\D/g, '').slice(0, 4);
   const totalCaptured = faceSlots.filter(Boolean).length;
@@ -111,7 +114,7 @@ export function RegisterCustomer() {
   useEffect(() => {
     const needsCamera = currentStep.id === 'faceCapture';
 
-    if (needsCamera && !cameraOpen && !cameraOpeningRef.current) {
+    if (needsCamera && !cameraOpen && !cameraOpeningRef.current && debugCameraOverride !== false) {
       cameraOpeningRef.current = true;
       openCamera().then((result) => {
         if (!result.success) {
@@ -126,7 +129,7 @@ export function RegisterCustomer() {
     if (!needsCamera && cameraOpen) {
       closeCamera();
     }
-  }, [cameraOpen, closeCamera, currentStep.id, openCamera]);
+  }, [cameraOpen, closeCamera, currentStep.id, debugCameraOverride, openCamera]);
 
   useEffect(() => {
     return () => {
@@ -158,6 +161,23 @@ export function RegisterCustomer() {
     },
     [captureFrame, faceAlignment.aligned],
   );
+
+  const handleToggleCamera = useCallback(() => {
+    if (cameraOpen) {
+      setDebugCameraOverride(false);
+      closeCamera();
+      return;
+    }
+
+    setDebugCameraOverride(true);
+    openCamera().then((result) => {
+      if (!result.success) {
+        setCameraError(result.error);
+      } else {
+        setCameraError(null);
+      }
+    });
+  }, [cameraOpen, closeCamera, openCamera]);
 
   const handleRemoveSlot = useCallback((index: number) => {
     setFaceSlots((prev) => {
@@ -307,7 +327,8 @@ export function RegisterCustomer() {
                           stream={streamRef.current}
                           isActive
                           enableFaceAlignment
-                          showDebugUi={import.meta.env?.DEV}
+                          showDebugUi={canSeeFaceDebug}
+                          onToggleCamera={handleToggleCamera}
                           alignmentConfig={FACE_CAPTURE_ALIGNMENT_CONFIG}
                           overlayShape={FACE_CAPTURE_OVERLAY_SHAPE}
                           onAlignmentChange={(next) => {
