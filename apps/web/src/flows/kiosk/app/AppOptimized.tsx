@@ -18,6 +18,7 @@ import { FoodSelectionOptimized } from './components/FoodSelectionOptimized';
 import { RedemptionSuccessOptimized } from './components/RedemptionSuccessOptimized';
 import { getTranslation } from './utils/translations';
 import { callContract } from '../../../lib/contractClient';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export type ScreenOptimized = 
   | 'boot'
@@ -42,6 +43,7 @@ interface AppOptimizedProps {
 }
 
 export default function AppOptimized({ apiBase }: AppOptimizedProps) {
+  const { getIdToken } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<ScreenOptimized>('boot');
   const [aadhaarDigits, setAadhaarDigits] = useState('');
   const [capturedFace, setCapturedFace] = useState<string | null>(null);
@@ -89,7 +91,12 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
 
       let response;
       try {
+        const token = await getIdToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
         response = await callContract(apiBase, Contracts.kioskPinLookup, {
+          token,
           body: { pin: aadhaarDigits },
         });
       } catch (err) {
@@ -118,7 +125,7 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     return () => {
       isMounted = false;
     };
-  }, [aadhaarDigits, apiBase, currentScreen]);
+  }, [aadhaarDigits, apiBase, currentScreen, getIdToken]);
 
   useEffect(() => {
     let isMounted = true;
@@ -130,7 +137,12 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
 
       let response;
       try {
+        const token = await getIdToken();
+        if (!token) {
+          throw new Error('Not authenticated');
+        }
         response = await callContract(apiBase, Contracts.kioskFaceMatch, {
+          token,
           body: { pin: aadhaarDigits, faceImage: capturedFace },
         });
       } catch (err) {
@@ -179,7 +191,7 @@ export default function AppOptimized({ apiBase }: AppOptimizedProps) {
     return () => {
       isMounted = false;
     };
-  }, [aadhaarDigits, apiBase, capturedFace, currentScreen]);
+  }, [aadhaarDigits, apiBase, capturedFace, currentScreen, getIdToken]);
 
   return (
     <div className="min-h-screen bg-[#5A6472] flex flex-col">

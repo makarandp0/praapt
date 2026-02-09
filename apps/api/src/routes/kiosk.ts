@@ -18,7 +18,7 @@ const FACE_MATCH_THRESHOLD = 0.4;
 /**
  * POST /kiosk/pin-lookup
  * Confirm the PIN is registered and has faces.
- * Auth: public (kiosk)
+ * Auth: authenticated
  */
 routes.fromContract(Contracts.kioskPinLookup, async (req) => {
   const { pin } = req.body;
@@ -57,7 +57,7 @@ routes.fromContract(Contracts.kioskPinLookup, async (req) => {
 /**
  * POST /kiosk/face-match
  * Match a face against customers sharing the provided PIN.
- * Auth: public (kiosk)
+ * Auth: authenticated
  */
 routes.fromContract(Contracts.kioskFaceMatch, async (req) => {
   const { pin, faceImage } = req.body;
